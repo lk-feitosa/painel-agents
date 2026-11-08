@@ -1,0 +1,1 @@
+window.DADOS_DO_PAINEL = {"versao": "2.0.0", "gerado_em": "2026-11-07T21:49:37-03:00", "origem": "tmux", "agentes": [], "resumo": {"total": 0, "trabalhando": 0, "ociosos": 0}};
