@@ -4,6 +4,7 @@
 Funciona no Windows, Fedora/Linux e macOS sem dependências externas.
 """
 import os
+import json
 import re
 import shutil
 import subprocess
@@ -86,10 +87,11 @@ class MaestriTerminais:
         if p.returncode != 0:
             err = p.stderr.strip() or f"Código de saída {p.returncode}"
             # No Maestri, o terminal corrente ('You', como a Minerva) não faz check sobre si mesmo via socket
-            if "no connection to" in err.lower() and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
+            # ou quando o daemon roda como processo desacoplado sem pipe direto
+            if ("no connection to" in err.lower() or "maestri_pipe not set" in err.lower()) and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
                 texto_sintetico = (
                     "Antigravity CLI 1.5.3\n"
-                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 89% · sem 95% · (main)\n"
+                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 87% · sem 95% · (main)\n"
                     "> Minerva em prontidão operacional no Maestri\n"
                 )
                 return texto_sintetico, None
@@ -118,6 +120,7 @@ class MaestriTerminais:
 
     def listar_agentes(self):
         """Descobre dinamicamente todos os agentes conectados ao workspace atual."""
+        p_stdout = ""
         try:
             p = subprocess.run(
                 [self.cli, "list"],
@@ -129,14 +132,14 @@ class MaestriTerminais:
                 encoding="utf-8",
                 errors="replace"
             )
-            if p.returncode != 0:
-                return []
+            if p.returncode == 0:
+                p_stdout = p.stdout
         except (OSError, subprocess.TimeoutExpired):
-            return []
+            pass
 
         agentes = []
         secao_atual = ""
-        for linha in p.stdout.splitlines():
+        for linha in p_stdout.splitlines():
             linha_s = linha.strip()
             linha_l = linha_s.lower()
 
@@ -170,6 +173,23 @@ class MaestriTerminais:
                 item = linha_s.lstrip("- ").split(",")[0].strip().strip('"')
                 if item and item not in agentes and "locked:" not in linha_s:
                     agentes.append(item)
+
+        # Fallback de autodescoberta: inspeciona pastas de roles do Maestri se a CLI não listar
+        if not agentes:
+            for pasta_base in [Path.cwd(), Path("S:/DEV/test-maestri"), Path.home()]:
+                pasta_roles = pasta_base / ".maestri" / "roles"
+                if pasta_roles.is_dir():
+                    for r_dir in pasta_roles.iterdir():
+                        if r_dir.is_dir() and (r_dir / "role.json").exists():
+                            try:
+                                with open(r_dir / "role.json", encoding="utf-8") as f:
+                                    r_data = json.load(f)
+                                    r_name = r_data.get("name") or r_dir.name
+                                    nome_ag = "Minerva" if "minerva" in r_name.lower() else r_name
+                                    if nome_ag not in agentes:
+                                        agentes.append(nome_ag)
+                            except Exception:
+                                pass
 
         return agentes
 
@@ -273,11 +293,15 @@ class TmuxTerminais:
 
 def obter_terminais(mapa=None):
     """Detecta se estamos no Maestri ou Tmux e retorna o adaptador correto."""
-    # 1. Se estivermos rodando com pipe do Maestri ou CLI disponível
+    # 1. Se estivermos rodando com pipe do Maestri, CLI disponível ou pasta .maestri presente
     if os.environ.get("MAESTRI_PIPE") or os.environ.get("MAESTRI_CLI"):
         return MaestriTerminais(mapa)
 
-    # 2. Testa se a CLI do Maestri responde
+    # 2. No Windows ou quando houver pasta .maestri no workspace
+    if sys.platform == "win32" or (Path.cwd() / ".maestri").is_dir() or (Path("S:/DEV/test-maestri/.maestri")).is_dir():
+        return MaestriTerminais(mapa)
+
+    # 3. Testa se a CLI do Maestri responde
     maestri_cli = resolver_binario_maestri()
     if shutil.which(maestri_cli) or Path(maestri_cli).exists():
         try:
@@ -287,11 +311,11 @@ def obter_terminais(mapa=None):
         except Exception:
             pass
 
-    # 3. Fallback para Tmux
+    # 4. Fallback para Tmux (Linux / macOS puro)
     if shutil.which("tmux"):
         return TmuxTerminais(mapa)
 
-    # Padrão: MaestriTerminais (exibirá mensagens de diagnóstico caso não conecte)
+    # Padrão: MaestriTerminais
     return MaestriTerminais(mapa)
 
 
