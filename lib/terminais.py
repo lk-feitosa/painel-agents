@@ -38,7 +38,12 @@ def resolver_binario_maestri():
                 return str(caminho_win)
 
     # 4. Caminhos padrão no Linux / macOS
-    for p in ["/usr/local/bin/maestri", "/usr/bin/maestri", os.path.expanduser("~/.local/bin/maestri")]:
+    for p in [
+        "/usr/local/bin/maestri",
+        "/usr/bin/maestri",
+        os.path.expanduser("~/.local/bin/maestri"),
+        "/Applications/Maestri.app/Contents/Resources/cli/maestri",
+    ]:
         if Path(p).exists():
             return p
 
