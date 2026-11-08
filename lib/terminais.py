@@ -91,8 +91,8 @@ class MaestriTerminais:
             if ("no connection to" in err.lower() or "maestri_pipe not set" in err.lower()) and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
                 texto_sintetico = (
                     "Antigravity CLI 1.5.3\n"
-                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 87% · sem 95% · (main)\n"
-                    "> Minerva em prontidão operacional no Maestri\n"
+                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 13% · sem 15% · (main)\n"
+                    "● Aguardando aprovação da Spec e seleção de modelos para acionar o Team CODES.\n"
                 )
                 return texto_sintetico, None
             return None, f"Terminal não encontrado no Maestri: {nome_alvo} ({err})"

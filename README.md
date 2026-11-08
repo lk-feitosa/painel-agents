@@ -38,10 +38,12 @@ Diferente de soluções pesadas ou sondas que consomem chamadas de LLM, o `paine
 ## Destaques
 
 - **Auto-Descoberta de Workspace**: Descobre dinamicamente os agentes e terminais pertencentes ao canvas ativo (`maestri list`). Não requer cadastro estático nem arquivos de configuração prévios.
-- **Isolamento de Escopo**: Os dados exibidos pertencem estritamente ao workspace em foco, sem sobreposição com outros projetos.
-- **Zero Gasto de Tokens**: Toda a extração é analítica e baseada em expressões regulares determinísticas sobre a status line e o buffer do terminal.
-- **Nativo no Canvas**: Sobe automaticamente um nó de navegador (*Portal*) lado a lado com os seus terminais no espaço tridimensional do Maestri.
-- **Multiplataforma Real**: Desenvolvido exclusivamente com a biblioteca padrão do Python 3 (sem dependências como `pip`, `npm` ou compiladores nativos). Roda de forma idêntica no **Windows**, **Fedora / Ubuntu / Arch** e **macOS**.
+- **Cápsulas de Cota 3D Interativas (`Overview-Painel`)**: Renderiza os cards squircle com tilt 3D, tarja de privacidade pixelada no e-mail e régua de tempo decorrido para as contas conectadas (**Antigravity / Google AI Pro**, **OpenAI Codex CLI** e **Claude Code**).
+- **Sincronização Viva com o Kanban & "Precisa de Você"**: Sincroniza automaticamente `.kanban/board.json` com `publico/kanban.json` (`:3333/kanban.html`), preenchendo a coluna `Missão` de cada agente e criando cartões 3D interativos na seção **Precisa de você** sempre que houver aprovação humana pendente.
+- **Seção "Skills & MCPs do Projeto" + Roteamento Consultivo de Modelos**: Exibe na parte inferior do painel a tabela de sugestão dinâmica de modelos por terminal do Team CODES (`Minerva`, `Back-End`, `Front-End`, `QA`, `Review`), as Skills ativas/mapeadas e os servidores MCP conectados (`ai-memory`, `kan`, `maestri-ipc`, `agent-desktop`, `rea`, `magicpath`).
+- **Auto-Heal pela Memória do Projeto (Sem Script Global no Boot)**: Nenhum processo roda à toa na inicialização do Windows. Quando você interage com a Minerva no projeto, ela verifica se a porta `3333` está ativa e, caso necessário, dispara `iniciar-silencioso.vbs` (`painel.py --sem-portal --ensure`) em background.
+- **Zero Gasto de Tokens**: Toda a extração é analítica e baseada em expressões regulares determinísticas sobre a status line, sessões locais e buffer do terminal.
+- **Multiplataforma Real**: Desenvolvido exclusivamente com a biblioteca padrão do Python 3 (sem dependências externas). Roda de forma idêntica no **Windows**, **Fedora / Ubuntu / Arch** e **macOS**.
 
 ---
 

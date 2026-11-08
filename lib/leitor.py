@@ -28,6 +28,10 @@ AGY_TRABALHANDO = {"thinking", "working", "tool_use", "initializing", "confirmac
 ESFORCOS = {"minimal", "low", "medium", "high", "xhigh"}
 
 RE_CTX = re.compile(r"^\s*(?P<modelo>\S.*?) · ctx \[[^\]]*\] (?P<ctx>\d{1,3}|--)%(?P<resto>.*)$")
+RE_AGY_NATIVA = re.compile(
+    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)\S.*?)\s+[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%\s*\|\s*(?P<tempo>[^|]+?)\s*\|\s*.*?\((?P<estado>ocioso|idle|trabalhando|working|thinking|running)\)",
+    re.IGNORECASE,
+)
 RE_CODEX = re.compile(r"Context \d{1,3}% (?:used|left)")
 RE_BORDA = re.compile(r"^\s*[─━═]{20,}")
 RE_SEPARADOR = re.compile(r"^\s*[─━═_\-]{3,}\s*$")
@@ -357,19 +361,40 @@ def _hora_24(hora, minuto, periodo):
     return "%02dh%s" % (hora, minuto)
 
 
+def _ler_linha_agy_nativa(linha, r):
+    """Status line nativa do Antigravity CLI 1.5+ no Windows/macOS."""
+    m = RE_AGY_NATIVA.search(linha)
+    if not m:
+        return
+    r["modelo"] = (
+        m.group("modelo")
+        .strip()
+        .replace("(Med)", "(Medium)")
+        .replace("(Lo)", "(Low)")
+        .replace("(Hi)", "(High)")
+    )
+    restante = _pct(m.group("restante"))
+    if restante is not None:
+        r["sessao_5h_pct"] = max(0, min(100, 100 - restante))
+    est = (m.group("estado") or "").lower()
+    r["estado_bruto"] = "idle" if est in ("ocioso", "idle") else "working"
+
+
 def ler_tela(texto, ferramenta):
     """Lê a tela de um terminal. `ferramenta`: 'claude', 'codex', 'agy' ou 'auto'."""
     if ferramenta == "auto":
-        for tentativa in ("claude", "codex", "agy"):
+        t_lower = (texto or "").lower()
+        if "gemini" in t_lower or "antigravity" in t_lower:
+            ordem = ("agy", "codex", "claude")
+        elif "codex" in t_lower:
+            ordem = ("codex", "agy", "claude")
+        else:
+            ordem = ("claude", "agy", "codex")
+        for tentativa in ordem:
             res = ler_tela(texto, tentativa)
             if res.get("leitura") == "ok":
                 return res
-        t_lower = (texto or "").lower()
-        if "codex" in t_lower:
-            return ler_tela(texto, "codex")
-        if "gemini" in t_lower or "antigravity" in t_lower:
-            return ler_tela(texto, "agy")
-        return ler_tela(texto, "claude")
+        return ler_tela(texto, ordem[0])
 
     if ferramenta not in MARCADOR:
         return sem_leitura(ferramenta, "ferramenta desconhecida: %s" % ferramenta)
@@ -377,13 +402,19 @@ def ler_tela(texto, ferramenta):
         return sem_leitura(ferramenta, "tela vazia")
     linhas = [linha.rstrip() for linha in texto.replace("\r", "").split("\n")]
 
+    usou_agy_nativa = False
     i_status = _linha_da_status(linhas, RE_CODEX if ferramenta == "codex" else RE_CTX)
+    if i_status is None and ferramenta == "agy":
+        i_status = _linha_da_status(linhas, RE_AGY_NATIVA)
+        usou_agy_nativa = i_status is not None
     if i_status is None:
         return sem_leitura(ferramenta, "status line não encontrada no fim da tela")
 
     r = _resultado_base(ferramenta)
     if ferramenta == "codex":
         _ler_linha_codex(linhas[i_status], r)
+    elif usou_agy_nativa:
+        _ler_linha_agy_nativa(linhas[i_status], r)
     else:
         _ler_linha_ctx(linhas[i_status], r)
 

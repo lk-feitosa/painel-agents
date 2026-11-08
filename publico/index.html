@@ -286,6 +286,26 @@
 
   .rodape { margin: 12px 0 0; color: var(--apagado); font-size: 11px; }
   .rodape .erro { color: var(--critico-tinta); font-weight: 600; }
+
+  /* ---------- Ecossistema do Projeto: Skills, MCPs e Sugestão de Modelos ---------- */
+  #ecossistema .eco-sub { margin: 0; padding: 6px 16px 4px; font-size: 11px; font-weight: 500; color: var(--apagado); text-transform: uppercase; letter-spacing: .5px; border-top: 1px solid var(--fio); }
+  #ecossistema .eco-sub:first-child { border-top: 0; }
+  #ecossistema .eco-sub small { font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 6px; color: var(--apagado); }
+  .eco-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; padding: 6px 16px 14px; }
+  .eco-card { background: var(--sup2); border: 1px solid var(--fio); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; transition: border-color 150ms ease; }
+  .eco-card:hover { border-color: var(--fio-forte); }
+  .eco-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .eco-nome { font-weight: 600; font-size: 12.5px; color: var(--tinta); display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eco-nome i { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--apagado); }
+  .eco-nome i.on { background: var(--bom); }
+  .eco-nome i.map { background: var(--aviso); }
+  .eco-tag { font-size: 10px; color: var(--tinta2); background: var(--sup); border: 1px solid var(--fio); border-radius: 999px; padding: 1px 8px; white-space: nowrap; flex: none; }
+  .eco-desc { font-size: 11.5px; color: var(--tinta2); line-height: 1.38; }
+  .eco-meta { font-size: 10.5px; color: var(--apagado); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .eco-tabela-rot { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .eco-tabela-rot th, .eco-tabela-rot td { text-align: left; padding: 7px 16px; border-top: 1px solid var(--fio); vertical-align: middle; }
+  .eco-tabela-rot th { font-size: 10.5px; font-weight: 500; color: var(--apagado); border-top: 0; padding-top: 4px; padding-bottom: 4px; }
+  .eco-modelo-pill { display: inline-block; font-size: 11px; font-weight: 550; color: var(--tinta); background: var(--sup2); border: 1px solid var(--fio); border-radius: 6px; padding: 2px 8px; }
 </style>
 </head>
 <body>
@@ -334,6 +354,14 @@
     <div class="cabeca"><h2>Precisa de você <span class="conta zero" id="precisa-conta">0</span></h2>
       <span class="nota" id="precisa-nota"></span></div>
     <div id="precisa-corpo"></div>
+  </section>
+
+  <section class="cartao" id="ecossistema" aria-label="Skills e MCPs do Projeto">
+    <div class="cabeca">
+      <h2>Skills &amp; MCPs do Projeto <span class="conta" id="eco-conta">0</span></h2>
+      <span class="nota" id="eco-nota"></span>
+    </div>
+    <div id="ecossistema-corpo"></div>
   </section>
 
   <p class="rodape" id="rodape" hidden></p>
@@ -982,9 +1010,59 @@ function desenhar() {
   desenharPrs(agoraS);
   if (window.__painelContas) window.__painelContas.desenhar(dados.contas, agoraS);    /* cards de cota (cotas.js) */
   desenharPrecisa(agoraS);
+  desenharEcossistema();
   var problemas = (dados.quadro.erro ? ["▲ " + esc(dados.quadro.erro)] : []).concat(problemasDaSonda());
   por(el("rodape"), problemas.length ? '<span class="erro">' + problemas.join(" · ") + "</span>" : "");
   el("rodape").hidden = !problemas.length;
+}
+
+function desenharEcossistema() {
+  var eco = dados && dados.ecossistema;
+  var secao = el("ecossistema");
+  if (!secao) return;
+  if (!eco) { secao.hidden = true; return; }
+  secao.hidden = false;
+  var skills = Array.isArray(eco.skills) ? eco.skills : [];
+  var mcps = Array.isArray(eco.mcps) ? eco.mcps : [];
+  var rot = Array.isArray(eco.roteamento_modelos) ? eco.roteamento_modelos : [];
+  var total = skills.length + mcps.length;
+  por(el("eco-conta"), String(total));
+  classe(el("eco-conta"), "zero", total === 0);
+  por(el("eco-nota"), "Projeto ativo: " + esc(eco.projeto || "workspace") + " · " + skills.length + " skills · " + mcps.length + " MCPs");
+
+  var html = "";
+  if (rot.length) {
+    html += '<h3 class="eco-sub">Alocação Consultiva de Modelos (Team CODES)<small>sugerida pela Minerva conforme cotas restantes · você aprova ou escolhe por terminal</small></h3>';
+    html += '<table class="eco-tabela-rot"><thead><tr><th>Terminal / Papel</th><th>CLI</th><th>Modelo Sugerido</th><th>Critério (Cota &amp; Especialidade)</th></tr></thead><tbody>';
+    rot.forEach(function (r) {
+      html += "<tr><td><b>" + esc(r.terminal) + "</b></td><td>" + esc(r.ferramenta) + '</td><td><span class="eco-modelo-pill">' + esc(r.modelo_sugerido) + '</span></td><td style="color:var(--tinta2)">' + esc(r.motivo) + "</td></tr>";
+    });
+    html += "</tbody></table>";
+  }
+
+  if (skills.length) {
+    html += '<h3 class="eco-sub">Skills em Uso no Projeto<small>orquestração, arquitetura, UI, QA e segurança</small></h3><div class="eco-grade">';
+    skills.forEach(function (s) {
+      var corPonto = s.estado === "ativa" ? "on" : "map";
+      html += '<div class="eco-card"><div class="eco-topo"><span class="eco-nome" title="' + esc(s.nome) + '"><i class="' + corPonto + '"></i>' + esc(s.nome) + '</span><span class="eco-tag">' + esc(s.papel) + '</span></div>' +
+              '<div class="eco-desc">' + comCodigo(s.descricao || "") + '</div>' +
+              '<div class="eco-meta"><span>' + esc(s.categoria) + '</span> · <span>' + esc(s.estado) + '</span></div></div>';
+    });
+    html += "</div>";
+  }
+
+  if (mcps.length) {
+    html += '<h3 class="eco-sub">Servidores MCP &amp; Barramentos Conectados<small>memória persistente, kanban e ferramentas do workspace</small></h3><div class="eco-grade">';
+    mcps.forEach(function (m) {
+      var corPonto = m.estado === "ativo" ? "on" : "map";
+      html += '<div class="eco-card"><div class="eco-topo"><span class="eco-nome"><i class="' + corPonto + '"></i>' + esc(m.nome) + '</span><span class="eco-tag">' + esc(m.estado) + '</span></div>' +
+              '<div class="eco-desc">' + comCodigo(m.detalhe || "") + '</div>' +
+              '<div class="eco-meta"><span>' + esc(m.tipo) + '</span></div></div>';
+    });
+    html += "</div>";
+  }
+
+  por(el("ecossistema-corpo"), html);
 }
 
 /* ---------- leitura dos dados ---------- */
@@ -1026,7 +1104,8 @@ function dispararRefresh() {
     pararGiro();
   }, 15000);
 
-  fetch("http://127.0.0.1:7420/refresh", { method: "POST", mode: "no-cors" })
+  var urlRefresh = (window.location && window.location.protocol.indexOf("http") === 0) ? "/refresh" : "http://127.0.0.1:3333/refresh";
+  fetch(urlRefresh, { method: "POST", mode: "no-cors" })
     .then(function () {
       setTimeout(carregar, 400);
     })
