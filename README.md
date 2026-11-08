@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/avatar.jpg" alt="Minerva" width="140" />
+
 # painel-agents
 
 **Telemetria espacial e monitor de cotas em tempo real para agentes de IA no Maestri.**
