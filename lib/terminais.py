@@ -140,18 +140,16 @@ class MaestriTerminais:
             linha_s = linha.strip()
             linha_l = linha_s.lower()
 
-            # Delineadores de seção do maestri list
-            if "portal" in linha_l:
-                secao_atual = "portals"
-                continue
-            elif "note" in linha_l or "fichário" in linha_l:
-                secao_atual = "notes"
-                continue
-            elif "you:" in linha_l:
-                secao_atual = "you"
-                continue
-            elif "agent" in linha_l or "terminal" in linha_l or "connected" in linha_l:
-                secao_atual = "agents"
+            # Cabeçalhos de seção terminam com ':' ou não começam com '-'
+            if not linha_s.startswith("-"):
+                if "portal" in linha_l:
+                    secao_atual = "portals"
+                elif "note" in linha_l or "fichário" in linha_l:
+                    secao_atual = "notes"
+                elif "you" in linha_l:
+                    secao_atual = "you"
+                elif "agent" in linha_l or "terminal" in linha_l:
+                    secao_atual = "agents"
                 continue
 
             # Pula qualquer item de portais ou notas
