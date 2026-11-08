@@ -1,85 +1,166 @@
-# Painel de Agentes (Maestri & Multiplataforma)
+<div align="center">
 
-Monitor local e visual em tempo real para acompanhar agentes de inteligência artificial (Claude Code, Codex e Antigravity) rodando em workspaces no **Maestri** (e em terminais convencionais com Tmux).
+# painel-agents
 
-Projetado para rodar nativamente em **Windows**, **Fedora / Linux** e **macOS**.
+**Telemetria espacial e monitor de cotas em tempo real para agentes de IA no Maestri.**
 
----
+[![Licença MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Multiplataforma](https://img.shields.io/badge/plataforma-Windows%20|%20Linux%20|%20macOS-informational.svg?style=flat-square)](#instalação)
+[![Zero Token Cost](https://img.shields.io/badge/tokens-zero%20cost-success.svg?style=flat-square)](#arquitetura)
 
-## Recursos
-
-- **Auto-Descoberta de Workspace**: Descobre automaticamente todos os agentes ativos no canvas atual via `maestri list` (sem necessidade de cadastrar nada manualmente).
-- **Sem gasto de tokens**: Apenas lê as telas com comandos de leitura do Maestri (`maestri check`) e verifica as cotas administrativas das ferramentas locais.
-- **Criação Automática de Portal**: Ao iniciar, já abre automaticamente o card de Portal no canvas do Maestri.
-- **Multiplataforma Real**: Código 100% Python padrão, sem dependências externas nem pacotes pesados.
+</div>
 
 ---
 
-## Como Usar no Dia a Dia
+## O que é
 
-Dentro de qualquer terminal do seu Workspace no Maestri, execute:
+`painel-agents` é um painel local, leve e não intrusivo para acompanhar visualmente múltiplos agentes de IA (**Claude Code**, **Codex** e **Antigravity**) operando simultaneamente no **Maestri**.
+
+Diferente de soluções pesadas ou sondas que consomem chamadas de LLM, o `painel-agents` utiliza **telemetria passiva**: lê as telas dos terminais nativos via IPC do Maestri e extrai estado, modelo, esforço, contexto e cotas sem disparar tokens de inferência.
+
+```
+┌────────────────────────────────────────────────────────┐
+│                    MAESTRI CANVAS                      │
+│                                                        │
+│   [ Terminal 1: Claude ]  ───┐                         │
+│   [ Terminal 2: Codex  ]  ───┼── (maestri check) ──┐   │
+│   [ Terminal 3: Agy    ]  ───┘                     │   │
+│                                                    ▼   │
+│   [ Portal: Painel ] <── http://127.0.0.1:3333 ── [Core]
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Destaques
+
+- **Auto-Descoberta de Workspace**: Descobre dinamicamente os agentes e terminais pertencentes ao canvas ativo (`maestri list`). Não requer cadastro estático nem arquivos de configuração prévios.
+- **Isolamento de Escopo**: Os dados exibidos pertencem estritamente ao workspace em foco, sem sobreposição com outros projetos.
+- **Zero Gasto de Tokens**: Toda a extração é analítica e baseada em expressões regulares determinísticas sobre a status line e o buffer do terminal.
+- **Nativo no Canvas**: Sobe automaticamente um nó de navegador (*Portal*) lado a lado com os seus terminais no espaço tridimensional do Maestri.
+- **Multiplataforma Real**: Desenvolvido exclusivamente com a biblioteca padrão do Python 3 (sem dependências como `pip`, `npm` ou compiladores nativos). Roda de forma idêntica no **Windows**, **Fedora / Ubuntu / Arch** e **macOS**.
+
+---
+
+## Início Rápido
+
+### Instalação (Uma única vez)
+
+```bash
+# Clone o repositório
+git clone https://github.com/lk-feitosa/painel-agents.git
+cd painel-agents
+
+# No Windows:
+instalar.bat
+
+# No Fedora / Linux / macOS:
+./instalar.sh
+```
+
+O instalador registra o comando global `painel` em `~/.local/bin/` e instala a skill correspondente em `~/.agents/skills/painel-agents/`.
+
+---
+
+## Uso
+
+Em qualquer terminal dentro do seu workspace no Maestri, digite:
 
 ```bash
 painel
 ```
 
-O comando:
-1. Detecta quais agentes estão conectados ao canvas daquele workspace.
-2. Inicia o coletor em segundo plano e sobe o servidor HTTP local (`http://localhost:3333`).
-3. Abre automaticamente o card do **Portal** no seu canvas do Maestri.
+O executável:
+1. Identifica os agentes ativos no canvas atual.
+2. Inicia o daemon de telemetria e o servidor HTTP local (`127.0.0.1:3333`).
+3. Invoca a API de canvas do Maestri (`maestri portal create`) para abrir o card do painel instantaneamente.
 
-### Opções:
+### Opções de Linha de Comando
 
-```bash
-painel                # Modo contínuo com abertura automática de portal
-painel --uma-vez      # Faz apenas uma leitura e mostra o resumo no terminal
-painel --sem-portal   # Inicia o servidor e coletor sem abrir o portal automaticamente
-painel --porta 3334   # Escolhe uma porta HTTP diferente
+```
+Uso: painel [OPÇÕES]
+
+Opções:
+  --porta INT        Porta do servidor local (padrão: 3333, com auto-fallback)
+  --intervalo INT    Taxa de amostragem das telas em segundos (padrão: 10s)
+  --sem-portal       Inicia o coletor e o servidor web sem abrir o nó de Portal
+  --uma-vez          Executa uma única amostragem analítica e encerra no terminal
+  -h, --help         Exibe a mensagem de ajuda e opções
 ```
 
 ---
 
-## Como Instalar em Novas Máquinas
+## Como Funciona
 
-### No Windows:
-1. Clone o repositório:
-   ```cmd
-   git clone https://github.com/lk-feitosa/painel-agents.git
-   cd painel-agents
-   ```
-2. Execute o instalador:
-   ```cmd
-   instalar.bat
-   ```
+### 1. Descoberta de Topologia
+O daemon consulta a árvore de nós do canvas através da interface de linha de comando do Maestri. O comando `maestri list` devolve a relação de terminais, fichários e conexões ativas. Nós não interativos ou notas são descartados da cadeia de leitura.
 
-### No Fedora / Linux:
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/lk-feitosa/painel-agents.git
-   cd painel-agents
-   ```
-2. Dê permissão e execute o instalador:
-   ```bash
-   chmod +x instalar.sh
-   ./instalar.sh
-   ```
+### 2. Leitura e Decodificação de Telas
+A cada intervalo configurado (padrão: 10 segundos), o coletor faz uma amostragem em memória de cada agente via `maestri check "<agente>"`.
+
+O módulo analítico [`lib/leitor.py`](lib/leitor.py) extrai:
+- **Ferramenta**: Identificação automática de assinaturas de runtime (`Claude Code`, `Codex`, `Antigravity`).
+- **Estado Operacional**: `trabalhando`, `pensando`, `ocioso`, `aguardando confirmação` ou `em segundo plano`.
+- **Métricas de Sessão**: Uso de janela de contexto (%), cota periódica (5h), cota semanal (%) e modelo atualmente carregado.
+- **Atividade Recente**: A última ação ou intenção declarada pelo agente, com higienização estrita de tokens, caminhos e segredos (`mascarar()`).
+
+### 3. Visualização Reativa
+A interface servida em [`publico/`](publico/) utiliza componentes leves com renderização via Vanilla JS e CSS moderno. Os dados são consumidos via requisições assíncronas atômicas (`dados.json`), garantindo que o painel nunca trave nem exiba estados parciais.
 
 ---
 
-## Estrutura do Projeto
+## Estrutura do Repositório
 
-- `painel.py`: Core do painel (servidor web + orquestrador de coleta + abertura de portal).
-- `painel`: Executável direto para Linux / macOS.
-- `painel.cmd`: Executável direto para Windows.
-- `lib/`:
-  - `terminais.py`: Adaptador unificado para o Maestri e fallback para Tmux.
-  - `leitor.py`: Parser das telas de Claude Code, Codex e Antigravity.
-  - `comum.py`: Utilitários e gravação atômica compatível com Windows e Linux.
-- `publico/`: Interface web estática visualizada pelo Portal do Maestri.
-- `skills/`: Skill de integração para agentes do Maestri.
+```
+painel-agents/
+├── painel               # Launcher executável Unix (Linux / macOS)
+├── painel.cmd           # Launcher executável Windows
+├── painel.py            # Servidor HTTP, orquestrador e daemon de coleta
+├── instalar.bat         # Instalador 1-click para Windows
+├── instalar.sh          # Instalador 1-click para Linux / macOS
+├── lib/
+│   ├── terminais.py     # Adaptador unificado IPC (Maestri-first + Tmux fallback)
+│   ├── leitor.py        # Parser determinístico de telas e statuslines
+│   ├── contas.py        # Coletor de limites das CLIs instaladas
+│   ├── cotas.py         # Resolução e agrupamento de cotas compartilhadas
+│   ├── prs.py           # Integração com GitHub CLI (gh) para pull requests
+│   └── comum.py         # Gravação atômica e travas multiplataforma (msvcrt / fcntl)
+├── publico/
+│   ├── index.html       # Dashboard visual
+│   ├── cotas.js         # Widgets de exibição de cotas
+│   └── cartao-apoio.js  # Painéis contextuais
+└── skills/
+    └── painel-agents/   # Skill para agentes operarem o painel autonomamente
+```
+
+---
+
+## Integração via Skill (Agentes Autônomos)
+
+O `painel-agents` acompanha uma skill pronta para agentes Maestri / Codex / Antigravity em [`skills/painel-agents/SKILL.md`](skills/painel-agents/SKILL.md).
+
+Ao conversar com qualquer agente no seu canvas, você pode pedir:
+- *"Abra o painel de agentes"*
+- *"Verifique o status do time no painel"*
+- *"Mostre o consumo de cotas atual"*
+
+O agente invocará o comando nativo sem requerer nenhuma intervenção manual.
+
+---
+
+## Segurança e Privacidade
+
+- **Operação 100% Local**: O servidor se vincula exclusivamente a `127.0.0.1`. Nenhuma métrica, telemetria ou tela é enviada para a internet.
+- **Filtro de Segredos**: O leitor de telas possui padrões de rejeição automática para chaves de API (`sk-`, `ghp_`, `sbp_`), senhas e variáveis sensíveis.
+- **Somente Leitura**: As leituras de tela utilizam rotinas não destrutivas que não injetam caracteres nem interrompem o fluxo de pensamento dos agentes.
 
 ---
 
 ## Créditos e Licença
 
-- Baseado e aprimorado a partir dos projetos [Overview-Painel](https://github.com/cauecarneiro/Overview-Painel) de Caue Carneiro (@cauenovic) e [cotas-dashboard](https://github.com/fbtostadev/cotas-dashboard) de fbtostadev (Licença MIT).
+Distribuído sob a licença [MIT](LICENSE).
+
+Inspirado e construído com base nos trabalhos originais de:
+- [Overview-Painel](https://github.com/cauecarneiro/Overview-Painel) por Cauê Carneiro ([@cauenovic](https://github.com/cauenovic))
+- [cotas-dashboard](https://github.com/fbtostadev/cotas-dashboard) por Fábio Tosta ([@fbtostadev](https://github.com/fbtostadev))
