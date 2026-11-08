@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 ESPERA_PADRAO = 8
+FLAGS_SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 # Escapes comuns
 RE_TECLAS = re.compile(r"(\\n|\\e|\\x7f)")
@@ -66,6 +67,15 @@ class MaestriTerminais:
     def tela(self, nome):
         """Lê a tela do terminal do agente via `maestri check "<nome>"`."""
         nome_alvo = self.alvo(nome)
+        # Se o daemon estiver rodando desacoplado sem MAESTRI_PIPE, evita spawnar processo filho à toa
+        if not os.environ.get("MAESTRI_PIPE"):
+            if "minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower():
+                texto_sintetico = (
+                    "Antigravity CLI 1.5.3\n"
+                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 13% · sem 15% · (main)\n"
+                    "● Aguardando aprovação da Spec e seleção de modelos para acionar o Team CODES.\n"
+                )
+                return texto_sintetico, None
         try:
             p = subprocess.run(
                 [self.cli, "check", nome_alvo],
@@ -75,7 +85,8 @@ class MaestriTerminais:
                 timeout=ESPERA_PADRAO,
                 text=True,
                 encoding="utf-8",
-                errors="replace"
+                errors="replace",
+                creationflags=FLAGS_SEM_JANELA,
             )
         except FileNotFoundError:
             return None, "CLI do Maestri não encontrada"
@@ -86,8 +97,6 @@ class MaestriTerminais:
 
         if p.returncode != 0:
             err = p.stderr.strip() or f"Código de saída {p.returncode}"
-            # No Maestri, o terminal corrente ('You', como a Minerva) não faz check sobre si mesmo via socket
-            # ou quando o daemon roda como processo desacoplado sem pipe direto
             if ("no connection to" in err.lower() or "maestri_pipe not set" in err.lower()) and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
                 texto_sintetico = (
                     "Antigravity CLI 1.5.3\n"
@@ -112,7 +121,8 @@ class MaestriTerminais:
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=ESPERA_PADRAO
+                timeout=ESPERA_PADRAO,
+                creationflags=FLAGS_SEM_JANELA,
             )
             return p.returncode == 0
         except (OSError, subprocess.TimeoutExpired):
@@ -121,21 +131,23 @@ class MaestriTerminais:
     def listar_agentes(self):
         """Descobre dinamicamente todos os agentes conectados ao workspace atual."""
         p_stdout = ""
-        try:
-            p = subprocess.run(
-                [self.cli, "list"],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                timeout=ESPERA_PADRAO,
-                text=True,
-                encoding="utf-8",
-                errors="replace"
-            )
-            if p.returncode == 0:
-                p_stdout = p.stdout
-        except (OSError, subprocess.TimeoutExpired):
-            pass
+        if os.environ.get("MAESTRI_PIPE"):
+            try:
+                p = subprocess.run(
+                    [self.cli, "list"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    timeout=ESPERA_PADRAO,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    creationflags=FLAGS_SEM_JANELA,
+                )
+                if p.returncode == 0:
+                    p_stdout = p.stdout
+            except (OSError, subprocess.TimeoutExpired):
+                pass
 
         agentes = []
         secao_atual = ""
@@ -201,7 +213,8 @@ class MaestriTerminais:
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=ESPERA_PADRAO
+                timeout=ESPERA_PADRAO,
+                creationflags=FLAGS_SEM_JANELA,
             )
             return True
         except (OSError, subprocess.TimeoutExpired):
@@ -229,7 +242,8 @@ class TmuxTerminais:
                 timeout=ESPERA_PADRAO,
                 text=True,
                 encoding="utf-8",
-                errors="replace"
+                errors="replace",
+                creationflags=FLAGS_SEM_JANELA,
             )
         except FileNotFoundError:
             return None, "tmux não está instalado"
@@ -261,7 +275,8 @@ class TmuxTerminais:
                     stdin=subprocess.DEVNULL,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    timeout=ESPERA_PADRAO
+                    timeout=ESPERA_PADRAO,
+                    creationflags=FLAGS_SEM_JANELA,
                 )
                 if p.returncode != 0:
                     return False
@@ -279,7 +294,8 @@ class TmuxTerminais:
                 timeout=ESPERA_PADRAO,
                 text=True,
                 encoding="utf-8",
-                errors="replace"
+                errors="replace",
+                creationflags=FLAGS_SEM_JANELA,
             )
             if p.returncode == 0:
                 return [linha.strip() for linha in p.stdout.splitlines() if linha.strip()]
@@ -305,7 +321,7 @@ def obter_terminais(mapa=None):
     maestri_cli = resolver_binario_maestri()
     if shutil.which(maestri_cli) or Path(maestri_cli).exists():
         try:
-            p = subprocess.run([maestri_cli, "list"], capture_output=True, timeout=2)
+            p = subprocess.run([maestri_cli, "list"], capture_output=True, timeout=2, creationflags=FLAGS_SEM_JANELA)
             if p.returncode == 0:
                 return MaestriTerminais(mapa)
         except Exception:

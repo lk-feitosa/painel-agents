@@ -116,9 +116,10 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
     """Escaneia as portas TCP locais (3000..9999) e classifica entre Projeto/Maestri e Apps Externos."""
     agora = time.time()
     cache = ESTADO_GLOBAL["cache_portas"]
-    if agora - cache["lido_em"] < 15.0 and cache["lista"]:
+    if agora - cache["lido_em"] < 300.0 and cache["lista"]:
         return cache["lista"]
 
+    flags_oculto = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     portas_detectadas = {}
     # Sempre inclui o próprio Painel & Kanban na porta ativa
     portas_detectadas[porta_painel] = {
@@ -152,6 +153,7 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
                 text=True,
                 encoding="utf-8",
                 errors="ignore",
+                creationflags=flags_oculto,
             )
             if p.returncode == 0 and p.stdout.strip():
                 bruto = json.loads(p.stdout.strip())
@@ -174,6 +176,7 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
                         text=True,
                         encoding="utf-8",
                         errors="ignore",
+                        creationflags=flags_oculto,
                     )
                     if p2.returncode == 0 and p2.stdout.strip():
                         procs = json.loads(p2.stdout.strip())
