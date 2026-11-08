@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos gerados em tempo de execução pelo coletor
+publico/dados.json
+publico/dados.js
+estado.json
+quadro.json
+*.trava
+sonda.desligada
+
+# Ambientes virtuais
+.venv/
+env/
+venv/
+ENV/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
