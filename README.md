@@ -44,7 +44,7 @@ painel --porta 3334   # Escolhe uma porta HTTP diferente
 ### No Windows:
 1. Clone o repositório:
    ```cmd
-   git clone https://github.com/seu-usuario/painel-agents.git
+   git clone https://github.com/lk-feitosa/painel-agents.git
    cd painel-agents
    ```
 2. Execute o instalador:
@@ -55,7 +55,7 @@ painel --porta 3334   # Escolhe uma porta HTTP diferente
 ### No Fedora / Linux:
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seu-usuario/painel-agents.git
+   git clone https://github.com/lk-feitosa/painel-agents.git
    cd painel-agents
    ```
 2. Dê permissão e execute o instalador:
