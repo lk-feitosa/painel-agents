@@ -113,15 +113,25 @@
   .cabeca { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 16px 6px; }
   .cabeca .nota { color: var(--apagado); font-size: 11px; }
 
+  /* Botão de recolher/expandir seções */
+  .btn-recolher {
+    font: inherit; font-size: 11px; color: var(--apagado); background: var(--sup2);
+    border: 1px solid var(--fio); border-radius: 6px; padding: 2px 8px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; transition: color 140ms ease, border-color 140ms ease;
+  }
+  .btn-recolher:hover { color: var(--tinta); border-color: var(--fio-forte); }
+  .btn-recolher svg { width: 10px; height: 10px; transition: transform 200ms ease; }
+  .secao-recolhida .btn-recolher svg { transform: rotate(-90deg); }
+  .secao-recolhida .corpo-recolhivel { display: none !important; }
+
   /* ---------- quadro dos Agentes: linhas com frente e verso ----------
-     Mesmo modelo dos cards de cota: a frente mostra o mínimo (quem, estado, missão); o clique vira a
-     linha e o verso mostra o que a tela diz agora, contexto, PR e CI e previsão. A troca é um pop
-     curto da linha e os blocos de texto saltando (o que sai encolhe e some; o que entra vem de baixo). */
-  .cabecalho, .face { display: grid; align-items: center; column-gap: 10px; padding: 0 16px 0 10px; }
-  .cabecalho { grid-template-columns: 20px 190px 128px 1fr; padding-top: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--fio-forte); }
+     A linha agora traz Missão e Contexto/Previsão juntos na frente quando houver espaço.
+     O clique vira para o verso completo (PRs detalhados, agora/atividade, CI e histórico). */
+  .cabecalho, .face { display: grid; align-items: center; column-gap: 12px; padding: 0 16px 0 10px; }
+  .cabecalho { grid-template-columns: 20px 190px 110px 1fr 130px 140px; padding-top: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--fio-forte); }
   .cabecalho span { font-size: 11px; font-weight: 500; color: var(--apagado); white-space: nowrap; }
-  .face.frente { grid-template-columns: 20px 190px 128px 1fr; }
-  .face.verso { grid-template-columns: 20px 190px 128px 1fr; cursor: pointer; }
+  .face.frente { grid-template-columns: 20px 190px 110px 1fr 130px 140px; }
+  .face.verso { grid-template-columns: 20px 190px 110px 1fr; cursor: pointer; }
   /* O verso usa o mesmo molde da frente (alça, nome, estado), e os campos começam onde a missão
      começa. Entre eles, o mesmo espaço (column-gap), seja qual for a largura de cada um. */
   .campos { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 36px; row-gap: 6px; min-width: 0; }
@@ -129,7 +139,7 @@
   .campos .campo.ctx { width: 150px; }
   .campos .campo.pr-ci { max-width: 240px; }
   .campos .campo.agora-v { flex: 1 1 220px; min-width: 180px; }
-  .face { min-height: 46px; padding-top: 4px; padding-bottom: 4px; }
+  .face { min-height: 48px; padding-top: 5px; padding-bottom: 5px; }
   .linha-cena > .frente.solta, .linha-cena > .verso.solta { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   .linha-cena > .frente.oculta, .linha-cena > .verso.oculta { visibility: hidden; }
   .linha { border-bottom: 1px solid var(--fio); }
@@ -334,34 +344,72 @@
 </div>
 
 <main id="principal">
-  <section class="cartao" aria-label="Agentes">
-    <div class="cabecalho" aria-hidden="true"><span></span><span>Agente</span><span>Estado</span><span>Missão <small style="font-weight:400">· clique na linha para ver agora, contexto, PR e previsão</small></span></div>
-    <div id="linhas" role="list"></div>
-    <div class="pe-tabela">
-      <div class="semdono" id="semdono" hidden></div>
-      <span id="pe-prs"></span>
-      <button class="ordem-propria" id="ordem-propria" type="button" hidden title="Volta à ordem do mapa dos Agentes">Ordem personalizada · restaurar</button>
+  <section class="cartao" id="secao-agentes" aria-label="Agentes">
+    <div class="cabeca" style="padding-bottom: 2px;">
+      <h2>Terminais &amp; Agentes <span class="conta" id="agentes-conta">0</span></h2>
+      <button class="btn-recolher" type="button" data-alvo="secao-agentes" aria-label="Recolher ou expandir agentes">
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+        <span>Recolher</span>
+      </button>
+    </div>
+    <div class="corpo-recolhivel">
+      <div class="cabecalho" aria-hidden="true">
+        <span></span>
+        <span>Agente</span>
+        <span>Estado</span>
+        <span>Missão <small style="font-weight:400">· clique na linha para ver verso completo</small></span>
+        <span>Contexto</span>
+        <span>Previsão</span>
+      </div>
+      <div id="linhas" role="list"></div>
+      <div class="pe-tabela">
+        <div class="semdono" id="semdono" hidden></div>
+        <span id="pe-prs"></span>
+        <button class="ordem-propria" id="ordem-propria" type="button" hidden title="Volta à ordem do mapa dos Agentes">Ordem personalizada · restaurar</button>
+      </div>
     </div>
   </section>
 
   <section class="cartao" id="contas" aria-label="Cotas das contas">
-    <h2 class="so-leitor">Cotas das contas</h2>
-    <p class="aviso-contas" hidden></p>
-    <div class="contas-grade" id="contas-grade"></div>
+    <div class="cabeca" style="padding-bottom: 4px;">
+      <h2>Cotas por Conta (3D) <span class="conta" id="contas-conta">0</span></h2>
+      <button class="btn-recolher" type="button" data-alvo="contas" aria-label="Recolher ou expandir cotas">
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+        <span>Recolher</span>
+      </button>
+    </div>
+    <div class="corpo-recolhivel">
+      <p class="aviso-contas" hidden></p>
+      <div class="contas-grade" id="contas-grade"></div>
+    </div>
   </section>
 
   <section class="cartao" id="precisa" aria-label="Precisa de você">
-    <div class="cabeca"><h2>Precisa de você <span class="conta zero" id="precisa-conta">0</span></h2>
-      <span class="nota" id="precisa-nota"></span></div>
-    <div id="precisa-corpo"></div>
+    <div class="cabeca">
+      <h2>Precisa de você <span class="conta zero" id="precisa-conta">0</span></h2>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="nota" id="precisa-nota"></span>
+        <button class="btn-recolher" type="button" data-alvo="precisa" aria-label="Recolher ou expandir pendências">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          <span>Recolher</span>
+        </button>
+      </div>
+    </div>
+    <div class="corpo-recolhivel" id="precisa-corpo"></div>
   </section>
 
   <section class="cartao" id="ecossistema" aria-label="Skills e MCPs do Projeto">
     <div class="cabeca">
-      <h2>Skills &amp; MCPs do Projeto <span class="conta" id="eco-conta">0</span></h2>
-      <span class="nota" id="eco-nota"></span>
+      <h2>Ecossistema do Projeto (Portas, Skills &amp; Modelos) <span class="conta" id="eco-conta">0</span></h2>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="nota" id="eco-nota"></span>
+        <button class="btn-recolher" type="button" data-alvo="ecossistema" aria-label="Recolher ou expandir ecossistema">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          <span>Recolher</span>
+        </button>
+      </div>
     </div>
-    <div id="ecossistema-corpo"></div>
+    <div class="corpo-recolhivel" id="ecossistema-corpo"></div>
   </section>
 
   <p class="rodape" id="rodape" hidden></p>
@@ -754,7 +802,9 @@ function desenharTabela(agoraS) {
     else if (arrastando && !l.no.parentNode) corpo.appendChild(l.no);
     classe(l.no, "recua", v.estado !== "trabalhando");
     var quem = '<div class="cel-nome">' + htmlAlca(v.nome) + '<div class="quem">' + celAgente(v) + "</div></div>";
-    por(l.frente, lb(0, "") + lb(1, quem) + lb(2, celEstado(v)) + lb(3, celMissao(v)));
+    var ctxFrente = medidorDeContexto(v.contexto_pct, v.leitura === "ok" ? "Sem dado de contexto" : "Sem leitura");
+    var prevFrente = celPrevisao(v.missao);
+    por(l.frente, lb(0, "") + lb(1, quem) + lb(2, celEstado(v)) + lb(3, celMissao(v)) + lb(4, ctxFrente, "campo ctx") + lb(5, prevFrente, "campo"));
     por(l.verso, lb(0, "") + lb(1, quem) + lb(2, celEstado(v)) +
         '<div class="campos">' +
           lb(3, '<span class="rotulo-v">Contexto</span>' + medidorDeContexto(v.contexto_pct, v.leitura === "ok" ? "Sem dado: a ferramenta ainda não informou o contexto desta sessão" : "Sem leitura"), "campo ctx") +
@@ -768,6 +818,10 @@ function desenharTabela(agoraS) {
 function plural(n, um, varios) { return "<b>" + n + "</b> " + (n === 1 ? um : varios); }
 function desenharResumo() {
   var n = { trabalhando: 0, ocioso: 0, indeterminado: 0, sem_leitura: 0 };
+  dados.agentes.forEach(function (v) { if (n[v.estado] != null) n[v.estado]++; });
+  var elContaAg = el("agentes-conta");
+  if (elContaAg) { elContaAg.textContent = String(dados.agentes.length); elContaAg.classList.toggle("zero", !dados.agentes.length); }
+  var p = dados.quadro.pendencias.length;
   dados.agentes.forEach(function (v) { if (n[v.estado] != null) n[v.estado]++; });
   var p = dados.quadro.pendencias.length;
   var partes = [plural(n.trabalhando, "trabalhando", "trabalhando"), plural(n.ocioso, "ocioso", "ociosos")];
@@ -1158,6 +1212,28 @@ el("tema").addEventListener("click", function () {
   tema = TEMAS[(TEMAS.indexOf(tema) + 1) % TEMAS.length];
   aplicarTema(tema);
   try { localStorage.setItem("painel-tema", tema); } catch (e) { /* idem */ }
+});
+
+/* ---------- recolher / expandir seções ---------- */
+var secoesRecolhidas = {};
+try { secoesRecolhidas = JSON.parse(localStorage.getItem("painel-recolhidas") || "{}") || {}; } catch (e) { secoesRecolhidas = {}; }
+function aplicarRecolhimento(id) {
+  var sec = el(id);
+  if (!sec) return;
+  var recolhida = !!secoesRecolhidas[id];
+  sec.classList.toggle("secao-recolhida", recolhida);
+  var btn = sec.querySelector(".btn-recolher span");
+  if (btn) btn.textContent = recolhida ? "Expandir" : "Recolher";
+}
+Object.keys(secoesRecolhidas).forEach(aplicarRecolhimento);
+document.addEventListener("click", function (ev) {
+  var btn = ev.target.closest && ev.target.closest(".btn-recolher");
+  if (!btn) return;
+  var id = btn.getAttribute("data-alvo");
+  if (!id) return;
+  secoesRecolhidas[id] = !secoesRecolhidas[id];
+  try { localStorage.setItem("painel-recolhidas", JSON.stringify(secoesRecolhidas)); } catch (e) {}
+  aplicarRecolhimento(id);
 });
 
 carregar();
