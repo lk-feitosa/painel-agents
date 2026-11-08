@@ -37,12 +37,32 @@
       "descricao": "Configuração inicial de .gitignore, governança .agents/, documentação docs/ e inicialização de memória e kanban.",
       "prioridade": "alta",
       "agente": "Minerva",
-      "etiquetas": ["infra", "governanca", "setup"],
+      "etiquetas": [
+        "infra",
+        "governanca",
+        "setup"
+      ],
       "checklist": [
-        { "id": "chk-1", "texto": "Blindagem do .gitignore", "concluido": true },
-        { "id": "chk-2", "texto": "Diretrizes .agents/ e papéis Team CODES", "concluido": true },
-        { "id": "chk-3", "texto": "Estrutura docs/ e ADR-0001", "concluido": true },
-        { "id": "chk-4", "texto": "Inicialização de ai-memory e Kanban", "concluido": true }
+        {
+          "id": "chk-1",
+          "texto": "Blindagem do .gitignore",
+          "concluido": true
+        },
+        {
+          "id": "chk-2",
+          "texto": "Diretrizes .agents/ e papéis Team CODES",
+          "concluido": true
+        },
+        {
+          "id": "chk-3",
+          "texto": "Estrutura docs/ e ADR-0001",
+          "concluido": true
+        },
+        {
+          "id": "chk-4",
+          "texto": "Inicialização de ai-memory e Kanban",
+          "concluido": true
+        }
       ],
       "criadoEm": "2026-11-08T07:00:00.000Z"
     },
@@ -53,12 +73,32 @@
       "descricao": "Apresentação e aprovação de docs/spec.md, docs/architecture.md e ADR-0002 para iniciar o desenvolvimento.",
       "prioridade": "alta",
       "agente": "Minerva",
-      "etiquetas": ["planejamento", "spec", "alinhamento"],
+      "etiquetas": [
+        "planejamento",
+        "spec",
+        "alinhamento"
+      ],
       "checklist": [
-        { "id": "chk-a1", "texto": "Elaboração de docs/spec.md", "concluido": true },
-        { "id": "chk-a2", "texto": "Elaboração de docs/architecture.md", "concluido": true },
-        { "id": "chk-a3", "texto": "Elaboração de ADR-0002 (Stack Android)", "concluido": true },
-        { "id": "chk-a4", "texto": "Aprovação formal do usuário", "concluido": false }
+        {
+          "id": "chk-a1",
+          "texto": "Elaboração de docs/spec.md",
+          "concluido": true
+        },
+        {
+          "id": "chk-a2",
+          "texto": "Elaboração de docs/architecture.md",
+          "concluido": true
+        },
+        {
+          "id": "chk-a3",
+          "texto": "Elaboração de ADR-0002 (Stack Android)",
+          "concluido": true
+        },
+        {
+          "id": "chk-a4",
+          "texto": "Aprovação formal do usuário",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:30:00.000Z"
     },
@@ -69,11 +109,27 @@
       "descricao": "Camada de domínio e dados: ContactsRepository, AppsRepository, PreferencesRepository (PIN e Whitelist).",
       "prioridade": "alta",
       "agente": "Back-End Specialist",
-      "etiquetas": ["android", "backend", "repositorios"],
+      "etiquetas": [
+        "android",
+        "backend",
+        "repositorios"
+      ],
       "checklist": [
-        { "id": "chk-b1", "texto": "Estrutura de módulos e permissões", "concluido": false },
-        { "id": "chk-b2", "texto": "Repositório de contatos e telefonia", "concluido": false },
-        { "id": "chk-b3", "texto": "Whitelist de apps e storage seguro", "concluido": false }
+        {
+          "id": "chk-b1",
+          "texto": "Estrutura de módulos e permissões",
+          "concluido": false
+        },
+        {
+          "id": "chk-b2",
+          "texto": "Repositório de contatos e telefonia",
+          "concluido": false
+        },
+        {
+          "id": "chk-b3",
+          "texto": "Whitelist de apps e storage seguro",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:31:00.000Z"
     },
@@ -84,11 +140,28 @@
       "descricao": "UI com 5 fixos no topo (190, 192, Mãe, Pai, Outro) + scroll vertical de contatos em cartões grandes.",
       "prioridade": "alta",
       "agente": "Front-End Specialist",
-      "etiquetas": ["ui", "compose", "contatos", "acessibilidade"],
+      "etiquetas": [
+        "ui",
+        "compose",
+        "contatos",
+        "acessibilidade"
+      ],
       "checklist": [
-        { "id": "chk-u1", "texto": "Topo fixo de 5 contatos com destaque", "concluido": false },
-        { "id": "chk-u2", "texto": "Cards grandes de contatos com discagem", "concluido": false },
-        { "id": "chk-u3", "texto": "Feedback tátil e acessibilidade", "concluido": false }
+        {
+          "id": "chk-u1",
+          "texto": "Topo fixo de 5 contatos com destaque",
+          "concluido": false
+        },
+        {
+          "id": "chk-u2",
+          "texto": "Cards grandes de contatos com discagem",
+          "concluido": false
+        },
+        {
+          "id": "chk-u3",
+          "texto": "Feedback tátil e acessibilidade",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:32:00.000Z"
     },
@@ -99,11 +172,28 @@
       "descricao": "Grade de ícones médios/grandes filtrados e modal de configuração protegido por PIN.",
       "prioridade": "alta",
       "agente": "Front-End Specialist",
-      "etiquetas": ["ui", "compose", "apps", "pin"],
+      "etiquetas": [
+        "ui",
+        "compose",
+        "apps",
+        "pin"
+      ],
       "checklist": [
-        { "id": "chk-a1", "texto": "Grade de apps com ícones grandes", "concluido": false },
-        { "id": "chk-a2", "texto": "Fluxo de autenticação com PIN", "concluido": false },
-        { "id": "chk-a3", "texto": "Seleção de apps e contatos familiares", "concluido": false }
+        {
+          "id": "chk-a1",
+          "texto": "Grade de apps com ícones grandes",
+          "concluido": false
+        },
+        {
+          "id": "chk-a2",
+          "texto": "Fluxo de autenticação com PIN",
+          "concluido": false
+        },
+        {
+          "id": "chk-a3",
+          "texto": "Seleção de apps e contatos familiares",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:33:00.000Z"
     },
@@ -114,10 +204,22 @@
       "descricao": "Testes unitários e de UI para garantir tamanho de alvos de toque, contraste e segurança do PIN.",
       "prioridade": "media",
       "agente": "Test & QA Specialist",
-      "etiquetas": ["qa", "testes", "acessibilidade"],
+      "etiquetas": [
+        "qa",
+        "testes",
+        "acessibilidade"
+      ],
       "checklist": [
-        { "id": "chk-q1", "texto": "Testes de regras de whitelist e PIN", "concluido": false },
-        { "id": "chk-q2", "texto": "Testes de touch targets e acessibilidade", "concluido": false }
+        {
+          "id": "chk-q1",
+          "texto": "Testes de regras de whitelist e PIN",
+          "concluido": false
+        },
+        {
+          "id": "chk-q2",
+          "texto": "Testes de touch targets e acessibilidade",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:34:00.000Z"
     },
@@ -128,10 +230,22 @@
       "descricao": "Auditoria de permissões do Android, blindagem de chamadas acidentais e aprovação de merges.",
       "prioridade": "alta",
       "agente": "Reviewer & Auditor",
-      "etiquetas": ["review", "seguranca", "audit"],
+      "etiquetas": [
+        "review",
+        "seguranca",
+        "audit"
+      ],
       "checklist": [
-        { "id": "chk-r1", "texto": "Auditoria de CALL_PHONE e READ_CONTACTS", "concluido": false },
-        { "id": "chk-r2", "texto": "Revisão e homologação de PRs", "concluido": false }
+        {
+          "id": "chk-r1",
+          "texto": "Auditoria de CALL_PHONE e READ_CONTACTS",
+          "concluido": false
+        },
+        {
+          "id": "chk-r2",
+          "texto": "Revisão e homologação de PRs",
+          "concluido": false
+        }
       ],
       "criadoEm": "2026-11-08T07:35:00.000Z"
     }

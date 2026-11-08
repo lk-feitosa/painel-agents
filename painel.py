@@ -432,8 +432,8 @@ def descobrir_contas_local(leituras, agora_epoch):
                     "lido_em_epoch": agora_epoch,
                     "como_soube": "status line",
                     "membros": [
-                        {"id": "gemini-3-8-flash", "rotulo": "Gemini 3.8 Flash", "usado_pct": usado_5h_agy, "renova_epoch": renova_5h},
-                        {"id": "gemini-3-1-pro", "rotulo": "Gemini 3.1 Pro", "usado_pct": max(5, usado_5h_agy - 5), "renova_epoch": renova_5h},
+                        "Gemini 3.8 Flash",
+                        "Gemini 3.1 Pro",
                     ],
                 },
                 {

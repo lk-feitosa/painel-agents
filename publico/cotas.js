@@ -35,6 +35,13 @@ html[data-tema="escuro"] #contas { --c-alerta: #c98a52; }
 #contas .aviso-contas { padding: 0 16px 12px; color: var(--apagado); font-size: 11px; }
 #contas .aviso-contas[hidden] { display: none; }
 #contas .aviso-contas .erro { color: var(--critico-tinta); }
+.legenda-faixas { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 11px; color: var(--apagado);
+  margin: 0 4px 14px; padding: 7px 12px; background: color-mix(in srgb, var(--c-sup) 80%, transparent);
+  border: 1px solid var(--c-fio); border-radius: 8px; line-height: 1.4; }
+.legenda-item { display: inline-flex; align-items: center; gap: 6px; }
+.legenda-cor { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+.legenda-cor.faixa-tempo { background: var(--c-decorrido); border: 1px solid var(--c-borda); }
+.legenda-cor.faixa-consumo { background: var(--c-cheio); }
 .contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; margin: 0; padding: 0 2px; }
 #contas.cartao { background: none; border-radius: 0; }
 #contas .aviso-contas { padding-left: 4px; padding-right: 4px; }
@@ -60,12 +67,12 @@ html[data-layout="minimo"] #contas { display: none; }
   85% { transform: rotate(calc(var(--giro, 0deg) * 0.02)) scale(1); }
   100% { transform: rotate(0deg) scale(1); }
 }
-.card { --radius: 20px; --padding: 18px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: var(--padding); min-width: 0; color: var(--c-tinta);
+.card { --radius: 16px; --padding: 16px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
+  padding: var(--padding); min-width: 0; min-height: 250px; color: var(--c-tinta);
   box-shadow: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 20px; --padding: 18px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; padding: var(--padding); min-width: 0;
+.card-verso { --radius: 16px; --padding: 16px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; padding: var(--padding); min-width: 0;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
-.verso-corpo { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; display: flex; flex-direction: column; margin: 0 calc(-1 * var(--padding)); padding: 0 var(--padding); }
+.verso-corpo { flex: 1; min-height: 0; overflow-y: hidden; display: flex; flex-direction: column; margin: 0 calc(-1 * var(--padding)); padding: 0 var(--padding); }
 .card-cena.virado .card { pointer-events: none; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
@@ -130,7 +137,7 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 3px 9px; font-size: 10px; line-height: 1.35;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; max-width: 50%; }
 .quota { position: relative; }
-.quota + .quota { margin-top: 11px; }
+.quota + .quota { margin-top: 18px; }
 .quota.weekly + .quota.primary { margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--c-fio); }
 .quota-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; font-variant-numeric: tabular-nums; }
 .quota-label { margin-right: auto; font-size: 12.5px; font-weight: 590; }
@@ -243,18 +250,21 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
   from { left: clamp(calc(48px + var(--meia-pilula) + var(--folga-pilula)), var(--x), calc(100% - var(--meia-pilula) - var(--folga-pilula))); }
   to { left: clamp(calc(48px + var(--meia-compacta) + var(--folga-pilula)), var(--x), calc(100% - var(--meia-compacta) - var(--folga-pilula))); }
 }
-/* Realce */
-.realce .visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 3px + var(--pilula)); }
-.realce .cap { --slot-gap: 0px; background: color-mix(in srgb, var(--c-sup) 72%, transparent);
-  -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); border-color: var(--c-tinta); box-shadow: var(--sombra-md); }
+/* Realce permanente por padrão: o usuário vê a régua de horas e o decorrido sempre abertos */
+.visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 3px + var(--pilula)); }
+.cap { --slot-gap: 0px; background: color-mix(in srgb, var(--c-sup) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); border-color: var(--c-borda); box-shadow: var(--sombra-sm); }
+.marcas { opacity: 0.85; }
+.agulha { top: 0; height: 100%; width: 2px; margin-left: -1px; background: var(--c-tinta); }
+.agulha::after { animation: none; }
+.conector { opacity: 1; visibility: visible; }
+.relogio { opacity: 1; visibility: visible; transform: translateX(-50%); pointer-events: none; }
+.corte-rotulo { opacity: 0.9; }
+
+/* Realce no hover: ganha borda de tinta cheia e sombra destacada */
+.realce .cap { border-color: var(--c-tinta); box-shadow: var(--sombra-md); }
 .realce .marcas { opacity: 1; }
-.realce .agulha { top: 0; height: 100%; width: 2px; margin-left: -1px; background: var(--c-tinta); }
-.realce .agulha::after { animation: none; }
-.realce .conector { opacity: 1; visibility: visible; transition-delay: 0s; }
-.realce .relogio { opacity: 1; visibility: visible; transform: translateX(-50%); transition-delay: 0s;
-  animation: seguir-agulha 520ms cubic-bezier(.25, .1, .25, 1) 1300ms forwards; }
-.realce .r-rotulo { animation: recolher-rotulo 520ms cubic-bezier(.25, .1, .25, 1) 1300ms forwards; }
-.realce .r-rotulo > span { animation: desaparecer-rotulo 520ms linear 1300ms forwards; }
+.realce .corte-rotulo { opacity: 1; }
 /* O pontilhado em sete dias da barra do verso (a do card agora é a cápsula, com os cortes na faixa de tempo). */
 .tip-meter.is-weekly::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 7 - 1.5px), var(--c-sup, var(--sup)) calc(100% / 7 - 1.5px), var(--c-sup, var(--sup)) calc(100% / 7)); }
@@ -312,12 +322,12 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-reset { font-size: 11px; color: var(--apagado); font-variant-numeric: tabular-nums; }
 .tip-time { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--apagado); }
 .tip-time strong { font-variant-numeric: tabular-nums; font-weight: 590; color: var(--tinta); }
-.tip-main .tip-time { display: grid; grid-template-columns: 1fr auto; margin-top: 12px; }
+.card-verso .tip-main .tip-time { display: grid; grid-template-columns: 1fr auto; margin-top: 6px; }
 .tip-main .tip-time > span:first-child { grid-column: 1 / -1; }
-.tip-main .tip-time strong { font-size: 26px; line-height: 1.2; font-weight: 680; letter-spacing: -.8px; }
+.tip-main .tip-time strong { font-size: 20px; line-height: 1.15; font-weight: 680; letter-spacing: -.6px; }
 .tip-main .tip-window-heading .tip-reset { display: none; }
-.tip-main .tip-time .tip-reset { display: block; align-self: end; padding-bottom: 5px; letter-spacing: 0; }
-.tip-meter { position: relative; height: 5px; background: var(--sup2); border-radius: 999px; margin: 10px 0; overflow: hidden; }
+.tip-main .tip-time .tip-reset { display: block; align-self: end; padding-bottom: 2px; letter-spacing: 0; }
+.tip-meter { position: relative; height: 5px; background: var(--sup2); border-radius: 999px; margin: 6px 0; overflow: hidden; }
 .tip-meter.is-weekly { overflow: visible; }
 .tip-fill { display: block; height: 100%; background: var(--accent, var(--barra)); border-radius: inherit; }
 .tip-cursor { position: absolute; top: -3px; height: 11px; width: 1px; background: var(--tinta); transform: translateX(-50%); }
@@ -327,7 +337,7 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .card-verso dt { color: var(--apagado); }
 .card-verso dd { margin: 0; text-align: right; }
 .card-verso dl[hidden] { display: none; }
-.tip-main .tip-quota { margin-top: 12px; }
+.tip-main .tip-quota { margin-top: 6px; }
 .tip-main dd { font-weight: 650; }
 .tip-window { font-size: 11px; line-height: 14px; }
 .tip-window[hidden] { display: none; }
@@ -335,11 +345,11 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-reset-row { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tip-duration { font-weight: 590; }
 .tip-duration::after { content: " ·"; font-weight: 400; color: var(--apagado); }
-.tip-compact-usage { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.tip-compact-usage { display: flex; align-items: center; gap: 12px; margin-top: 3px; }
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
 .tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); }
-.tip-pace { font-size: 11px; padding-top: 6px; }
-.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 8px; padding-top: 8px; }
+.tip-pace { font-size: 11px; padding-top: 4px; }
+.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 6px; padding-top: 6px; }
 .card-verso footer { color: var(--apagado); font-size: 11px; }
 .card-verso footer p { margin: 0 0 6px; }
 .card-verso footer p[hidden] { display: none; }
@@ -728,7 +738,8 @@ function encherVerso(card, agoraS) {
   var barra = card.barraVirada, v = card.verso;
   if (!barra) return;
   var b = barra.dados || {}, conta = card.conta;
-  texto(v.eyebrow, mascarar((conta.titulo || "") + (b.membros && b.membros.length ? " · " + b.membros.join(", ") : "")));
+  var nomesMembros = (b.membros || []).map(function(m) { return typeof m === "object" && m !== null ? (m.rotulo || m.id || "") : String(m); }).filter(Boolean);
+  texto(v.eyebrow, mascarar((conta.titulo || "") + (nomesMembros.length ? " · " + nomesMembros.join(", ") : "")));
   texto(v.titulo, b.rotulo || "");
   encherJanela(v.principal, b, agoraS, true);
   var outra = null;
@@ -808,7 +819,7 @@ function realcar(barra) {
 }
 function escreverRelogio(barra, agoraS) {
   var b = barra.dados;
-  texto(barra.timer, b ? Apoio.timerDaPilula(barra.ativa, !barra.regua.hidden, agoraS, b.renova_epoch, b.janela_min) : "");
+  texto(barra.timer, b ? Apoio.timerDaPilula(true, !barra.regua.hidden, agoraS, b.renova_epoch, b.janela_min) : "");
 }
 function encerrarRealces() {
   Object.keys(cards).forEach(function (id) { cards[id].barras.forEach(function (b) {
