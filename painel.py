@@ -8,7 +8,7 @@ Inclui:
   - Descoberta multiplataforma de contas e cotas 3D (Antigravity, Codex, Claude Code);
   - Sincronização automática do Kanban (.kanban/board.json -> publico/kanban.json);
   - Descoberta de Skills & MCPs ativos no projeto ("Ecossistema do Projeto");
-  - Endpoint POST /refresh e flag --ensure para auto-recuperação silenciosa.
+  - Gerenciador Inteligente de Portas (IPv4 + IPv6 exclusivo, /health, anti-colisão e mapa de portas em docs/ports.md).
 """
 import argparse
 import base64
@@ -23,6 +23,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -47,26 +48,268 @@ ESTADO_GLOBAL = {
     "terminais": None,
     "pasta_saida": RAIZ / "publico",
     "workspace_projeto": None,
+    "porta_ativa": 3333,
+    "cache_portas": {"lido_em": 0.0, "lista": []},
 }
 
 
-def porta_em_uso(porta, host="127.0.0.1"):
-    """Retorna True se já houver um serviço escutando na porta informada."""
+def porta_em_uso_qualquer_pilha(porta):
+    """Retorna True se houver qualquer processo escutando na porta em IPv4 (127.0.0.1) OU IPv6 (::1)."""
+    # 1. Testa conexão ativa em IPv4
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s4:
+        s4.settimeout(0.35)
+        if s4.connect_ex(("127.0.0.1", porta)) == 0:
+            return True
+    # 2. Testa conexão ativa em IPv6 (no Windows, localhost resolve primeiro para ::1)
+    if socket.has_ipv6:
+        try:
+            with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s6:
+                s6.settimeout(0.35)
+                if s6.connect_ex(("::1", porta)) == 0:
+                    return True
+        except OSError:
+            pass
+    return False
+
+
+def porta_realmente_livre(porta):
+    """Garante que a porta não está ocupada nem em IPv4 nem em IPv6 e aceita bind exclusivo."""
+    if porta_em_uso_qualquer_pilha(porta):
+        return False
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.6)
-        return s.connect_ex((host, porta)) == 0
-
-
-def achar_porta_livre(porta_inicial=3333, max_tentativas=20):
-    """Encontra uma porta TCP livre a partir de porta_inicial."""
-    for porta in range(porta_inicial, porta_inicial + max_tentativas):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
             try:
-                s.bind(("127.0.0.1", porta))
-                return porta
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             except OSError:
-                continue
-    return porta_inicial
+                pass
+        try:
+            s.bind(("127.0.0.1", porta))
+            return True
+        except OSError:
+            return False
+
+
+def consultar_health_painel(porta):
+    """Verifica se a porta já está rodando uma instância legítima do nosso painel-agents."""
+    for host in ("127.0.0.1", "[::1]"):
+        try:
+            req = urllib.request.Request(f"http://{host}:{porta}/health", method="GET")
+            with urllib.request.urlopen(req, timeout=0.6) as resp:
+                if resp.status == 200:
+                    dados = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                    if isinstance(dados, dict) and dados.get("servico") == "painel-agents":
+                        return dados
+        except Exception:
+            continue
+    return None
+
+
+def achar_porta_inteligente(porta_preferida=3333, max_tentativas=30):
+    """Encontra a porta preferida se estiver 100% livre (IPv4 e IPv6) ou salta para a próxima livre."""
+    for candidata in range(porta_preferida, porta_preferida + max_tentativas):
+        if porta_realmente_livre(candidata):
+            return candidata
+    return porta_preferida
+
+
+def escanear_portas_ativas(porta_painel, projeto_dir):
+    """Escaneia as portas TCP locais (3000..9999) e classifica entre Projeto/Maestri e Apps Externos."""
+    agora = time.time()
+    cache = ESTADO_GLOBAL["cache_portas"]
+    if agora - cache["lido_em"] < 15.0 and cache["lista"]:
+        return cache["lista"]
+
+    portas_detectadas = {}
+    # Sempre inclui o próprio Painel & Kanban na porta ativa
+    portas_detectadas[porta_painel] = {
+        "porta": porta_painel,
+        "endereco": "127.0.0.1",
+        "pid": os.getpid(),
+        "processo": "python (painel-agents)",
+        "servico": "Painel de Agentes & Quadro Kanban",
+        "escopo": "projeto",
+        "url": f"http://localhost:{porta_painel}",
+        "urls_extras": [
+            {"rotulo": "Painel", "url": f"http://localhost:{porta_painel}/"},
+            {"rotulo": "Kanban", "url": f"http://localhost:{porta_painel}/kanban.html"},
+        ],
+        "status": "Ativo · Exclusivo",
+    }
+
+    if sys.platform == "win32":
+        ps_cmd = (
+            "Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | "
+            "Where-Object { $_.LocalPort -ge 3000 -and $_.LocalPort -le 9999 } | "
+            "Select-Object LocalAddress, LocalPort, OwningProcess | ConvertTo-Json -Compress"
+        )
+        try:
+            p = subprocess.run(
+                ["powershell", "-NoProfile", "-Command", ps_cmd],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                timeout=4,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+            )
+            if p.returncode == 0 and p.stdout.strip():
+                bruto = json.loads(p.stdout.strip())
+                if isinstance(bruto, dict):
+                    bruto = [bruto]
+                pids = sorted({int(x["OwningProcess"]) for x in bruto if x.get("OwningProcess")})
+                mapa_proc = {}
+                if pids:
+                    filtro = " OR ".join(f"ProcessId={pid}" for pid in pids[:25])
+                    ps_proc = (
+                        f"Get-CimInstance Win32_Process -Filter '{filtro}' -ErrorAction SilentlyContinue | "
+                        "Select-Object ProcessId, Name, CommandLine | ConvertTo-Json -Compress"
+                    )
+                    p2 = subprocess.run(
+                        ["powershell", "-NoProfile", "-Command", ps_proc],
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        timeout=4,
+                        text=True,
+                        encoding="utf-8",
+                        errors="ignore",
+                    )
+                    if p2.returncode == 0 and p2.stdout.strip():
+                        procs = json.loads(p2.stdout.strip())
+                        if isinstance(procs, dict):
+                            procs = [procs]
+                        for pr in procs:
+                            mapa_proc[int(pr["ProcessId"])] = {
+                                "nome": pr.get("Name") or "processo",
+                                "cmd": pr.get("CommandLine") or "",
+                            }
+
+                for item in bruto:
+                    porta = int(item.get("LocalPort", 0))
+                    pid = int(item.get("OwningProcess", 0))
+                    end = item.get("LocalAddress") or "127.0.0.1"
+                    if not porta or (porta == porta_painel and pid == os.getpid()):
+                        continue
+                    info_pr = mapa_proc.get(pid, {"nome": f"PID {pid}", "cmd": ""})
+                    nome_pr = info_pr["nome"]
+                    cmd_pr = info_pr["cmd"]
+                    eh_proj = (
+                        "painel-agents" in cmd_pr.lower()
+                        or str(projeto_dir).lower() in cmd_pr.lower()
+                        or projeto_dir.name.lower() in cmd_pr.lower()
+                    )
+                    # Nome amigável do serviço
+                    if "painel.py" in cmd_pr.lower():
+                        servico = "Painel de Agentes & Kanban"
+                        eh_proj = True
+                    elif "http.server" in cmd_pr.lower():
+                        servico = f"Servidor HTTP Python ({nome_pr})"
+                    elif "anydesk" in nome_pr.lower():
+                        servico = "AnyDesk (Serviço Local)"
+                    elif "googledrive" in nome_pr.lower():
+                        servico = "Google Drive FS"
+                    elif "galaxy" in nome_pr.lower():
+                        servico = "GOG Galaxy Communication"
+                    elif "node" in nome_pr.lower() or "bun" in nome_pr.lower():
+                        servico = f"Servidor Node/Bun ({nome_pr})"
+                    else:
+                        servico = nome_pr
+
+                    chave = porta
+                    if chave not in portas_detectadas:
+                        portas_detectadas[chave] = {
+                            "porta": porta,
+                            "endereco": end,
+                            "pid": pid,
+                            "processo": nome_pr,
+                            "servico": servico,
+                            "escopo": "projeto" if eh_proj else "externo",
+                            "url": f"http://localhost:{porta}" if ("http" in servico.lower() or eh_proj) else None,
+                            "status": "Ativo no Projeto" if eh_proj else "Porta Externa Ocupada",
+                        }
+        except Exception:
+            pass
+
+    lista_ordenada = sorted(
+        portas_detectadas.values(),
+        key=lambda x: (0 if x["escopo"] == "projeto" else 1, x["porta"]),
+    )
+    cache["lido_em"] = agora
+    cache["lista"] = lista_ordenada
+
+    # Persiste o mapa de portas no projeto (.maestri/ports.json e docs/ports.md)
+    salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_ordenada)
+    return lista_ordenada
+
+
+def salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_portas):
+    """Salva o registro de portas em .maestri/ports.json e docs/ports.md para você e a Minerva consultarem."""
+    if not projeto_dir or not projeto_dir.exists():
+        return
+
+    agora_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    payload_ports = {
+        "projeto": projeto_dir.name,
+        "atualizado_em": agora_str,
+        "painel_porta": porta_painel,
+        "painel_url": f"http://localhost:{porta_painel}/",
+        "kanban_url": f"http://localhost:{porta_painel}/kanban.html",
+        "portas_ativas": lista_portas,
+    }
+
+    try:
+        pasta_maestri = projeto_dir / ".maestri"
+        pasta_maestri.mkdir(parents=True, exist_ok=True)
+        comum.gravar_atomico(
+            pasta_maestri / "ports.json",
+            json.dumps(payload_ports, ensure_ascii=False, indent=2),
+        )
+    except Exception:
+        pass
+
+    pasta_docs = projeto_dir / "docs"
+    if pasta_docs.exists():
+        linhas_md = [
+            f"# 🔌 Mapa de Portas Ativas — `{projeto_dir.name}`",
+            "",
+            f"> **Atualizado automaticamente pelo Painel de Agentes em:** `{agora_str}`  ",
+            "> **Regra Anti-Colisão:** Antes de subir qualquer servidor local (API, Front-end, Testes), verifique esta tabela ou `.maestri/ports.json`. Se uma porta estiver ocupada por aplicação externa, o sistema salta automaticamente para a próxima porta livre.",
+            "",
+            "## 1. Serviços do Projeto & Maestri",
+            "",
+            "| Porta | Serviço | URL Local | PID | Endereço | Status |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        ]
+        for p in lista_portas:
+            if p["escopo"] == "projeto":
+                url_md = f"[`http://localhost:{p['porta']}`](http://localhost:{p['porta']})"
+                if p["porta"] == porta_painel:
+                    url_md += f" · [Kanban](http://localhost:{p['porta']}/kanban.html)"
+                linhas_md.append(
+                    f"| **`{p['porta']}`** | {p['servico']} | {url_md} | `{p['pid']}` | `{p['endereco']}` | ✅ {p['status']} |"
+                )
+
+        externas = [p for p in lista_portas if p["escopo"] != "projeto"]
+        linhas_md.extend([
+            "",
+            "## 2. Portas Ocupadas por Aplicações Externas na Máquina (Bloqueadas p/ Evitar Colisão)",
+            "",
+            "| Porta | Processo / Aplicação | PID | Endereço | Ação do Anti-Colisão |",
+            "| :--- | :--- | :--- | :--- | :--- |",
+        ])
+        if externas:
+            for p in externas:
+                linhas_md.append(
+                    f"| **`{p['porta']}`** | `{p['servico']}` (`{p['processo']}`) | `{p['pid']}` | `{p['endereco']}` | 🛡️ Ignorada automaticamente pelo projeto |"
+                )
+        else:
+            linhas_md.append("| — | Nenhuma porta externa concorrente na faixa 3000–9999 | — | — | — |")
+
+        try:
+            comum.gravar_atomico(pasta_docs / "ports.md", "\n".join(linhas_md) + "\n")
+        except Exception:
+            pass
 
 
 def _decodificar_email_jwt(token):
@@ -91,7 +334,6 @@ def _proximo_reset_5h(agora_epoch, restante_segundos=None):
     if restante_segundos:
         return int(agora_epoch + restante_segundos)
     janela = 5 * 3600
-    # Alinha em blocos de 5h com deslocamento natural para mostrar o cursor de tempo ativo
     decorrido = int(agora_epoch) % janela
     if decorrido < 900:
         decorrido = 5400
@@ -389,7 +631,6 @@ def localizar_projeto_ativo():
         if p.exists():
             return p
 
-    # Verifica o kanban.json sincronizado ou o test-maestri
     candidatos = [
         Path("S:/DEV/test-maestri"),
         Path.cwd(),
@@ -421,7 +662,6 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
     except Exception:
         return
 
-    # 1. Mantém publico/kanban.json sempre sincronizado com o board do projeto
     try:
         comum.gravar_atomico(
             RAIZ / "publico" / "kanban.json",
@@ -443,7 +683,6 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
         checklist = c.get("checklist") or []
         pendentes_chk = [item.get("texto", "") for item in checklist if not item.get("concluido")]
 
-        # Detecta se o cartão aguarda aprovação formal do usuário
         aguarda_usuario = any(
             termo in (titulo + " " + " ".join(pendentes_chk)).lower()
             for termo in ("aprovação", "aprovacao", "usuário", "usuario", "alinhamento")
@@ -463,10 +702,9 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
                     "No terminal da `Minerva`, aprove o plano e peça a sugestão de modelos por terminal (`Codex`, `Claude`, `Gemini`)",
                     "Escolha a opção `1 (Automático pela Minerva)` ou `2 (Escolher manualmente cada modelo)` para iniciar a execução",
                 ],
-                "fontes": ["docs/spec.md", "docs/architecture.md", ".kanban/board.json"],
+                "fontes": ["docs/spec.md", "docs/architecture.md", "docs/ports.md", ".kanban/board.json"],
             })
 
-        # Associa missão ao agente correspondente
         if agente_card:
             chave = agente_card.lower()
             prioridade_col = {"col-progresso": 3, "col-revisao": 2, "col-todo": 1}.get(col, 0)
@@ -483,7 +721,6 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
                     },
                 }
 
-    # Injeta a missão em cada agente lido se ainda não tiver missão manual no quadro.json
     for reg in leituras:
         nome_l = reg["nome"].lower()
         if not reg.get("missao"):
@@ -497,7 +734,6 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
                         reg["missao"] = v["missao"]
                         break
 
-    # Mescla pendências automáticas do Kanban com as do quadro.json sem duplicar
     ids_existentes = {p.get("id") for p in quadro.get("pendencias", []) if p.get("id")}
     for pa in pendencias_auto:
         if pa["id"] not in ids_existentes:
@@ -505,10 +741,13 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
 
 
 def descobrir_ecossistema_projeto(projeto_dir, contas_info):
-    """Mapeia Skills, MCPs e Sugestão Dinâmica de Modelos ativos no projeto/workspace."""
+    """Mapeia Portas Ativas, Skills, MCPs e Sugestão Dinâmica de Modelos ativos no projeto/workspace."""
     tem_ai_memory = (projeto_dir / ".ai-memory").exists() or (projeto_dir / ".ai-memory.toml").exists()
     tem_kanban = (projeto_dir / ".kanban" / "board.json").exists()
     tem_agents_gov = (projeto_dir / ".agents").exists()
+
+    porta_atual = ESTADO_GLOBAL.get("porta_ativa") or 3333
+    portas_ativas = escanear_portas_ativas(porta_atual, projeto_dir)
 
     skills = [
         {
@@ -527,10 +766,10 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
         },
         {
             "nome": "painel-agents",
-            "categoria": "Telemetria & Auto-Heal",
+            "categoria": "Telemetria & Anti-Colisão",
             "papel": "Workspace",
             "estado": "ativa",
-            "descricao": "Monitora agentes, cápsulas de cota 3D, Kanban e reativa a porta 3333 automaticamente ao interagir com a Minerva.",
+            "descricao": "Monitora agentes, cápsulas de cota 3D, Kanban e aloca portas livres sem conflito IPv4/IPv6 (`docs/ports.md`).",
         },
         {
             "nome": "api-and-interface-design & domain-modeling",
@@ -562,7 +801,6 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
         },
     ]
 
-    # Adiciona eventuais skills locais específicas do projeto em .agents/skills/
     pasta_skills_proj = projeto_dir / ".agents" / "skills"
     if pasta_skills_proj.exists():
         for sk in sorted(pasta_skills_proj.iterdir()):
@@ -586,7 +824,7 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
             "nome": "kan / Kanban Local",
             "tipo": "MCP Gestão Ágil",
             "estado": "ativo" if tem_kanban else "disponível",
-            "detalhe": "Quadro `.kanban/board.json` sincronizado em tempo real com `:3333/kanban.html`",
+            "detalhe": f"Quadro `.kanban/board.json` sincronizado em `localhost:{porta_atual}/kanban.html`",
         },
         {
             "nome": "maestri-ipc",
@@ -651,6 +889,9 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
         "projeto": projeto_dir.name,
         "caminho": str(projeto_dir),
         "governanca_ativa": tem_agents_gov,
+        "porta_painel": porta_atual,
+        "arquivo_portas": str(projeto_dir / "docs" / "ports.md"),
+        "portas": portas_ativas,
         "skills": skills,
         "mcps": mcps,
         "roteamento_modelos": roteamento,
@@ -662,7 +903,6 @@ def ciclo_coleta(terminais, pasta_saida):
     mapa = comum.carregar_mapa()
     agentes_cfg = mapa.get("agentes", [])
 
-    # Se estivermos no Maestri, descobre novos terminais abertos dinamicamente
     if hasattr(terminais, "listar_agentes"):
         try:
             descobertos = terminais.listar_agentes()
@@ -705,7 +945,6 @@ def ciclo_coleta(terminais, pasta_saida):
 
         leituras.append(reg)
 
-    # Carrega o quadro e sincroniza com o Kanban do projeto ativo
     quadro = comum.carregar_quadro() if hasattr(comum, "carregar_quadro") else {"pendencias": [], "missoes": {}}
     quadro.setdefault("pendencias", [])
     quadro.setdefault("missoes", {})
@@ -727,7 +966,7 @@ def ciclo_coleta(terminais, pasta_saida):
     }
 
     dados = {
-        "versao": "2.1.0",
+        "versao": "2.2.0",
         "gerado_em": agora_iso,
         "gerado_em_epoch": agora_epoch,
         "origem": "maestri" if hasattr(terminais, "cli") else "tmux",
@@ -743,7 +982,6 @@ def ciclo_coleta(terminais, pasta_saida):
         },
     }
 
-    # Gravação atômica em publico/dados.json e dados.js
     pasta_saida.mkdir(parents=True, exist_ok=True)
     json_str = json.dumps(dados, ensure_ascii=False)
     comum.gravar_atomico(pasta_saida / "dados.json", json.dumps(dados, ensure_ascii=False, indent=2))
@@ -760,8 +998,21 @@ def ciclo_coleta(terminais, pasta_saida):
     return dados
 
 
+class ServidorTCPExclusivo(socketserver.TCPServer):
+    """TCPServer que bloqueia hijack de porta no Windows usando SO_EXCLUSIVEADDRUSE."""
+    allow_reuse_address = sys.platform != "win32"
+
+    def server_bind(self):
+        if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            except OSError:
+                pass
+        super().server_bind()
+
+
 class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
-    """Serve os arquivos de publico/ com CORS, sem cache e suporte a POST /refresh."""
+    """Serve os arquivos de publico/ com CORS, /health e suporte a POST /refresh."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(RAIZ / "publico"), **kwargs)
@@ -776,9 +1027,29 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
+    def do_GET(self):
+        if self.path.startswith("/health"):
+            proj = localizar_projeto_ativo()
+            corpo = json.dumps({
+                "ok": True,
+                "servico": "painel-agents",
+                "versao": "2.2.0",
+                "porta": ESTADO_GLOBAL.get("porta_ativa", 3333),
+                "pid": os.getpid(),
+                "projeto": proj.name,
+                "caminho": str(proj),
+            }).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
+        super().do_GET()
+
     def do_POST(self):
         if self.path.startswith("/refresh"):
             try:
+                ESTADO_GLOBAL["cache_portas"]["lido_em"] = 0.0
                 if ESTADO_GLOBAL["terminais"] is not None:
                     ciclo_coleta(ESTADO_GLOBAL["terminais"], ESTADO_GLOBAL["pasta_saida"])
                 self.send_response(200)
@@ -798,10 +1069,9 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
 
 
 def iniciar_servidor(porta):
-    """Inicia o servidor HTTP em uma thread dedicada."""
+    """Inicia o servidor HTTP exclusivo em uma thread dedicada."""
     try:
-        socketserver.TCPServer.allow_reuse_address = True
-        servidor = socketserver.TCPServer(("127.0.0.1", porta), HandlerEstatico)
+        servidor = ServidorTCPExclusivo(("127.0.0.1", porta), HandlerEstatico)
         t = threading.Thread(target=servidor.serve_forever, daemon=True)
         t.start()
         return servidor
@@ -813,22 +1083,48 @@ def iniciar_servidor(porta):
 def main():
     parser = argparse.ArgumentParser(
         prog="painel",
-        description="Painel de Agentes - Monitor em tempo real de tarefas, cotas 3D, Kanban e Skills para o Maestri."
+        description="Painel de Agentes - Monitor em tempo real de tarefas, cotas 3D, Kanban, Portas e Skills para o Maestri."
     )
-    parser.add_argument("--porta", type=int, default=3333, help="Porta HTTP local (padrão: 3333)")
+    parser.add_argument("--porta", type=int, default=3333, help="Porta HTTP preferencial (padrão: 3333, com salto inteligente se ocupada)")
     parser.add_argument("--intervalo", type=int, default=10, help="Intervalo de atualização em segundos (padrão: 10)")
     parser.add_argument("--sem-portal", action="store_true", help="Não abre o Portal do Maestri automaticamente")
     parser.add_argument("--uma-vez", action="store_true", help="Executa apenas uma coleta e sai")
-    parser.add_argument("--ensure", action="store_true", help="Sai imediatamente se a porta já estiver ativa")
-    parser.add_argument("--projeto", type=str, default=None, help="Caminho do projeto ativo para sincronizar Kanban e Skills")
+    parser.add_argument("--ensure", action="store_true", help="Sai se já houver uma instância legítima do painel ativa")
+    parser.add_argument("--projeto", type=str, default=None, help="Caminho do projeto ativo para sincronizar Kanban, Portas e Skills")
     args = parser.parse_args()
 
     if args.projeto:
         ESTADO_GLOBAL["workspace_projeto"] = args.projeto
 
-    if args.ensure and porta_em_uso(args.porta):
-        print(f"[+] Painel já está ativo na porta {args.porta}.")
-        return
+    projeto_dir = localizar_projeto_ativo()
+
+    # Verifica se já existe uma instância legítima do painel-agents rodando (na porta salva em .maestri/ports.json ou na args.porta)
+    portas_para_checar = [args.porta]
+    arq_ports = projeto_dir / ".maestri" / "ports.json"
+    if arq_ports.exists():
+        try:
+            salvo = json.loads(arq_ports.read_text(encoding="utf-8", errors="ignore"))
+            p_salva = int(salvo.get("painel_porta", 0))
+            if p_salva and p_salva not in portas_para_checar:
+                portas_para_checar.insert(0, p_salva)
+        except Exception:
+            pass
+
+    for p_check in portas_para_checar:
+        health = consultar_health_painel(p_check)
+        if health:
+            ESTADO_GLOBAL["porta_ativa"] = p_check
+            if args.ensure:
+                print(f"[+] Painel legítimo já está ativo na porta {p_check} (PID {health.get('pid')}).")
+                return
+            break
+
+    # Seleciona a porta livre sem conflito (IPv4 + IPv6)
+    if not args.uma_vez:
+        porta_escolhida = achar_porta_inteligente(args.porta)
+        ESTADO_GLOBAL["porta_ativa"] = porta_escolhida
+    else:
+        ESTADO_GLOBAL["porta_ativa"] = portas_para_checar[0]
 
     print("=" * 60)
     print("   🤖 PAINEL DE AGENTES (MAESTRI & MULTIPLATAFORMA)")
@@ -842,7 +1138,32 @@ def main():
     pasta_publica = RAIZ / "publico"
     ESTADO_GLOBAL["pasta_saida"] = pasta_publica
 
-    # Rodada inicial de coleta
+    if args.uma_vez:
+        dados_iniciais = ciclo_coleta(terminais, pasta_publica)
+        total = dados_iniciais["resumo"]["total"]
+        print(f"[+] Agentes detectados no workspace: {total}")
+        for a in dados_iniciais["agentes"]:
+            st = a.get("estado", "indeterminado")
+            mod = a.get("modelo") or a.get("ferramenta") or "IA"
+            print(f"    - {a['nome']}: {st} ({mod})")
+        print(f"[+] Mapa de portas salvo em: {projeto_dir / 'docs' / 'ports.md'}")
+        print("[+] Coleta única concluída.")
+        return
+
+    # Inicia o servidor web local antes da primeira coleta para que o scanner de portas já veja a porta ativa
+    porta = ESTADO_GLOBAL["porta_ativa"]
+    servidor = iniciar_servidor(porta)
+    if not servidor:
+        porta = achar_porta_inteligente(porta + 1)
+        ESTADO_GLOBAL["porta_ativa"] = porta
+        servidor = iniciar_servidor(porta)
+
+    url_painel = f"http://localhost:{porta}"
+    if porta != args.porta:
+        print(f"[!] Porta {args.porta} ocupada por aplicação externa -> Realocado automaticamente para {porta}!")
+    print(f"[+] Servidor web exclusivo ativo em: {url_painel}")
+    print(f"[+] Mapa de portas sincronizado em: {projeto_dir / 'docs' / 'ports.md'}")
+
     dados_iniciais = ciclo_coleta(terminais, pasta_publica)
     total = dados_iniciais["resumo"]["total"]
     print(f"[+] Agentes detectados no workspace: {total}")
@@ -851,17 +1172,6 @@ def main():
         mod = a.get("modelo") or a.get("ferramenta") or "IA"
         print(f"    - {a['nome']}: {st} ({mod})")
 
-    if args.uma_vez:
-        print("[+] Coleta única concluída.")
-        return
-
-    # Inicia o servidor web local
-    porta = achar_porta_livre(args.porta)
-    servidor = iniciar_servidor(porta)
-    url_painel = f"http://localhost:{porta}"
-    print(f"[+] Servidor web ativo em: {url_painel}")
-
-    # Abre automaticamente como Portal no Maestri se aplicável
     if not args.sem_portal and hasattr(terminais, "abrir_portal"):
         print("[+] Abrindo Portal no canvas do Maestri...")
         if terminais.abrir_portal(url_painel, "Painel de Agentes"):
@@ -877,7 +1187,7 @@ def main():
             d = ciclo_coleta(terminais, pasta_publica)
             r = d["resumo"]
             hora = datetime.now().strftime("%H:%M:%S")
-            print(f"[{hora}] {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
+            print(f"[{hora}] Porta {porta} | {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
     except KeyboardInterrupt:
         print("\n\n[+] Painel finalizado com sucesso.")
 

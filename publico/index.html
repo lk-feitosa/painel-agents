@@ -1022,15 +1022,32 @@ function desenharEcossistema() {
   if (!secao) return;
   if (!eco) { secao.hidden = true; return; }
   secao.hidden = false;
+  var portas = Array.isArray(eco.portas) ? eco.portas : [];
   var skills = Array.isArray(eco.skills) ? eco.skills : [];
   var mcps = Array.isArray(eco.mcps) ? eco.mcps : [];
   var rot = Array.isArray(eco.roteamento_modelos) ? eco.roteamento_modelos : [];
   var total = skills.length + mcps.length;
   por(el("eco-conta"), String(total));
   classe(el("eco-conta"), "zero", total === 0);
-  por(el("eco-nota"), "Projeto ativo: " + esc(eco.projeto || "workspace") + " · " + skills.length + " skills · " + mcps.length + " MCPs");
+  por(el("eco-nota"), "Projeto: " + esc(eco.projeto || "workspace") + " · Porta Painel: :" + esc(eco.porta_painel || 3333) + " · " + portas.length + " portas mapeadas (docs/ports.md)");
 
   var html = "";
+  if (portas.length) {
+    html += '<h3 class="eco-sub">Portas &amp; Serviços Locais em Uso (Anti-Colisão IPv4/IPv6)<small>sincronizado em docs/ports.md e .maestri/ports.json · salta automaticamente portas ocupadas</small></h3>';
+    html += '<table class="eco-tabela-rot"><thead><tr><th>Porta</th><th>Escopo</th><th>Serviço / Aplicação</th><th>PID &amp; Bind</th><th>Status</th></tr></thead><tbody>';
+    portas.forEach(function (p) {
+      var ehProj = p.escopo === "projeto";
+      var badgeEscopo = ehProj
+        ? '<span class="eco-tag" style="color:var(--bom-tinta);border-color:var(--bom)">Projeto / Maestri</span>'
+        : '<span class="eco-tag">App Externo</span>';
+      var linkPorta = p.url
+        ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener" class="cod" style="text-decoration:none">:' + esc(p.porta) + "</a>"
+        : '<span class="cod">:' + esc(p.porta) + "</span>";
+      html += "<tr><td><b>" + linkPorta + "</b></td><td>" + badgeEscopo + "</td><td><b>" + esc(p.servico) + '</b> <span style="color:var(--apagado);font-size:11px">(' + esc(p.processo) + ')</span></td><td style="font-variant-numeric:tabular-nums;color:var(--tinta2)">PID ' + esc(p.pid) + " · " + esc(p.endereco) + '</td><td style="color:' + (ehProj ? "var(--bom-tinta)" : "var(--tinta2)") + '">' + esc(p.status) + "</td></tr>";
+    });
+    html += "</tbody></table>";
+  }
+
   if (rot.length) {
     html += '<h3 class="eco-sub">Alocação Consultiva de Modelos (Team CODES)<small>sugerida pela Minerva conforme cotas restantes · você aprova ou escolhe por terminal</small></h3>';
     html += '<table class="eco-tabela-rot"><thead><tr><th>Terminal / Papel</th><th>CLI</th><th>Modelo Sugerido</th><th>Critério (Cota &amp; Especialidade)</th></tr></thead><tbody>';
