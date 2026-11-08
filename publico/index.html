@@ -80,6 +80,13 @@
   }
   button#refresh:hover { opacity: 0.95; color: var(--tinta); }
   button#refresh:focus-visible { outline: 2px solid var(--fio-forte); outline-offset: 2px; opacity: 1; }
+  #btn-kanban {
+    font: inherit; font-size: 11.5px; font-weight: 550; color: var(--tinta);
+    background: var(--sup2); border: 1px solid var(--fio); padding: 3px 10px;
+    border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    line-height: 1.2; transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  #btn-kanban:hover { background: var(--sup); border-color: var(--tinta2); }
   button#refresh.girando svg {
     animation: girar-refresh 0.8s linear infinite;
   }
@@ -325,6 +332,7 @@
   <div class="resumo" id="resumo"></div>
   <div class="direita">
     <span class="vivo sem" id="vivo"><span class="luz"></span><span id="vivo-texto">Carregando…</span></span>
+    <a id="btn-kanban" href="/kanban.html" target="_blank" rel="noopener" title="Abrir Quadro Kanban em tela cheia">📋 Kanban</a>
     <button id="privacidade" type="button" title="Ocultar ou mostrar o miolo dos e-mails nos cards de cota">Privacidade: ligada</button>
     <button id="tema" type="button" title="Trocar entre automático, claro e escuro">Tema: automático</button>
     <button id="refresh" type="button" aria-label="Atualizar tudo" title="Atualizar tudo">
@@ -403,9 +411,23 @@
     <div class="corpo-recolhivel" id="precisa-corpo"></div>
   </section>
 
-  <section class="cartao" id="ecossistema" aria-label="Skills e MCPs do Projeto">
+  <section class="cartao" id="secao-portas" aria-label="Portas e Serviços Locais">
     <div class="cabeca">
-      <h2>Ecossistema do Projeto (Portas, Skills &amp; Modelos) <span class="conta" id="eco-conta">0</span></h2>
+      <h2>Portas &amp; Serviços Locais (Anti-Colisão) <span class="conta" id="portas-conta">0</span></h2>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="nota" id="portas-nota"></span>
+        <button class="btn-recolher" type="button" data-alvo="secao-portas" aria-label="Recolher ou expandir portas">
+          <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
+          <span>Recolher</span>
+        </button>
+      </div>
+    </div>
+    <div class="corpo-recolhivel" id="portas-corpo"></div>
+  </section>
+
+  <section class="cartao" id="ecossistema" aria-label="Skills, MCPs e Modelos do Projeto">
+    <div class="cabeca">
+      <h2>Skills, MCPs &amp; Modelos do Projeto <span class="conta" id="eco-conta">0</span></h2>
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="nota" id="eco-nota"></span>
         <button class="btn-recolher" type="button" data-alvo="ecossistema" aria-label="Recolher ou expandir ecossistema">
@@ -1069,10 +1091,37 @@ function desenhar() {
   desenharPrs(agoraS);
   if (window.__painelContas) window.__painelContas.desenhar(dados.contas, agoraS);    /* cards de cota (cotas.js) */
   desenharPrecisa(agoraS);
+  desenharPortas();
   desenharEcossistema();
   var problemas = (dados.quadro.erro ? ["▲ " + esc(dados.quadro.erro)] : []).concat(problemasDaSonda());
   por(el("rodape"), problemas.length ? '<span class="erro">' + problemas.join(" · ") + "</span>" : "");
   el("rodape").hidden = !problemas.length;
+}
+
+function desenharPortas() {
+  var eco = dados && dados.ecossistema;
+  var secao = el("secao-portas");
+  if (!secao) return;
+  var portas = (eco && Array.isArray(eco.portas)) ? eco.portas : [];
+  if (!portas.length) { secao.hidden = true; return; }
+  secao.hidden = false;
+  por(el("portas-conta"), String(portas.length));
+  classe(el("portas-conta"), "zero", portas.length === 0);
+  por(el("portas-nota"), "Sincronizado em docs/ports.md e .maestri/ports.json · IPv4/IPv6 Dual-Stack");
+
+  var html = '<table class="eco-tabela-rot"><thead><tr><th>Porta</th><th>Escopo</th><th>Serviço / Aplicação</th><th>PID &amp; Bind</th><th>Status</th></tr></thead><tbody>';
+  portas.forEach(function (p) {
+    var ehProj = p.escopo === "projeto";
+    var badgeEscopo = ehProj
+      ? '<span class="eco-tag" style="color:var(--bom-tinta);border-color:var(--bom)">Projeto / Maestri</span>'
+      : '<span class="eco-tag">App Externo</span>';
+    var linkPorta = p.url
+      ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener" class="cod" style="text-decoration:none">:' + esc(p.porta) + "</a>"
+      : '<span class="cod">:' + esc(p.porta) + "</span>";
+    html += "<tr><td><b>" + linkPorta + "</b></td><td>" + badgeEscopo + "</td><td><b>" + esc(p.servico) + '</b> <span style="color:var(--apagado);font-size:11px">(' + esc(p.processo) + ')</span></td><td style="font-variant-numeric:tabular-nums;color:var(--tinta2)">PID ' + esc(p.pid) + " · " + esc(p.endereco) + '</td><td style="color:' + (ehProj ? "var(--bom-tinta)" : "var(--tinta2)") + '">' + esc(p.status) + "</td></tr>";
+  });
+  html += "</tbody></table>";
+  por(el("portas-corpo"), html);
 }
 
 function desenharEcossistema() {
@@ -1081,32 +1130,15 @@ function desenharEcossistema() {
   if (!secao) return;
   if (!eco) { secao.hidden = true; return; }
   secao.hidden = false;
-  var portas = Array.isArray(eco.portas) ? eco.portas : [];
   var skills = Array.isArray(eco.skills) ? eco.skills : [];
   var mcps = Array.isArray(eco.mcps) ? eco.mcps : [];
   var rot = Array.isArray(eco.roteamento_modelos) ? eco.roteamento_modelos : [];
   var total = skills.length + mcps.length;
   por(el("eco-conta"), String(total));
   classe(el("eco-conta"), "zero", total === 0);
-  por(el("eco-nota"), "Projeto: " + esc(eco.projeto || "workspace") + " · Porta Painel: :" + esc(eco.porta_painel || 3333) + " · " + portas.length + " portas mapeadas (docs/ports.md)");
+  por(el("eco-nota"), "Projeto: " + esc(eco.projeto || "workspace") + " · Team CODES com " + rot.length + " modelos mapeados");
 
   var html = "";
-  if (portas.length) {
-    html += '<h3 class="eco-sub">Portas &amp; Serviços Locais em Uso (Anti-Colisão IPv4/IPv6)<small>sincronizado em docs/ports.md e .maestri/ports.json · salta automaticamente portas ocupadas</small></h3>';
-    html += '<table class="eco-tabela-rot"><thead><tr><th>Porta</th><th>Escopo</th><th>Serviço / Aplicação</th><th>PID &amp; Bind</th><th>Status</th></tr></thead><tbody>';
-    portas.forEach(function (p) {
-      var ehProj = p.escopo === "projeto";
-      var badgeEscopo = ehProj
-        ? '<span class="eco-tag" style="color:var(--bom-tinta);border-color:var(--bom)">Projeto / Maestri</span>'
-        : '<span class="eco-tag">App Externo</span>';
-      var linkPorta = p.url
-        ? '<a href="' + esc(p.url) + '" target="_blank" rel="noopener" class="cod" style="text-decoration:none">:' + esc(p.porta) + "</a>"
-        : '<span class="cod">:' + esc(p.porta) + "</span>";
-      html += "<tr><td><b>" + linkPorta + "</b></td><td>" + badgeEscopo + "</td><td><b>" + esc(p.servico) + '</b> <span style="color:var(--apagado);font-size:11px">(' + esc(p.processo) + ')</span></td><td style="font-variant-numeric:tabular-nums;color:var(--tinta2)">PID ' + esc(p.pid) + " · " + esc(p.endereco) + '</td><td style="color:' + (ehProj ? "var(--bom-tinta)" : "var(--tinta2)") + '">' + esc(p.status) + "</td></tr>";
-    });
-    html += "</tbody></table>";
-  }
-
   if (rot.length) {
     html += '<h3 class="eco-sub">Alocação Consultiva de Modelos (Team CODES)<small>sugerida pela Minerva conforme cotas restantes · você aprova ou escolhe por terminal</small></h3>';
     html += '<table class="eco-tabela-rot"><thead><tr><th>Terminal / Papel</th><th>CLI</th><th>Modelo Sugerido</th><th>Critério (Cota &amp; Especialidade)</th></tr></thead><tbody>';

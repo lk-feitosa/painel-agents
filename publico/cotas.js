@@ -68,11 +68,11 @@ html[data-layout="minimo"] #contas { display: none; }
   100% { transform: rotate(0deg) scale(1); }
 }
 .card { --radius: 16px; --padding: 16px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: var(--padding); min-width: 0; min-height: 250px; color: var(--c-tinta);
+  padding: var(--padding); min-width: 0; min-height: 285px; color: var(--c-tinta);
   box-shadow: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 16px; --padding: 16px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; padding: var(--padding); min-width: 0;
+.card-verso { --radius: 16px; --padding: 14px 16px 12px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
-.verso-corpo { flex: 1; min-height: 0; overflow-y: hidden; display: flex; flex-direction: column; margin: 0 calc(-1 * var(--padding)); padding: 0 var(--padding); }
+.verso-corpo { flex: 1; min-height: 0; overflow-y: hidden; display: flex; flex-direction: column; }
 .card-cena.virado .card { pointer-events: none; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
@@ -349,13 +349,13 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
 .tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); }
 .tip-pace { font-size: 11px; padding-top: 4px; }
-.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 6px; padding-top: 6px; }
-.card-verso footer { color: var(--apagado); font-size: 11px; }
-.card-verso footer p { margin: 0 0 6px; }
+.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 5px; padding-top: 5px; }
+.card-verso footer { color: var(--apagado); font-size: 10.5px; }
+.card-verso footer p { margin: 0 0 3px; line-height: 1.3; }
 .card-verso footer p[hidden] { display: none; }
-.tip-error { margin-bottom: 6px; }
+.tip-error { margin-bottom: 4px; }
 .tip-error dd { color: var(--critico-tinta); }
-.tip-observation { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.tip-observation { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; font-size: 10.5px; padding-top: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .query-ring > span { animation: none; opacity: .25; }
   .orbita i { animation: none; }
