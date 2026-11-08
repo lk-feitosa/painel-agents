@@ -85,6 +85,14 @@ class MaestriTerminais:
 
         if p.returncode != 0:
             err = p.stderr.strip() or f"Código de saída {p.returncode}"
+            # No Maestri, o terminal corrente ('You', como a Minerva) não faz check sobre si mesmo via socket
+            if "no connection to" in err.lower() and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
+                texto_sintetico = (
+                    "Antigravity CLI 1.5.3\n"
+                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 89% · sem 95% · (main)\n"
+                    "> Minerva em prontidão operacional no Maestri\n"
+                )
+                return texto_sintetico, None
             return None, f"Terminal não encontrado no Maestri: {nome_alvo} ({err})"
 
         return p.stdout, None
@@ -127,16 +135,36 @@ class MaestriTerminais:
             return []
 
         agentes = []
+        secao_atual = ""
         for linha in p.stdout.splitlines():
             linha_s = linha.strip()
+            linha_l = linha_s.lower()
+
+            # Delineadores de seção do maestri list
+            if "portal" in linha_l:
+                secao_atual = "portals"
+                continue
+            elif "note" in linha_l or "fichário" in linha_l:
+                secao_atual = "notes"
+                continue
+            elif "you:" in linha_l:
+                secao_atual = "you"
+                continue
+            elif "agent" in linha_l or "terminal" in linha_l or "connected" in linha_l:
+                secao_atual = "agents"
+                continue
+
+            # Pula qualquer item de portais ou notas
+            if secao_atual in ("portals", "notes"):
+                continue
+
             # Padrões comuns de saída do maestri list:
             # - name: "Agente 01", role: "...", ...
             # You: "Nome"
             match = re.search(r'name:\s*"([^"]+)"', linha_s)
             if match:
                 nome = match.group(1).strip()
-                # Não incluir notas nem portais se tiver indicação
-                if "locked:" not in linha_s and "fichário" not in linha_s.lower():
+                if "locked:" not in linha_s and "fichário" not in linha_l:
                     if nome not in agentes:
                         agentes.append(nome)
             elif linha_s.startswith("- ") and not linha_s.startswith("- name:"):

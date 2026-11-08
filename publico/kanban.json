@@ -1,0 +1,66 @@
+{
+  "versao": 1,
+  "workspace": "S:\\DEV\\test-maestri",
+  "titulo": "Kanban: test-maestri",
+  "colunas": [
+    {
+      "id": "col-backlog",
+      "titulo": "Backlog",
+      "cor": "#64748b"
+    },
+    {
+      "id": "col-todo",
+      "titulo": "A Fazer",
+      "cor": "#38bdf8"
+    },
+    {
+      "id": "col-progresso",
+      "titulo": "Em Progresso",
+      "cor": "#fbbf24"
+    },
+    {
+      "id": "col-revisao",
+      "titulo": "Revisão",
+      "cor": "#a855f7"
+    },
+    {
+      "id": "col-concluido",
+      "titulo": "Concluído",
+      "cor": "#22c55e"
+    }
+  ],
+  "cartoes": [
+    {
+      "id": "card-bootstrap",
+      "colunaId": "col-concluido",
+      "titulo": "Bootstrap de Governança e Infraestrutura",
+      "descricao": "Configuração inicial de .gitignore, governança .agents/, documentação docs/ e inicialização de memória e kanban.",
+      "prioridade": "alta",
+      "agente": "Minerva",
+      "etiquetas": ["infra", "governanca", "setup"],
+      "checklist": [
+        { "id": "chk-1", "texto": "Blindagem do .gitignore", "concluido": true },
+        { "id": "chk-2", "texto": "Diretrizes .agents/ e papéis Team CODES", "concluido": true },
+        { "id": "chk-3", "texto": "Estrutura docs/ e ADR-0001", "concluido": true },
+        { "id": "chk-4", "texto": "Inicialização de ai-memory e Kanban", "concluido": true }
+      ],
+      "criadoEm": "2026-11-08T07:00:00.000Z"
+    },
+    {
+      "id": "card-primeira-demanda",
+      "colunaId": "col-backlog",
+      "titulo": "Definir primeira demanda e escopo do produto",
+      "descricao": "Alinhamento com o usuário para especificar a primeira funcionalidade a ser construída.",
+      "prioridade": "alta",
+      "agente": "Minerva",
+      "etiquetas": ["planejamento", "spec"],
+      "checklist": [
+        { "id": "chk-d1", "texto": "Receber requisitos do usuário", "concluido": false },
+        { "id": "chk-d2", "texto": "Elaborar docs/spec.md", "concluido": false },
+        { "id": "chk-d3", "texto": "Fatiar tarefas para o Team CODES", "concluido": false }
+      ],
+      "criadoEm": "2026-11-08T07:05:00.000Z"
+    }
+  ],
+  "atualizadoEm": 1794117000000
+}

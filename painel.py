@@ -98,11 +98,32 @@ def ciclo_coleta(terminais, pasta_saida):
         leituras.append(reg)
 
     agora_iso = comum.iso(comum.agora())
+    agora_epoch = time.time()
+
+    # Carrega ou monta o quadro e estrutura esperada pelo index.html
+    quadro = comum.carregar_quadro() if hasattr(comum, "carregar_quadro") else {"pendencias": [], "missoes": {}}
+    quadro.setdefault("pendencias", [])
+    quadro.setdefault("missoes", {})
+    quadro.setdefault("editado_em", agora_iso)
+    quadro.setdefault("erro", None)
+
+    prs = {
+        "consultado": False,
+        "erro": None,
+        "lido_em_epoch": None,
+        "intervalo_s": 300,
+        "sem_dono": []
+    }
+
     dados = {
         "versao": "2.0.0",
         "gerado_em": agora_iso,
+        "gerado_em_epoch": agora_epoch,
         "origem": "maestri" if hasattr(terminais, "cli") else "tmux",
         "agentes": leituras,
+        "quadro": quadro,
+        "prs": prs,
+        "contas": [],
         "resumo": {
             "total": len(leituras),
             "trabalhando": trabalhando,
@@ -112,8 +133,17 @@ def ciclo_coleta(terminais, pasta_saida):
 
     # Gravação atômica em publico/dados.json e dados.js
     pasta_saida.mkdir(parents=True, exist_ok=True)
+    json_str = json.dumps(dados, ensure_ascii=False)
     comum.gravar_atomico(pasta_saida / "dados.json", json.dumps(dados, ensure_ascii=False, indent=2))
-    comum.gravar_atomico(pasta_saida / "dados.js", f"window.DADOS_DO_PAINEL = {json.dumps(dados, ensure_ascii=False)};")
+    
+    js_payload = f"""(function() {{
+  var d = {json_str};
+  window.DADOS_DO_PAINEL = d;
+  if (typeof window.__painelDados === "function") {{
+    window.__painelDados(d);
+  }}
+}})();"""
+    comum.gravar_atomico(pasta_saida / "dados.js", js_payload)
 
     return dados
 
