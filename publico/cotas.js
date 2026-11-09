@@ -67,12 +67,13 @@ html[data-layout="minimo"] #contas { display: none; }
   85% { transform: rotate(calc(var(--giro, 0deg) * 0.02)) scale(1); }
   100% { transform: rotate(0deg) scale(1); }
 }
-.card { --radius: 16px; --padding: 18px 18px 24px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: var(--padding); min-width: 0; min-height: 340px; color: var(--c-tinta);
+.card { --radius: 16px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
+  padding: 20px 22px 28px; box-sizing: border-box; min-width: 0; min-height: 330px; color: var(--c-tinta);
   box-shadow: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 16px; --padding: 18px 18px 22px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+.card-verso { --radius: 16px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+  padding: 20px 22px 24px; box-sizing: border-box;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
-.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 4px; }
+.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .card-cena.virado .card { pointer-events: none; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
@@ -137,8 +138,8 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 3px 9px; font-size: 10px; line-height: 1.35;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; max-width: 50%; }
 .quota { position: relative; }
-.quota + .quota { margin-top: 22px; }
-.quota.weekly { margin-bottom: 6px; }
+.quota + .quota { margin-top: 20px; }
+.quota.weekly { margin-bottom: 12px; }
 .quota.weekly + .quota.primary { margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--c-fio); }
 .quota-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; font-variant-numeric: tabular-nums; }
 .quota-label { margin-right: auto; font-size: 12.5px; font-weight: 590; }
@@ -252,7 +253,8 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
   to { left: clamp(calc(48px + var(--meia-compacta) + var(--folga-pilula)), var(--x), calc(100% - var(--meia-compacta) - var(--folga-pilula))); }
 }
 /* Realce permanente por padrão: o usuário vê a régua de horas e o decorrido sempre abertos */
-.visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 3px + var(--pilula) + 8px); margin-bottom: 2px; }
+.visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 3px + var(--pilula) + 6px); margin-bottom: 4px; }
+.weekly .visual { height: calc(3px + var(--cap-d) + 3px + var(--pilula) + 6px); margin-bottom: 8px; }
 .cap { --slot-gap: 0px; background: color-mix(in srgb, var(--c-sup) 72%, transparent);
   -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); border-color: var(--c-borda); box-shadow: var(--sombra-sm); }
 .marcas { opacity: 0.85; }
@@ -350,8 +352,8 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
 .tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); }
 .tip-pace { font-size: 11px; padding-top: 4px; }
-.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 6px; padding-top: 6px; }
-.card-verso footer { color: var(--apagado); font-size: 11px; margin-top: auto; padding-bottom: 2px; }
+.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 8px; padding-top: 8px; }
+.card-verso footer { color: var(--apagado); font-size: 11px; margin-top: 10px; }
 .card-verso footer p { margin: 0 0 4px; line-height: 1.35; }
 .card-verso footer p[hidden] { display: none; }
 .tip-error { margin-bottom: 4px; }
