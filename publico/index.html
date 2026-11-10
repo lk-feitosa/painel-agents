@@ -408,6 +408,9 @@
   <button class="aba-btn" id="btn-aba-grafo" type="button" onclick="alternarAbaPainel('grafo')">
     🗺️ Arquitetura <span class="badge-log" id="badge-grafo-count">0</span>
   </button>
+  <button class="aba-btn" id="btn-aba-kanban" type="button" onclick="alternarAbaPainel('kanban')" title="Acessa o Kanban Minimalista na porta 3334">
+    🦉 Kanban (:3334)
+  </button>
 </nav>
 
 <div class="alerta" id="alerta" role="alert" hidden>
@@ -555,6 +558,11 @@
       </div>
     </div>
   </section>
+</div>
+
+<!-- View do Kanban Embutido (:3334) -->
+<div id="view-kanban" style="display: none; width: 100%; height: calc(100vh - 110px); padding: 8px 16px;">
+  <iframe id="kanban-iframe" src="" style="width: 100%; height: 100%; border: 1px solid var(--fio); border-radius: 8px; background: #0d1117;" title="Kanban (:3334)"></iframe>
 </div>
 
 <main id="principal">
@@ -1394,29 +1402,50 @@ window.alternarAbaPainel = function (aba) {
   var btnGeral = el("btn-aba-geral");
   var btnLogs = el("btn-aba-logs");
   var btnGrafo = el("btn-aba-grafo");
+  var btnKanban = el("btn-aba-kanban");
   var viewPrincipal = el("principal");
   var viewLogs = el("view-logs");
   var viewGrafo = el("view-grafo");
+  var viewKanban = el("view-kanban");
+  var iframeKanban = el("kanban-iframe");
 
   if (btnGeral) btnGeral.classList.toggle("ativa", aba === "geral");
   if (btnLogs) btnLogs.classList.toggle("ativa", aba === "logs");
   if (btnGrafo) btnGrafo.classList.toggle("ativa", aba === "grafo");
+  if (btnKanban) btnKanban.classList.toggle("ativa", aba === "kanban");
 
   if (aba === "geral") {
     if (viewPrincipal) viewPrincipal.style.display = "block";
     if (viewLogs) viewLogs.style.display = "none";
     if (viewGrafo) viewGrafo.style.display = "none";
+    if (viewKanban) viewKanban.style.display = "none";
   } else if (aba === "logs") {
     if (viewPrincipal) viewPrincipal.style.display = "none";
     if (viewLogs) viewLogs.style.display = "block";
     if (viewGrafo) viewGrafo.style.display = "none";
+    if (viewKanban) viewKanban.style.display = "none";
     desenharLogs();
   } else if (aba === "grafo") {
     if (viewPrincipal) viewPrincipal.style.display = "none";
     if (viewLogs) viewLogs.style.display = "none";
     if (viewGrafo) viewGrafo.style.display = "block";
+    if (viewKanban) viewKanban.style.display = "none";
     carregarERenderizarGrafo();
+  } else if (aba === "kanban") {
+    if (viewPrincipal) viewPrincipal.style.display = "none";
+    if (viewLogs) viewLogs.style.display = "none";
+    if (viewGrafo) viewGrafo.style.display = "none";
+    if (viewKanban) {
+      viewKanban.style.display = "block";
+      if (iframeKanban && (!iframeKanban.src || iframeKanban.src === 'about:blank' || iframeKanban.src === window.location.href)) {
+        iframeKanban.src = "http://" + (window.location.hostname || "localhost") + ":3334/";
+      }
+    }
   }
+
+  try {
+    localStorage.setItem("painel_aba_ativa", aba);
+  } catch (e) {}
 };
 
 /* ---------- Grafo de Arquitetura Interativo ---------- */
@@ -1898,6 +1927,13 @@ document.addEventListener("click", function (ev) {
   try { localStorage.setItem("painel-recolhidas", JSON.stringify(secoesRecolhidas)); } catch (e) {}
   aplicarRecolhimento(id);
 });
+
+try {
+  var abaSalva = localStorage.getItem("painel_aba_ativa");
+  if (abaSalva && ["geral", "logs", "grafo", "kanban"].indexOf(abaSalva) >= 0) {
+    alternarAbaPainel(abaSalva);
+  }
+} catch (e) {}
 
 carregar();
 setInterval(carregar, LER_A_CADA_MS);
