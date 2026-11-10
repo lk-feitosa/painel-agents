@@ -997,8 +997,9 @@ def ciclo_coleta(terminais, pasta_saida):
     return dados
 
 
-class ServidorTCPExclusivo(socketserver.TCPServer):
-    """TCPServer que bloqueia hijack de porta no Windows usando SO_EXCLUSIVEADDRUSE."""
+class ServidorTCPExclusivo(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """TCPServer multi-thread que bloqueia hijack de porta no Windows usando SO_EXCLUSIVEADDRUSE."""
+    daemon_threads = True
     allow_reuse_address = sys.platform != "win32"
 
     def server_bind(self):
@@ -1068,9 +1069,9 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
 
 
 def iniciar_servidor(porta):
-    """Inicia o servidor HTTP exclusivo em uma thread dedicada."""
+    """Inicia o servidor HTTP exclusivo e multi-thread em uma thread dedicada."""
     try:
-        servidor = ServidorTCPExclusivo(("127.0.0.1", porta), HandlerEstatico)
+        servidor = ServidorTCPExclusivo(("0.0.0.0", porta), HandlerEstatico)
         t = threading.Thread(target=servidor.serve_forever, daemon=True)
         t.start()
         return servidor
