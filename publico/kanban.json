@@ -1,7 +1,7 @@
 {
   "versao": 1,
   "workspace": "S:\\DEV\\test-maestri",
-  "titulo": "Kanban: test-maestri (SeniorKids Launcher)",
+  "titulo": "Kanban: test-maestri (Minerva & Team CODES)",
   "colunas": [
     {
       "id": "col-backlog",
@@ -34,7 +34,7 @@
       "id": "card-bootstrap",
       "colunaId": "col-concluido",
       "titulo": "KB-001: Bootstrap de Governança e Infraestrutura",
-      "descricao": "Configuração inicial de .gitignore, governança .agents/, documentação docs/ e inicialização de memória e kanban.",
+      "descricao": "Configuração de .gitignore, diretrizes .agents/, papéis Team CODES, documentação docs/, ADRs, inicialização de memória e kanban.",
       "prioridade": "alta",
       "agente": "Minerva",
       "etiquetas": [
@@ -55,22 +55,22 @@
         },
         {
           "id": "chk-3",
-          "texto": "Estrutura docs/ e ADR-0001",
+          "texto": "Estrutura docs/ e ADRs iniciais",
           "concluido": true
         },
         {
           "id": "chk-4",
-          "texto": "Inicialização de ai-memory e Kanban",
+          "texto": "Inicialização de ai-memory e Kanban minimalista",
           "concluido": true
         }
       ],
-      "criadoEm": "2026-11-08T07:00:00.000Z"
+      "criadoEm": "2026-11-10T01:00:00.000Z"
     },
     {
-      "id": "card-aprovacao-plano",
+      "id": "card-alinhamento-spec",
       "colunaId": "col-todo",
-      "titulo": "KB-002: Alinhamento e Aprovação da Spec pelo Usuário",
-      "descricao": "Apresentação e aprovação de docs/spec.md, docs/architecture.md e ADR-0002 para iniciar o desenvolvimento.",
+      "titulo": "KB-002: Alinhamento da Demanda e Aprovação da Spec",
+      "descricao": "Validação da primeira demanda com o usuário, refinamento de docs/spec.md e aprovação formal.",
       "prioridade": "alta",
       "agente": "Minerva",
       "etiquetas": [
@@ -81,173 +81,88 @@
       "checklist": [
         {
           "id": "chk-a1",
-          "texto": "Elaboração de docs/spec.md",
-          "concluido": true
-        },
-        {
-          "id": "chk-a2",
-          "texto": "Elaboração de docs/architecture.md",
-          "concluido": true
-        },
-        {
-          "id": "chk-a3",
-          "texto": "Elaboração de ADR-0002 (Stack Android)",
-          "concluido": true
-        },
-        {
-          "id": "chk-a4",
-          "texto": "Aprovação formal do usuário",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-08T07:30:00.000Z"
-    },
-    {
-      "id": "card-backend-setup",
-      "colunaId": "col-todo",
-      "titulo": "KB-003: Setup Android & Repositórios (Contatos/Apps/PIN)",
-      "descricao": "Camada de domínio e dados: ContactsRepository, AppsRepository, PreferencesRepository (PIN e Whitelist).",
-      "prioridade": "alta",
-      "agente": "Back-End Specialist",
-      "etiquetas": [
-        "android",
-        "backend",
-        "repositorios"
-      ],
-      "checklist": [
-        {
-          "id": "chk-b1",
-          "texto": "Estrutura de módulos e permissões",
-          "concluido": false
-        },
-        {
-          "id": "chk-b2",
-          "texto": "Repositório de contatos e telefonia",
-          "concluido": false
-        },
-        {
-          "id": "chk-b3",
-          "texto": "Whitelist de apps e storage seguro",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-08T07:31:00.000Z"
-    },
-    {
-      "id": "card-ui-contacts",
-      "colunaId": "col-todo",
-      "titulo": "KB-004: Página 01 (Contatos & Topo 5 Emergência)",
-      "descricao": "UI com 5 fixos no topo (190, 192, Mãe, Pai, Outro) + scroll vertical de contatos em cartões grandes.",
-      "prioridade": "alta",
-      "agente": "Front-End Specialist",
-      "etiquetas": [
-        "ui",
-        "compose",
-        "contatos",
-        "acessibilidade"
-      ],
-      "checklist": [
-        {
-          "id": "chk-u1",
-          "texto": "Topo fixo de 5 contatos com destaque",
-          "concluido": false
-        },
-        {
-          "id": "chk-u2",
-          "texto": "Cards grandes de contatos com discagem",
-          "concluido": false
-        },
-        {
-          "id": "chk-u3",
-          "texto": "Feedback tátil e acessibilidade",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-08T07:32:00.000Z"
-    },
-    {
-      "id": "card-ui-apps",
-      "colunaId": "col-todo",
-      "titulo": "KB-005: Página 02 (Grade de Apps) e Painel do Responsável",
-      "descricao": "Grade de ícones médios/grandes filtrados e modal de configuração protegido por PIN.",
-      "prioridade": "alta",
-      "agente": "Front-End Specialist",
-      "etiquetas": [
-        "ui",
-        "compose",
-        "apps",
-        "pin"
-      ],
-      "checklist": [
-        {
-          "id": "chk-a1",
-          "texto": "Grade de apps com ícones grandes",
+          "texto": "Definição do escopo da primeira demanda",
           "concluido": false
         },
         {
           "id": "chk-a2",
-          "texto": "Fluxo de autenticação com PIN",
+          "texto": "Refinamento de docs/spec.md e arquitetura",
           "concluido": false
         },
         {
           "id": "chk-a3",
-          "texto": "Seleção de apps e contatos familiares",
+          "texto": "Aprovação formal do usuário (Zero-HITL após aceite)",
           "concluido": false
         }
       ],
-      "criadoEm": "2026-11-08T07:33:00.000Z"
+      "criadoEm": "2026-11-10T01:05:00.000Z"
     },
     {
-      "id": "card-qa-tests",
+      "id": "card-alocacao-modelos",
+      "colunaId": "col-todo",
+      "titulo": "KB-003: Alocação Consultiva de Modelos do Team CODES",
+      "descricao": "Consulta às cotas do workspace (Codex, Claude Code, Gemini/Antigravity) e apresentação de sugestão de modelo por terminal para aprovação.",
+      "prioridade": "alta",
+      "agente": "Minerva",
+      "etiquetas": [
+        "alocacao",
+        "modelos",
+        "team-codes"
+      ],
+      "checklist": [
+        {
+          "id": "chk-m1",
+          "texto": "Consultar dados.json e cotas em tempo real",
+          "concluido": false
+        },
+        {
+          "id": "chk-m2",
+          "texto": "Apresentar sugestão por terminal (Back, Front, QA, Review)",
+          "concluido": false
+        },
+        {
+          "id": "chk-m3",
+          "texto": "Recrutar os terminais autorizados via maestri recruit",
+          "concluido": false
+        }
+      ],
+      "criadoEm": "2026-11-10T01:10:00.000Z"
+    },
+    {
+      "id": "card-dev-fatia-1",
       "colunaId": "col-backlog",
-      "titulo": "KB-006: Testes Automatizados & Validação de Acessibilidade",
-      "descricao": "Testes unitários e de UI para garantir tamanho de alvos de toque, contraste e segurança do PIN.",
+      "titulo": "KB-004: Desenvolvimento da Fatia 1 (Back-End & Front-End)",
+      "descricao": "Execução concorrente em branches isoladas (agent/backend e agent/ui) respeitando contratos de interface.",
       "prioridade": "media",
-      "agente": "Test & QA Specialist",
+      "agente": "Team CODES",
       "etiquetas": [
-        "qa",
-        "testes",
-        "acessibilidade"
+        "desenvolvimento",
+        "backend",
+        "frontend"
       ],
       "checklist": [
         {
-          "id": "chk-q1",
-          "texto": "Testes de regras de whitelist e PIN",
+          "id": "chk-d1",
+          "texto": "Implementação do domínio e repositórios",
           "concluido": false
         },
         {
-          "id": "chk-q2",
-          "texto": "Testes de touch targets e acessibilidade",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-08T07:34:00.000Z"
-    },
-    {
-      "id": "card-review-sec",
-      "colunaId": "col-backlog",
-      "titulo": "KB-007: Auditoria de Segurança & Homologação Final",
-      "descricao": "Auditoria de permissões do Android, blindagem de chamadas acidentais e aprovação de merges.",
-      "prioridade": "alta",
-      "agente": "Reviewer & Auditor",
-      "etiquetas": [
-        "review",
-        "seguranca",
-        "audit"
-      ],
-      "checklist": [
-        {
-          "id": "chk-r1",
-          "texto": "Auditoria de CALL_PHONE e READ_CONTACTS",
+          "id": "chk-d2",
+          "texto": "Implementação dos componentes de UI",
           "concluido": false
         },
         {
-          "id": "chk-r2",
-          "texto": "Revisão e homologação de PRs",
+          "id": "chk-d3",
+          "texto": "Testes unitários e integração QA",
+          "concluido": false
+        },
+        {
+          "id": "chk-d4",
+          "texto": "Auditoria e Merge pelo Reviewer",
           "concluido": false
         }
       ],
-      "criadoEm": "2026-11-08T07:35:00.000Z"
+      "criadoEm": "2026-11-10T01:15:00.000Z"
     }
   ]
 }
