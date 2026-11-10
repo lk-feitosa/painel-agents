@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Kanban para Maestri" width="150" style="border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
+<img src="assets/logo.png" alt="Minerva Logo" width="180" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" />
 
 # painel-agents
 
