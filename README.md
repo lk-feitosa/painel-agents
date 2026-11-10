@@ -4,12 +4,13 @@
 
 # painel-agents
 
-**Telemetria espacial e monitor de cotas em tempo real para agentes de IA no Maestri.**
+**Telemetria espacial, monitor de cotas e Mapa Dinâmico de Arquitetura (Live Graph) para agentes de IA no Maestri.**
 
 [![Licença MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-3776AB.svg?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Multiplataforma](https://img.shields.io/badge/plataforma-Windows%20|%20Linux%20|%20macOS-informational.svg?style=flat-square)](#instalação)
 [![Zero Token Cost](https://img.shields.io/badge/tokens-zero%20cost-success.svg?style=flat-square)](#arquitetura)
+[![Live Architecture Graph](https://img.shields.io/badge/live--graph-SVG%2060FPS-blueviolet.svg?style=flat-square)](#-mapa-dinâmico-de-arquitetura-live-graph)
 
 </div>
 
@@ -17,20 +18,30 @@
 
 ## O que é
 
-`painel-agents` é um painel local, leve e não intrusivo para acompanhar visualmente múltiplos agentes de IA (**Claude Code**, **Codex** e **Antigravity**) operando simultaneamente no **Maestri**.
+`painel-agents` é um painel local, leve e não intrusivo para acompanhar visualmente múltiplos agentes de IA (**Claude Code**, **Codex** e **Antigravity**) e inspecionar a arquitetura viva do seu projeto no **Maestri**.
 
-Diferente de soluções pesadas ou sondas que consomem chamadas de LLM, o `painel-agents` utiliza **telemetria passiva**: lê as telas dos terminais nativos via IPC do Maestri e extrai estado, modelo, esforço, contexto e cotas sem disparar tokens de inferência.
+Tudo fica unificado em uma **única janela de Portal com 3 abas no topo**:
+1. **`📊 Visão Geral`**: Cápsulas 3D de cota de cada conta (`Antigravity`, `Codex`, `Claude Code`), tabela de agentes, missões do Kanban e ecossistema de MCPs/Skills.
+2. **`📜 Logs de Atividades`**: Feed de eventos em tempo real, registrando comandos e ações dos agentes sem poluir o terminal.
+3. **`🗺️ Arquitetura`**: Mapa dinâmico e interativo do repositório em grafo SVG (60 FPS), com detecção de dependências, destaque de alterações recentes e despacho de tarefas para os agentes com 1 clique.
+
+Diferente de soluções pesadas ou sondas que consomem chamadas de LLM, o `painel-agents` utiliza **telemetria passiva e estática local**: lê os terminais via IPC do Maestri e varre o código do workspace via AST/Regex sem disparar tokens de inferência.
 
 ```
-┌────────────────────────────────────────────────────────┐
-│                    MAESTRI CANVAS                      │
-│                                                        │
-│   [ Terminal 1: Claude ]  ───┐                         │
-│   [ Terminal 2: Codex  ]  ───┼── (maestri check) ──┐   │
-│   [ Terminal 3: Agy    ]  ───┘                     │   │
-│                                                    ▼   │
-│   [ Portal: Painel ] <── http://127.0.0.1:3333 ── [Core]
-└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                            MAESTRI CANVAS                              │
+│                                                                        │
+│   [ Terminal 1: Claude ] ──┐                                           │
+│   [ Terminal 2: Codex  ] ──┼── (Telemetria Passiva) ───┐               │
+│   [ Terminal 3: Agy    ] ──┘                           │               │
+│                                                        ▼               │
+│   [ Workspace Ativo    ] ── (Scanner AST/Imports) ── [Core]            │
+│                                                        │               │
+│   [ Portal: Painel Web ] <── http://127.0.0.1:3333 ────┘               │
+│     ├── 📊 Visão Geral (Cotas 3D, Missões Kanban & Agentes)            │
+│     ├── 📜 Logs de Atividades (Timeline de Ações em Tempo Real)        │
+│     └── 🗺️ Arquitetura (Grafo Interativo SVG 60 FPS + 1-Click Dispatch)│
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -94,6 +105,52 @@ Opções:
   --uma-vez          Executa uma única amostragem analítica e encerra no terminal
   -h, --help         Exibe a mensagem de ajuda e opções
 ```
+
+---
+
+## 🗺️ Mapa Dinâmico de Arquitetura (Live Architecture Graph)
+
+Integrado diretamente no header do painel na aba **`🗺️ Arquitetura`**, o Live Architecture Graph gera uma visão espacial interativa de todos os módulos, arquivos e dependências do repositório em tempo real.
+
+```
+┌────────────────────────────────────────────────────────────────────────────┐
+│ [ 📊 Visão Geral ]  [ 📜 Logs de Atividades ]  [ 🗺️ Arquitetura (6) ]      │
+├────────────────────────────────────────────────────────────────────────────┤
+│ [Filtros: Todos | Core | UI | API | DB | Agents]         [ + ] [ - ] [ ⟲ ] │
+│                                                                            │
+│            ╭────────────╮         imports          ╭────────────╮          │
+│            │   lib/     │ ───────────────────────> │  publico/  │          │
+│            │  (Core)    │                          │   (UI)     │          │
+│            ╰─────┬──────╯                          ╰────────────╯          │
+│                  │                                                         │
+│                  │ imports          ╭───────────────────────────────────╮  │
+│                  ▼                  │ 📦 INSPETOR & DESPACHO            │  │
+│            ╭────────────╮           │ Módulo: lib/                      │  │
+│            │   cotas/   │ ❇️ Ativo  │ Total: 2.594 linhas (8 arquivos)  │  │
+│            │ (Database) │ (pulso)   │ Agente: [ Minerva ▼ ]             │  │
+│            ╰────────────╯           │ Ação:   [ Criar testes unitários] │  │
+│                                     │ [ ⚡ Despachar Missão para Agente ]│  │
+│                                     ╰───────────────────────────────────╯  │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Funcionalidades do Grafo
+
+- **⚡ Scanner Nativo em Tempo Real**: Varre o repositório em milissegundos sem congelar a interface ou a telemetria do Maestri.
+- **🎨 Canvas SVG Fluido a 60 FPS**: Renderização vetorial ultraleve sem bibliotecas pesadas de terceiros (sem React Flow ou Canvas 2D bloatware).
+- **🖱️ Controles Espaciais**:
+  - **Arrastar Nós**: Posicione livremente qualquer módulo no canvas.
+  - **Pan e Zoom**: Navegue pelo diagrama com o botão do mouse ou pelas teclas/botões `[+]` e `[-]`.
+  - **Filtros por Camada**: Exiba instantaneamente apenas módulos de `Core`, `UI`, `API`, `Database` ou `Agents`.
+- **❇️ Pulso de Atividade (< 15 min)**: Módulos com arquivos alterados recentemente recebem um anel verde luminoso com animação de pulso contínuo, mostrando onde o time de agentes está trabalhando agora.
+- **🚀 1-Click Dispatch para Agentes**:
+  - Ao clicar em um nó, abre-se o **Drawer Lateral**.
+  - Selecione o agente de destino (`Minerva`, `Claude Code` ou `Codex`).
+  - Escolha o preset de ação (*Refatorar módulo*, *Criar testes unitários*, *Auditar vulnerabilidades de segurança* ou *Documentar arquitetura*).
+  - O painel envia a ordem diretamente via `maestri ask` sem precisar trocar de janela.
+- **🔌 Endpoints HTTP Locais**:
+  - `GET /api/architecture` (ou `/api/graph`): Devolve o JSON estruturado com nós, arestas, tamanhos, linhas e arquivos.
+  - `POST /api/architecture/dispatch`: Executa o despacho da ordem e registra no log de eventos.
 
 ---
 
