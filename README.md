@@ -1,6 +1,6 @@
 <div align="center">
 
-<span style="font-size: 72px;">🦉</span>
+<span style="font-size: 72px;">🐍</span>
 
 # painel-agents
 
