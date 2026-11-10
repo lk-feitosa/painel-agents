@@ -345,6 +345,38 @@
   .eco-tabela-rot th, .eco-tabela-rot td { text-align: left; padding: 7px 16px; border-top: 1px solid var(--fio); vertical-align: middle; }
   .eco-tabela-rot th { font-size: 10.5px; font-weight: 500; color: var(--apagado); border-top: 0; padding-top: 4px; padding-bottom: 4px; }
   .eco-modelo-pill { display: inline-block; font-size: 11px; font-weight: 550; color: var(--tinta); background: var(--sup2); border: 1px solid var(--fio); border-radius: 6px; padding: 2px 8px; }
+
+  /* ---------- Grafo de Arquitetura Interativo ---------- */
+  .view-grafo-wrap { width: 100%; max-width: 1400px; margin: 0 auto; padding: 16px 20px; }
+  .grafo-container { display: flex; gap: 14px; position: relative; width: 100%; min-height: 580px; height: calc(100vh - 190px); }
+  .grafo-viewport { flex: 1; background: var(--sup2); border: 1px solid var(--fio); border-radius: 10px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .grafo-canvas-svg { width: 100%; height: 100%; cursor: grab; background-image: radial-gradient(circle, var(--fio-forte) 1px, transparent 1px); background-size: 20px 20px; user-select: none; }
+  .grafo-canvas-svg:active { cursor: grabbing; }
+
+  .grafo-controles { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; z-index: 10; background: var(--sup); border: 1px solid var(--fio); border-radius: 8px; padding: 4px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .grafo-btn-ctrl { background: transparent; border: 1px solid transparent; color: var(--tinta2); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 120ms; }
+  .grafo-btn-ctrl:hover { background: var(--sup2); color: var(--tinta); }
+  .grafo-btn-ctrl.ativo { background: var(--fio-forte); color: var(--tinta); }
+
+  .grafo-drawer { width: 340px; background: var(--sup); border: 1px solid var(--fio); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: -4px 0 16px rgba(0,0,0,0.1); }
+  .grafo-drawer-header { padding: 12px 14px; border-bottom: 1px solid var(--fio); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .grafo-drawer-body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  .grafo-node-item { cursor: pointer; transition: transform 0.15s ease, filter 0.15s ease; }
+  .grafo-node-item:hover { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6)); }
+  .grafo-node-pulse circle { animation: pulseGlow 2s infinite ease-in-out; }
+  @keyframes pulseGlow {
+    0%, 100% { stroke-width: 2px; stroke-opacity: 0.7; }
+    50% { stroke-width: 6px; stroke-opacity: 1; filter: drop-shadow(0 0 6px #22c55e); }
+  }
+
+  .grafo-file-item { display: flex; align-items: center; justify-content: space-between; font-size: 11px; padding: 4px 6px; background: var(--sup2); border: 1px solid var(--fio); border-radius: 4px; gap: 6px; }
+  .grafo-file-name { font-weight: 500; color: var(--tinta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .grafo-file-badge { font-size: 10px; color: var(--apagado); font-variant-numeric: tabular-nums; }
+  .grafo-btn-acao { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600; cursor: pointer; border: 1px solid var(--fio); background: var(--sup2); color: var(--tinta); transition: all 120ms; }
+  .grafo-btn-acao:hover { background: var(--fio-forte); border-color: var(--tinta2); }
+  .grafo-btn-acao.destaque { background: var(--bom); color: #fff; border-color: transparent; }
+  .grafo-btn-acao.destaque:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
@@ -372,6 +404,9 @@
   <button class="aba-btn ativa" id="btn-aba-geral" type="button" onclick="alternarAbaPainel('geral')">📊 Visão Geral</button>
   <button class="aba-btn" id="btn-aba-logs" type="button" onclick="alternarAbaPainel('logs')">
     📜 Logs de Atividades <span class="badge-log" id="badge-log-count">0</span>
+  </button>
+  <button class="aba-btn" id="btn-aba-grafo" type="button" onclick="alternarAbaPainel('grafo')">
+    🗺️ Arquitetura <span class="badge-log" id="badge-grafo-count">0</span>
   </button>
 </nav>
 
@@ -401,6 +436,123 @@
     </div>
     <div class="timeline-logs" id="timeline-logs">
       <!-- Gerado via JS -->
+    </div>
+  </section>
+</div>
+
+<!-- View de Arquitetura (Live Architecture Graph) -->
+<div id="view-grafo" style="display: none; padding: 16px 20px; max-width: 1400px; margin: 0 auto; width: 100%;">
+  <section class="cartao" style="width: 100%; padding: 0; overflow: hidden;">
+    <div class="cabeca" style="padding: 12px 18px; border-bottom: 1px solid var(--fio);">
+      <div>
+        <h2>Mapa Dinâmico da Arquitetura <span class="conta" id="grafo-stats-modulos">0 módulos</span></h2>
+        <span class="nota" id="grafo-stats-subtitulo">Carregando mapa estrutural do workspace...</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="filtro-chip ativo" data-cat="todas" onclick="filtrarCategoriaGrafo('todas', this)">Todas</button>
+        <button class="filtro-chip" data-cat="core" onclick="filtrarCategoriaGrafo('core', this)">⚙️ Core</button>
+        <button class="filtro-chip" data-cat="api" onclick="filtrarCategoriaGrafo('api', this)">⚡ API</button>
+        <button class="filtro-chip" data-cat="ui" onclick="filtrarCategoriaGrafo('ui', this)">🎨 UI</button>
+        <button class="filtro-chip" data-cat="database" onclick="filtrarCategoriaGrafo('database', this)">🗄️ Dados</button>
+        <button class="filtro-chip" data-cat="agents" onclick="filtrarCategoriaGrafo('agents', this)">🤖 Agentes</button>
+        <button class="filtro-chip" data-cat="docs" onclick="filtrarCategoriaGrafo('docs', this)">📄 Docs</button>
+        <button class="filtro-chip" type="button" onclick="recarregarGrafo()" title="Recarregar análise">🔄</button>
+      </div>
+    </div>
+
+    <div class="grafo-container" style="padding: 14px 18px;">
+      <!-- Canvas SVG Interativo -->
+      <div class="grafo-viewport" id="grafo-viewport">
+        <div class="grafo-controles">
+          <button class="grafo-btn-ctrl" onclick="zoomGrafo(1.2)" title="Aumentar zoom">+</button>
+          <button class="grafo-btn-ctrl" onclick="zoomGrafo(0.8)" title="Diminuir zoom">-</button>
+          <button class="grafo-btn-ctrl" onclick="resetZoomGrafo()" title="Resetar visão">Centralizar</button>
+          <span style="font-size:10px; color:var(--apagado); margin-left:4px;">Arraste para mover | Scroll para zoom</span>
+        </div>
+        <svg class="grafo-canvas-svg" id="grafo-svg">
+          <defs>
+            <marker id="seta-dep" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(56, 189, 248, 0.7)" />
+            </marker>
+            <marker id="seta-hier" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(255, 255, 255, 0.25)" />
+            </marker>
+          </defs>
+          <g id="grafo-g-transform">
+            <g id="grafo-g-arestas"></g>
+            <g id="grafo-g-nos"></g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Drawer Lateral de Detalhes do Módulo & Ações de Agentes -->
+      <div class="grafo-drawer" id="grafo-drawer">
+        <div class="grafo-drawer-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;" id="drawer-icone">📁</span>
+            <div>
+              <strong style="font-size:13px; color:var(--tinta);" id="drawer-titulo">Selecione um Módulo</strong>
+              <div style="font-size:10px; color:var(--apagado);" id="drawer-subtitulo">Clique em qualquer nó do mapa</div>
+            </div>
+          </div>
+          <span class="eco-tag" id="drawer-categoria-tag">Geral</span>
+        </div>
+
+        <div class="grafo-drawer-body">
+          <!-- Estatísticas Rápidas -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+            <div class="eco-card" style="padding:6px 10px;">
+              <span style="font-size:10px; color:var(--apagado);">ARQUIVOS</span>
+              <strong style="font-size:13px;" id="drawer-stat-arqs">0</strong>
+            </div>
+            <div class="eco-card" style="padding:6px 10px;">
+              <span style="font-size:10px; color:var(--apagado);">LINHAS APROX.</span>
+              <strong style="font-size:13px;" id="drawer-stat-linhas">0</strong>
+            </div>
+          </div>
+
+          <!-- Ações de Agentes Maestri -->
+          <div style="display:flex; flex-direction:column; gap:6px; background:var(--sup2); border:1px solid var(--fio); border-radius:8px; padding:10px;">
+            <span style="font-size:10px; font-weight:700; color:var(--apagado); text-transform:uppercase; letter-spacing:0.3px;">Orquestrar com Agentes</span>
+            
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <label style="font-size:10px; color:var(--tinta2);">Agente:</label>
+              <select id="drawer-select-agente" style="background:var(--sup); border:1px solid var(--fio); color:var(--tinta); padding:4px 8px; border-radius:4px; font-size:11px; font-family:inherit;">
+                <option value="Minerva">🦉 Minerva (Orquestradora)</option>
+                <option value="Claude Code">🟣 Claude Code (Front / Review)</option>
+                <option value="Codex">🟢 Codex (Back-End / QA)</option>
+              </select>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+              <label style="font-size:10px; color:var(--tinta2);">Ação Rápida:</label>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('refatorar')">⚡ Refatorar</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('testes')">🧪 Criar Testes</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('seguranca')">🛡️ Auditar</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('documentar')">📝 Documentar</button>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+              <label style="font-size:10px; color:var(--tinta2);">Instrução / Prompt:</label>
+              <textarea id="drawer-prompt-input" rows="2" style="background:var(--sup); border:1px solid var(--fio); color:var(--tinta); padding:6px; border-radius:4px; font-size:11px; font-family:inherit; resize:vertical;" placeholder="Instrução para o agente..."></textarea>
+            </div>
+
+            <button class="grafo-btn-acao destaque" id="btn-despachar-modulo" type="button" onclick="despacharAcaoModulo()" style="justify-content:center; margin-top:4px;">
+              <span>Despachar para Terminal</span>
+            </button>
+          </div>
+
+          <!-- Lista de Arquivos Internos -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-size:10px; font-weight:700; color:var(--apagado); text-transform:uppercase; letter-spacing:0.3px;">Arquivos no Módulo</span>
+            <div id="drawer-lista-arquivos" style="display:flex; flex-direction:column; gap:4px; max-height:220px; overflow-y:auto;">
+              <span style="font-size:11px; color:var(--apagado);">Selecione um nó para inspecionar</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </div>
@@ -1241,21 +1393,322 @@ window.alternarAbaPainel = function (aba) {
   abaPainelAtiva = aba;
   var btnGeral = el("btn-aba-geral");
   var btnLogs = el("btn-aba-logs");
+  var btnGrafo = el("btn-aba-grafo");
   var viewPrincipal = el("principal");
   var viewLogs = el("view-logs");
+  var viewGrafo = el("view-grafo");
 
   if (btnGeral) btnGeral.classList.toggle("ativa", aba === "geral");
   if (btnLogs) btnLogs.classList.toggle("ativa", aba === "logs");
+  if (btnGrafo) btnGrafo.classList.toggle("ativa", aba === "grafo");
 
   if (aba === "geral") {
     if (viewPrincipal) viewPrincipal.style.display = "block";
     if (viewLogs) viewLogs.style.display = "none";
+    if (viewGrafo) viewGrafo.style.display = "none";
   } else if (aba === "logs") {
     if (viewPrincipal) viewPrincipal.style.display = "none";
     if (viewLogs) viewLogs.style.display = "block";
+    if (viewGrafo) viewGrafo.style.display = "none";
     desenharLogs();
+  } else if (aba === "grafo") {
+    if (viewPrincipal) viewPrincipal.style.display = "none";
+    if (viewLogs) viewLogs.style.display = "none";
+    if (viewGrafo) viewGrafo.style.display = "block";
+    carregarERenderizarGrafo();
   }
 };
+
+/* ---------- Grafo de Arquitetura Interativo ---------- */
+var estadoGrafo = {
+  dados: null,
+  filtroCat: "todas",
+  nodeSel: null,
+  zoom: 1.0,
+  panX: 0,
+  panY: 0,
+  posicoes: {},
+  isDragging: false,
+  dragNodeId: null,
+  isPanning: false,
+  panStartX: 0,
+  panStartY: 0
+};
+
+window.carregarERenderizarGrafo = function (forcar) {
+  fetch("/api/architecture")
+    .then(function (r) { return r.json(); })
+    .then(function (dados) {
+      estadoGrafo.dados = dados;
+      if (el("badge-grafo-count")) {
+        el("badge-grafo-count").textContent = (dados.nodes ? dados.nodes.length : 0);
+      }
+      if (el("grafo-stats-modulos")) {
+        el("grafo-stats-modulos").textContent = (dados.stats ? dados.stats.total_modulos + " módulos" : "0 módulos");
+      }
+      if (el("grafo-stats-subtitulo")) {
+        var langs = Object.keys(dados.stats.linguagens || {}).join(", ");
+        el("grafo-stats-subtitulo").textContent = "Workspace: " + dados.nome + " · " + dados.stats.total_arquivos + " arquivos · " + dados.stats.total_linhas + " linhas · Linguagens: " + (langs || "Código");
+      }
+
+      calcularPosicoesIniciais(dados.nodes);
+      desenharGrafoSVG();
+    })
+    .catch(function (err) {
+      console.warn("[Grafo] Erro ao carregar arquitetura:", err);
+    });
+};
+
+function calcularPosicoesIniciais(nodes) {
+  if (!nodes || !nodes.length) return;
+  var svg = el("grafo-svg");
+  var rect = svg ? svg.getBoundingClientRect() : { width: 800, height: 500 };
+  var cx = Math.max(300, rect.width / 2);
+  var cy = Math.max(220, rect.height / 2);
+
+  if (!estadoGrafo.posicoes["root"]) {
+    estadoGrafo.posicoes["root"] = { x: cx, y: cy };
+  }
+
+  var modulos = nodes.filter(function (n) { return n.id !== "root"; });
+  var count = modulos.length;
+  var raio = Math.min(cx - 80, cy - 60, 220);
+
+  modulos.forEach(function (n, idx) {
+    if (!estadoGrafo.posicoes[n.id]) {
+      var angulo = (idx / count) * 2 * Math.PI - (Math.PI / 2);
+      estadoGrafo.posicoes[n.id] = {
+        x: cx + raio * Math.cos(angulo),
+        y: cy + raio * Math.sin(angulo)
+      };
+    }
+  });
+}
+
+function desenharGrafoSVG() {
+  var dados = estadoGrafo.dados;
+  if (!dados) return;
+
+  var gArestas = el("grafo-g-arestas");
+  var gNos = el("grafo-g-nos");
+  if (!gArestas || !gNos) return;
+
+  var filtro = estadoGrafo.filtroCat;
+  var nodesFiltrados = dados.nodes.filter(function (n) {
+    if (n.id === "root") return true;
+    if (filtro === "todas") return true;
+    return n.categoria === filtro;
+  });
+
+  var idsVisiveis = new Set(nodesFiltrados.map(function (n) { return n.id; }));
+
+  // 1. Desenha arestas
+  var arestasHtml = "";
+  dados.edges.forEach(function (e) {
+    if (!idsVisiveis.has(e.from) || !idsVisiveis.has(e.to)) return;
+    var p1 = estadoGrafo.posicoes[e.from];
+    var p2 = estadoGrafo.posicoes[e.to];
+    if (!p1 || !p2) return;
+
+    var marker = e.tipo === "import" ? "url(#seta-dep)" : "url(#seta-hier)";
+    var cor = e.tipo === "import" ? "rgba(56, 189, 248, 0.7)" : "rgba(255, 255, 255, 0.18)";
+    var dash = e.tipo === "import" ? 'stroke-dasharray="4,4"' : '';
+
+    arestasHtml += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="' + cor + '" stroke-width="1.6" marker-end="' + marker + '" ' + dash + ' id="aresta-' + e.from + '-' + e.to + '" />';
+  });
+  gArestas.innerHTML = arestasHtml;
+
+  // 2. Desenha nós
+  var nosHtml = "";
+  nodesFiltrados.forEach(function (n) {
+    var p = estadoGrafo.posicoes[n.id] || { x: 200, y: 200 };
+    var raio = n.tamanho || (n.id === "root" ? 30 : 22);
+    var classePulso = n.modificado_recente ? "grafo-node-pulse" : "";
+    var isSel = estadoGrafo.nodeSel && estadoGrafo.nodeSel.id === n.id;
+    var strokeW = isSel ? 4 : (n.modificado_recente ? 3 : 2);
+    var strokeCor = isSel ? "#ffffff" : n.cor;
+
+    nosHtml += '<g class="grafo-node-item ' + classePulso + '" data-id="' + n.id + '" transform="translate(' + p.x + ',' + p.y + ')" onmousedown="iniciarArrastoNo(event, \'' + n.id + '\')" onclick="selecionarNoGrafo(\'' + n.id + '\')">';
+    nosHtml += '<circle r="' + raio + '" fill="var(--sup)" stroke="' + strokeCor + '" stroke-width="' + strokeW + '" />';
+    nosHtml += '<text text-anchor="middle" dy="5" font-size="' + (raio > 25 ? 16 : 13) + '" pointer-events="none">' + n.icone + '</text>';
+    nosHtml += '<text text-anchor="middle" dy="' + (raio + 14) + '" font-size="11.5" font-weight="600" fill="var(--tinta)" pointer-events="none">' + esc(n.label) + '</text>';
+    if (n.id !== "root") {
+      nosHtml += '<text text-anchor="middle" dy="' + (raio + 26) + '" font-size="9.5" fill="var(--apagado)" pointer-events="none">' + n.arquivos_count + ' arqs · ' + n.linhas_count + ' l</text>';
+    }
+    nosHtml += '</g>';
+  });
+  gNos.innerHTML = nosHtml;
+
+  aplicarTransformGrafo();
+}
+
+function aplicarTransformGrafo() {
+  var g = el("grafo-g-transform");
+  if (g) {
+    g.setAttribute("transform", "translate(" + estadoGrafo.panX + "," + estadoGrafo.panY + ") scale(" + estadoGrafo.zoom + ")");
+  }
+}
+
+window.selecionarNoGrafo = function (nodeId) {
+  if (!estadoGrafo.dados) return;
+  var node = estadoGrafo.dados.nodes.find(function (n) { return n.id === nodeId; });
+  if (!node) return;
+  estadoGrafo.nodeSel = node;
+
+  desenharGrafoSVG();
+
+  // Preenche o Drawer
+  el("drawer-icone").textContent = node.icone;
+  el("drawer-titulo").textContent = node.label;
+  el("drawer-subtitulo").textContent = node.rotulo + (node.modificado_recente ? " · 🟢 Alterado recentemente" : "");
+  el("drawer-categoria-tag").textContent = node.categoria.toUpperCase();
+  el("drawer-stat-arqs").textContent = node.arquivos_count;
+  el("drawer-stat-linhas").textContent = node.linhas_count;
+
+  // Lista de arquivos
+  var arqs = node.arquivos || [];
+  var htmlArqs = "";
+  if (!arqs.length) {
+    htmlArqs = '<span style="font-size:11px; color:var(--apagado);">Nenhum arquivo no módulo</span>';
+  } else {
+    arqs.forEach(function (a) {
+      var badgeRecente = a.recente ? ' <span style="color:var(--bom)">●</span>' : '';
+      htmlArqs += '<div class="grafo-file-item" title="' + esc(a.caminho) + '">';
+      htmlArqs += '<span class="grafo-file-name">' + esc(a.nome) + badgeRecente + '</span>';
+      htmlArqs += '<span class="grafo-file-badge">' + (a.linhas ? a.linhas + ' lin' : '') + '</span>';
+      htmlArqs += '</div>';
+    });
+  }
+  el("drawer-lista-arquivos").innerHTML = htmlArqs;
+
+  setarPromptPredefinido("refatorar");
+};
+
+window.setarPromptPredefinido = function (tipo) {
+  var node = estadoGrafo.nodeSel;
+  var modulo = node ? node.label : "módulo selecionado";
+  var prompts = {
+    refatorar: "Revise e refatore o módulo '" + modulo + "', melhorando coesão, modularidade e tipagens.",
+    testes: "Crie testes unitários completos e assertivos para os arquivos do módulo '" + modulo + "'.",
+    seguranca: "Audite a segurança, sanitização de entradas e tratamento de erros do módulo '" + modulo + "'.",
+    documentar: "Gere documentação técnica clara e especificações da arquitetura do módulo '" + modulo + "'."
+  };
+  var input = el("drawer-prompt-input");
+  if (input) input.value = prompts[tipo] || "";
+};
+
+window.despacharAcaoModulo = function () {
+  var node = estadoGrafo.nodeSel;
+  if (!node) {
+    alert("Selecione um módulo no mapa primeiro.");
+    return;
+  }
+  var agente = el("drawer-select-agente").value;
+  var promptTxt = el("drawer-prompt-input").value.trim();
+  var btn = el("btn-despachar-modulo");
+
+  if (!promptTxt) {
+    alert("Informe a instrução antes de despachar.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = "<span>Enviando...</span>";
+
+  fetch("/api/architecture/dispatch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      agente: agente,
+      modulo: node.label,
+      prompt: promptTxt
+    })
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (res) {
+    btn.disabled = false;
+    btn.innerHTML = "<span>Despachar para Terminal</span>";
+    if (res.ok) {
+      alert("✓ " + (res.mensagem || "Tarefa enviada ao agente!"));
+    } else {
+      alert("❌ " + (res.erro || "Falha ao enviar"));
+    }
+  })
+  .catch(function (err) {
+    btn.disabled = false;
+    btn.innerHTML = "<span>Despachar para Terminal</span>";
+    alert("Erro na conexão: " + err.message);
+  });
+};
+
+window.filtrarCategoriaGrafo = function (cat, btn) {
+  estadoGrafo.filtroCat = cat;
+  document.querySelectorAll("#view-grafo .filtro-chip").forEach(function (b) { b.classList.remove("ativo"); });
+  if (btn) btn.classList.add("ativo");
+  desenharGrafoSVG();
+};
+
+window.zoomGrafo = function (fator) {
+  estadoGrafo.zoom = Math.max(0.4, Math.min(2.8, estadoGrafo.zoom * fator));
+  aplicarTransformGrafo();
+};
+
+window.resetZoomGrafo = function () {
+  estadoGrafo.zoom = 1.0;
+  estadoGrafo.panX = 0;
+  estadoGrafo.panY = 0;
+  aplicarTransformGrafo();
+};
+
+window.recarregarGrafo = function () {
+  carregarERenderizarGrafo(true);
+};
+
+window.iniciarArrastoNo = function (ev, nodeId) {
+  ev.stopPropagation();
+  estadoGrafo.isDragging = true;
+  estadoGrafo.dragNodeId = nodeId;
+};
+
+// Eventos de drag e zoom no SVG
+setTimeout(function () {
+  var svg = el("grafo-svg");
+  if (!svg) return;
+
+  svg.addEventListener("mousedown", function (ev) {
+    if (ev.target.closest && ev.target.closest(".grafo-node-item")) return;
+    estadoGrafo.isPanning = true;
+    estadoGrafo.panStartX = ev.clientX - estadoGrafo.panX;
+    estadoGrafo.panStartY = ev.clientY - estadoGrafo.panY;
+  });
+
+  window.addEventListener("mousemove", function (ev) {
+    if (estadoGrafo.isDragging && estadoGrafo.dragNodeId) {
+      var pt = estadoGrafo.posicoes[estadoGrafo.dragNodeId];
+      if (pt) {
+        pt.x += ev.movementX / estadoGrafo.zoom;
+        pt.y += ev.movementY / estadoGrafo.zoom;
+        desenharGrafoSVG();
+      }
+    } else if (estadoGrafo.isPanning) {
+      estadoGrafo.panX = ev.clientX - estadoGrafo.panStartX;
+      estadoGrafo.panY = ev.clientY - estadoGrafo.panStartY;
+      aplicarTransformGrafo();
+    }
+  });
+
+  window.addEventListener("mouseup", function () {
+    estadoGrafo.isDragging = false;
+    estadoGrafo.dragNodeId = null;
+    estadoGrafo.isPanning = false;
+  });
+
+  svg.addEventListener("wheel", function (ev) {
+    ev.preventDefault();
+    var delta = ev.deltaY < 0 ? 1.1 : 0.9;
+    zoomGrafo(delta);
+  }, { passive: false });
+}, 500);
 
 window.filtrarLogsAutor = function (autor, btn) {
   filtroAutorLog = autor.toLowerCase();
@@ -1346,7 +1799,23 @@ function carregar() {
   s.src = "dados.js?t=" + Date.now();      /* sem isto o navegador reaproveita o arquivo antigo */
   s.onload = s.onerror = function () { s.remove(); };
   document.head.appendChild(s);
+
+  if (abaPainelAtiva === "grafo") {
+    carregarERenderizarGrafo(false);
+  }
 }
+
+// Atualiza o contador de módulos do grafo no badge logo no início
+try {
+  fetch("/api/architecture")
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.nodes && el("badge-grafo-count")) {
+        el("badge-grafo-count").textContent = d.nodes.length;
+      }
+    })
+    .catch(function () {});
+} catch (e) {}
 
 /* ---------- botão de refresh completo ---------- */
 var btnRefresh = el("refresh");

@@ -45,6 +45,7 @@ Diferente de soluções pesadas ou sondas que consomem chamadas de LLM, o `paine
 - **Auto-Heal Silencioso pela Memória do Projeto**: Nenhum processo desnecessário no boot do Windows. Ao interagir com a Minerva no projeto, ela verifica o endpoint `/health` na porta ativa e, se preciso, aciona `iniciar-silencioso.vbs` (`CREATE_NO_WINDOW`) 100% em segundo plano sem piscar janelas de console.
 - **Zero Gasto de Tokens**: Toda a extração é analítica e baseada em expressões regulares determinísticas sobre a status line, sessões locais e buffer do terminal.
 - **Multiplataforma Real**: Desenvolvido exclusivamente com a biblioteca padrão do Python 3 (sem dependências externas). Roda de forma idêntica no **Windows**, **Fedora / Ubuntu / Arch** e **macOS**.
+- **Mapa Dinâmico de Arquitetura & Grafo do Workspace (`🗺️ Arquitetura`)**: Aba integrada no topo do painel que analisa o workspace em milissegundos, gerando um grafo interativo de módulos, arquivos e dependências em SVG nativo (60 FPS, sem bibliotecas externas). Suporta arrastar nós, zoom/pan, filtros de categoria, visualização de arquivos alterados recentemente (< 15 min com pulso luminoso) e despacho de tarefas para os agentes (`Minerva`, `Claude Code`, `Codex`) com 1 clique direto pelo drawer lateral.
 
 ---
 

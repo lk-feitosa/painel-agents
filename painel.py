@@ -35,6 +35,7 @@ sys.path.insert(0, str(RAIZ / "lib"))
 import comum
 import cotas
 import leitor
+import arquitetura
 from terminais import obter_terminais
 
 NOME_FERRAMENTA = {
@@ -1248,6 +1249,16 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(corpo)
             return
 
+        if self.path.startswith("/api/architecture") or self.path.startswith("/api/graph"):
+            proj = localizar_projeto_ativo()
+            dados_grafo = arquitetura.escanear_arquitetura(proj)
+            corpo = json.dumps(dados_grafo, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
+
         if self.path.startswith("/health"):
             proj = localizar_projeto_ativo()
             corpo = json.dumps({
@@ -1302,6 +1313,27 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(json.dumps({"ok": True, "log": ev}, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
+        if self.path.startswith("/api/architecture/dispatch"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                payload = json.loads(payload_bruto.decode("utf-8"))
+                agente = payload.get("agente", "Minerva")
+                modulo = payload.get("modulo", "")
+                acao = payload.get("acao", "refatorar")
+                prompt = payload.get("prompt")
+                ok, msg = arquitetura.despachar_tarefa_modulo(agente, modulo, acao, prompt)
+                self.send_response(200 if ok else 400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": ok, "mensagem": msg}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
