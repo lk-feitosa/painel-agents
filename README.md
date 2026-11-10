@@ -112,7 +112,14 @@ O módulo analítico [`lib/leitor.py`](lib/leitor.py) extrai:
 - **Atividade Recente**: A última ação ou intenção declarada pelo agente, com higienização estrita de tokens, caminhos e segredos (`mascarar()`).
 
 ### 3. Visualização Reativa
-A interface servida em [`publico/`](publico/) utiliza componentes leves com renderização via Vanilla JS e CSS moderno. Os dados são consumidos via requisições assíncronas atômicas (`dados.json`), garantindo que o painel nunca trave nem exiba estados parciais.
+A interface servida em [`publico/`](publico/) utiliza componentes leves com renderização via Vanilla JS e CSS moderno. Os dados são consumidos via requisições assíncronas atômicas (`dados.json`), garantindo que o painel nunca trave nem exiba estados parciais. O header unificado permite alternar instantaneamente entre a **Visão Geral**, os **Logs de Atividades** e a **Arquitetura** sem abrir novas abas ou janelas adicionais no 3D canvas do Maestri.
+
+### 4. Mapa Dinâmico de Arquitetura & Despacho de Agentes
+O módulo analítico [`lib/arquitetura.py`](lib/arquitetura.py) escaneia a topologia de diretórios e arquivos de código do workspace ativo em milissegundos:
+- **Grafo SVG Vetorial a 60 FPS**: Renderização fluida com nós interativos categorizados por cores (`Core`, `API`, `UI`, `Database`, `Agents`, `Docs`, `Tests`), suporte completo a arrastar nós (drag-and-drop), zoom e pan.
+- **Detecção de Dependências**: Identifica imports entre módulos em projetos Python e JavaScript/TypeScript, traçando arestas direcionais entre as camadas da aplicação.
+- **Destaque de Modificações Recentes**: Arquivos alterados nos últimos 15 minutos recebem badge de atividade e um anel com pulso luminoso no grafo.
+- **Drawer de Ações Rápidas (1-Click Dispatch)**: Ao clicar em qualquer nó do mapa, um painel lateral exibe a contagem de linhas, lista de arquivos e permite despachar ordens pré-configuradas (*Refatorar*, *Criar testes*, *Auditar segurança* ou *Documentar*) diretamente para o terminal do agente via `maestri ask`.
 
 ---
 
@@ -126,6 +133,7 @@ painel-agents/
 ├── instalar.bat         # Instalador 1-click para Windows
 ├── instalar.sh          # Instalador 1-click para Linux / macOS
 ├── lib/
+│   ├── arquitetura.py   # Scanner de código, análise de imports e grafo dinâmico
 │   ├── terminais.py     # Adaptador unificado IPC (Maestri-first + Tmux fallback)
 │   ├── leitor.py        # Parser determinístico de telas e statuslines
 │   ├── contas.py        # Coletor de limites das CLIs instaladas
@@ -133,7 +141,7 @@ painel-agents/
 │   ├── prs.py           # Integração com GitHub CLI (gh) para pull requests
 │   └── comum.py         # Gravação atômica e travas multiplataforma (msvcrt / fcntl)
 ├── publico/
-│   ├── index.html       # Dashboard visual
+│   ├── index.html       # Dashboard visual, abas, logs e canvas SVG do grafo
 │   ├── cotas.js         # Widgets de exibição de cotas
 │   └── cartao-apoio.js  # Painéis contextuais
 └── skills/
