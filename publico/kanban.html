@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban do Projeto — Minerva & Maestri</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --col-bg: #161b22;
+      --card-bg: #21262d;
+      --card-hover: #262c36;
+      --card-active: #30363d;
+      --border: #30363d;
+      --border-focus: #58a6ff;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      
+      --prio-urgente: #f85149;
+      --prio-alta: #ff7b72;
+      --prio-media: #e3b341;
+      --prio-baixa: #79c0ff;
+      
+      --accent-blue: #388bfd;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+      --radius: 8px;
+      --radius-sm: 6px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ---------- Header ---------- */
+    header.kanban-header {
+      background: #161b22;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: nowrap;
+      flex: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-proj {
+      font-size: 11px;
+      font-weight: 600;
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--accent-blue);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .sync-status {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(63, 185, 80, 0.6);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box input {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 10px 5px 28px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      width: 220px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      border-color: var(--border-focus);
+      width: 280px;
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      font-size: 12px;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      background: var(--card-bg);
+      color: var(--text);
+    }
+
+    .btn:hover {
+      background: var(--card-hover);
+      border-color: var(--text-muted);
+    }
+
+    .btn-primary {
+      background: #238636;
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2ea043;
+      border-color: rgba(240, 246, 252, 0.2);
+    }
+
+    /* ---------- Board Container ---------- */
+    .kanban-board {
+      flex: 1;
+      display: flex;
+      gap: 14px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      align-items: flex-start;
+    }
+
+    .kanban-board::-webkit-scrollbar {
+      height: 8px;
+    }
+    .kanban-board::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* ---------- Columns ---------- */
+    .kanban-col {
+      background: var(--col-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 310px;
+      min-width: 310px;
+      max-height: calc(100vh - 80px);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .kanban-col.drag-over {
+      border-color: var(--border-focus);
+      background: #1c2128;
+    }
+
+    .col-header {
+      padding: 12px 14px 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .col-header-stripe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .col-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .col-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+
+    .col-count {
+      font-size: 11px;
+      font-weight: 700;
+      background: #21262d;
+      color: var(--text-muted);
+      padding: 1px 7px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Card List */
+    .col-cards {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 120px;
+    }
+
+    .col-cards::-webkit-scrollbar {
+      width: 5px;
+    }
+    .col-cards::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* Add Card Button at Column Bottom */
+    .btn-add-card {
+      margin: 4px 10px 10px 10px;
+      padding: 8px 10px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-add-card:hover {
+      background: var(--card-bg);
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    /* ---------- Cards ---------- */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 13px;
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      background: var(--card-hover);
+      border-color: #58a6ff66;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .card:active {
+      cursor: grabbing;
+    }
+
+    .card.dragging {
+      opacity: 0.35;
+      transform: scale(0.97);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1.2;
+    }
+
+    .prio-urgente { background: rgba(248, 81, 73, 0.2); color: var(--prio-urgente); border: 1px solid rgba(248, 81, 73, 0.4); }
+    .prio-alta    { background: rgba(255, 123, 114, 0.2); color: var(--prio-alta); border: 1px solid rgba(255, 123, 114, 0.4); }
+    .prio-media   { background: rgba(227, 179, 65, 0.2); color: var(--prio-media); border: 1px solid rgba(227, 179, 65, 0.4); }
+    .prio-baixa   { background: rgba(121, 192, 255, 0.2); color: var(--prio-baixa); border: 1px solid rgba(121, 192, 255, 0.4); }
+
+    .card-agente {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--accent-purple);
+      background: rgba(188, 140, 255, 0.12);
+      border: 1px solid rgba(188, 140, 255, 0.3);
+      padding: 2px 7px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-actions-hover {
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card:hover .card-actions-hover {
+      display: flex;
+    }
+
+    .btn-card-action {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px;
+      border-radius: 3px;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .btn-card-action:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      cursor: pointer;
+    }
+
+    .card-title:hover {
+      color: var(--accent-blue);
+    }
+
+    .card-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Checklist Progress on Card */
+    .card-checklist {
+      background: #161b22;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 5px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .checklist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .checklist-bar-bg {
+      background: #21262d;
+      border-radius: 3px;
+      height: 4px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .checklist-bar-fill {
+      height: 100%;
+      background: var(--accent-green);
+      transition: width 0.3s ease;
+    }
+
+    .checklist-items-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-top: 2px;
+    }
+
+    .chk-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .chk-line:hover {
+      color: var(--text);
+    }
+
+    .chk-line input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: var(--accent-green);
+    }
+
+    .chk-line.done {
+      text-decoration: line-through;
+      opacity: 0.55;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tag-pill {
+      font-size: 10px;
+      background: #161b22;
+      color: var(--text-dim);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* ---------- Modal de Edição / Criação ---------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #161b22;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 540px;
+      max-width: 95vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-control {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+    }
+
+    textarea.form-control {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Checklist Builder in Modal */
+    .modal-checklist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .modal-chk-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #21262d;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+
+    .modal-chk-item input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+    }
+
+    .modal-chk-remove {
+      background: transparent;
+      border: 0;
+      color: var(--prio-urgente);
+      cursor: pointer;
+      font-size: 13px;
+      opacity: 0.6;
+    }
+    .modal-chk-remove:hover { opacity: 1; }
+
+    .modal-footer {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modal-footer-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-danger {
+      color: var(--prio-urgente);
+      border-color: rgba(248, 81, 73, 0.4);
+      background: rgba(248, 81, 73, 0.1);
+    }
+
+    .btn-danger:hover {
+      background: rgba(248, 81, 73, 0.2);
+      border-color: var(--prio-urgente);
+    }
+
+    /* Empty state */
+    .col-empty {
+      padding: 20px 10px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 11.5px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="kanban-header">
+    <div class="brand">
+      <span class="brand-icon">📋</span>
+      <div class="brand-title">
+        Kanban Ágil
+        <span class="badge-proj" id="proj-badge">test-maestri</span>
+      </div>
+      <div class="sync-status">
+        <span class="sync-dot"></span>
+        <span id="sync-text">Sincronizado via .kanban/board.json</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="filtro-busca" placeholder="Filtrar cartões..." oninput="filtrarCartoes()">
+      </div>
+      <button class="btn btn-primary" onclick="abrirModalCriar()">➕ Novo Cartão</button>
+      <button class="btn" onclick="carregarQuadro(true)" title="Recarregar do disco">🔄</button>
+    </div>
+  </header>
+
+  <!-- Board Columns Container -->
+  <main class="kanban-board" id="board-stage">
+    <!-- Renderizado dinamicamente pelo JavaScript -->
+  </main>
+
+  <!-- Modal de Criação / Edição de Cartão -->
+  <div class="modal-overlay" id="modal-card">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-card-title">Editar Cartão</h3>
+        <button class="modal-close" onclick="fecharModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="card-id-hidden">
+
+        <div class="form-group">
+          <label>Título do Cartão</label>
+          <input type="text" class="form-control" id="modal-input-titulo" placeholder="Ex: KB-005: Implementar endpoint de autenticação">
+        </div>
+
+        <div class="form-group">
+          <label>Descrição Detalhada</label>
+          <textarea class="form-control" id="modal-input-desc" placeholder="Detalhes técnicos, regras de negócio e arquivos impactados..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Coluna / Status</label>
+            <select class="form-control" id="modal-select-coluna">
+              <!-- Preenchido dinamicamente -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select class="form-control" id="modal-select-prio">
+              <option value="baixa">Baixa</option>
+              <option value="media">Média</option>
+              <option value="alta" selected>Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Agente Responsável</label>
+            <input type="text" class="form-control" id="modal-input-agente" placeholder="Ex: Minerva, Front-end, Back-end...">
+          </div>
+
+          <div class="form-group">
+            <label>Etiquetas / Tags (separadas por vírgula)</label>
+            <input type="text" class="form-control" id="modal-input-tags" placeholder="Ex: backend, auth, api">
+          </div>
+        </div>
+
+        <!-- Checklist Builder -->
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Checklist de Entregas</label>
+            <button type="button" class="btn" style="padding:2px 8px; font-size:11px;" onclick="adicionarItemChecklistModal()">+ Item</button>
+          </div>
+          <div class="modal-checklist-list" id="modal-checklist-container">
+            <!-- Itens de checklist -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="btn-modal-excluir" onclick="excluirCartaoModal()">🗑️ Excluir</button>
+        <div class="modal-footer-right">
+          <button type="button" class="btn" onclick="fecharModal()">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="salvarCartaoModal()">Salvar Cartão</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let boardData = {
+      versao: 1,
+      titulo: "Kanban Ágil",
+      colunas: [],
+      cartoes: []
+    };
+
+    let cardArrastadoId = null;
+    let modalAberto = false;
+    let ultimaModificacaoLocal = 0;
+
+    // Carrega o quadro da API
+    async function carregarQuadro(forcar = false) {
+      if (modalAberto && !forcar) return;
+      if (Date.now() - ultimaModificacaoLocal < 2500 && !forcar) return;
+
+      try {
+        const res = await fetch('/api/kanban?t=' + Date.now());
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        
+        boardData = data;
+        renderizarQuadro();
+        document.getElementById('sync-text').innerText = "Sincronizado ao vivo (.kanban/board.json)";
+        
+        const wsNome = data.workspace ? data.workspace.split(/[\\/]/).pop() : "projeto";
+        document.getElementById('proj-badge').innerText = wsNome;
+      } catch (err) {
+        document.getElementById('sync-text').innerText = "Desconectado: " + err.message;
+      }
+    }
+
+    // Salva o quadro completo na API
+    async function salvarQuadroRemoto() {
+      ultimaModificacaoLocal = Date.now();
+      try {
+        const res = await fetch('/api/kanban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(boardData)
+        });
+        if (!res.ok) throw new Error("Erro HTTP " + res.status);
+        document.getElementById('sync-text').innerText = "Salvo com sucesso!";
+        setTimeout(() => {
+          document.getElementById('sync-text').innerText = "Sincronizado ao vivo (.kanban/board.json)";
+        }, 1500);
+      } catch (err) {
+        alert("Erro ao salvar no .kanban/board.json: " + err.message);
+      }
+    }
+
+    // Renderiza colunas e cartões
+    function renderizarQuadro() {
+      const stage = document.getElementById('board-stage');
+      stage.innerHTML = '';
+
+      const termoBusca = (document.getElementById('filtro-busca').value || "").toLowerCase().trim();
+
+      (boardData.colunas || []).forEach(col => {
+        const colEl = document.createElement('div');
+        colEl.className = 'kanban-col';
+        colEl.dataset.colId = col.id;
+
+        // Filtra cartões desta coluna
+        const cardsDaColuna = (boardData.cartoes || []).filter(c => c.colunaId === col.id);
+        const cardsFiltrados = cardsDaColuna.filter(c => {
+          if (!termoBusca) return true;
+          const textoCompleto = (c.titulo + " " + (c.descricao || "") + " " + (c.agente || "") + " " + (c.etiquetas || []).join(" ")).toLowerCase();
+          return textoCompleto.includes(termoBusca);
+        });
+
+        colEl.innerHTML = `
+          <div class="col-header">
+            <div class="col-header-stripe" style="background: ${col.cor || '#58a6ff'};"></div>
+            <div class="col-title-wrap">
+              <span class="col-title">${col.titulo}</span>
+              <span class="col-count">${cardsDaColuna.length}</span>
+            </div>
+          </div>
+          <div class="col-cards" data-col-id="${col.id}" ondragover="aoArrastarSobre(event)" ondragleave="aoSairDoArrasto(event)" ondrop="aoSoltarCard(event, '${col.id}')">
+          </div>
+          <button class="btn-add-card" onclick="abrirModalCriar('${col.id}')">➕ Adicionar cartão</button>
+        `;
+
+        const cardsContainer = colEl.querySelector('.col-cards');
+
+        if (cardsFiltrados.length === 0) {
+          const vazio = document.createElement('div');
+          vazio.className = 'col-empty';
+          vazio.innerText = cardsDaColuna.length === 0 ? "Nenhum cartão" : "Nenhum correspondente ao filtro";
+          cardsContainer.appendChild(vazio);
+        } else {
+          cardsFiltrados.forEach(c => {
+            cardsContainer.appendChild(criarElementoCard(c));
+          });
+        }
+
+        stage.appendChild(colEl);
+      });
+    }
+
+    // Cria o card DOM
+    function criarElementoCard(c) {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.draggable = true;
+      cardEl.dataset.cardId = c.id;
+
+      cardEl.ondragstart = (e) => {
+        cardArrastadoId = c.id;
+        cardEl.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', c.id);
+      };
+
+      cardEl.ondragend = () => {
+        cardArrastadoId = null;
+        cardEl.classList.remove('dragging');
+      };
+
+      // Prioridade
+      const prio = (c.prioridade || "media").toLowerCase();
+      const prioHtml = `<span class="pill prio-${prio}">${prio}</span>`;
+
+      // Agente
+      const agenteHtml = c.agente ? `<span class="card-agente">👤 ${c.agente}</span>` : '';
+
+      // Checklist preview
+      let checklistHtml = '';
+      const chkList = c.checklist || [];
+      if (chkList.length > 0) {
+        const concluidos = chkList.filter(item => item.concluido).length;
+        const total = chkList.length;
+        const pct = Math.round((concluidos / total) * 100);
+
+        let linesHtml = '';
+        chkList.forEach((item, idx) => {
+          linesHtml += `
+            <label class="chk-line ${item.concluido ? 'done' : ''}" onclick="event.stopPropagation()">
+              <input type="checkbox" ${item.concluido ? 'checked' : ''} onchange="toggleChecklistItem('${c.id}', ${idx}, this.checked)">
+              <span>${item.texto}</span>
+            </label>
+          `;
+        });
+
+        checklistHtml = `
+          <div class="card-checklist">
+            <div class="checklist-header">
+              <span>Checklist</span>
+              <span>${concluidos}/${total} (${pct}%)</span>
+            </div>
+            <div class="checklist-bar-bg">
+              <div class="checklist-bar-fill" style="width: ${pct}%;"></div>
+            </div>
+            <div class="checklist-items-preview">
+              ${linesHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      // Tags
+      let tagsHtml = '';
+      if (c.etiquetas && c.etiquetas.length > 0) {
+        tagsHtml = '<div class="card-tags">' + c.etiquetas.map(t => `<span class="tag-pill">#${t}</span>`).join('') + '</div>';
+      }
+
+      cardEl.innerHTML = `
+        <div class="card-top">
+          <div class="card-meta">
+            ${prioHtml}
+            ${agenteHtml}
+          </div>
+          <div class="card-actions-hover">
+            <button class="btn-card-action" onclick="abrirModalEditar('${c.id}')" title="Editar cartão">✏️</button>
+            <button class="btn-card-action" onclick="excluirCartaoDireto('${c.id}')" title="Excluir cartão">🗑️</button>
+          </div>
+        </div>
+
+        <div class="card-title" onclick="abrirModalEditar('${c.id}')">${c.titulo}</div>
+        ${c.descricao ? `<div class="card-desc">${c.descricao}</div>` : ''}
+        ${checklistHtml}
+        ${tagsHtml}
+      `;
+
+      return cardEl;
+    }
+
+    // Drag and Drop
+    function aoArrastarSobre(e) {
+      e.preventDefault();
+      const colEl = e.currentTarget.closest('.kanban-col');
+      if (colEl) colEl.classList.add('drag-over');
+    }
+
+    function aoSairDoArrasto(e) {
+      const colEl = e.currentTarget.closest('.kanban-col');
+      if (colEl) colEl.classList.remove('drag-over');
+    }
+
+    function aoSoltarCard(e, destinoColunaId) {
+      e.preventDefault();
+      const colEl = e.currentTarget.closest('.kanban-col');
+      if (colEl) colEl.classList.remove('drag-over');
+
+      if (!cardArrastadoId) return;
+
+      const card = (boardData.cartoes || []).find(c => c.id === cardArrastadoId);
+      if (card && card.colunaId !== destinoColunaId) {
+        card.colunaId = destinoColunaId;
+        renderizarQuadro();
+        salvarQuadroRemoto();
+      }
+    }
+
+    // Toggle de checklist rápido no card
+    function toggleChecklistItem(cardId, itemIdx, concluido) {
+      const card = (boardData.cartoes || []).find(c => c.id === cardId);
+      if (card && card.checklist && card.checklist[itemIdx]) {
+        card.checklist[itemIdx].concluido = concluido;
+        renderizarQuadro();
+        salvarQuadroRemoto();
+      }
+    }
+
+    // Filtro de cartões
+    function filtrarCartoes() {
+      renderizarQuadro();
+    }
+
+    // Modal
+    function abrirModalCriar(colunaPreferida = null) {
+      modalAberto = true;
+      document.getElementById('modal-card-title').innerText = "Novo Cartão";
+      document.getElementById('card-id-hidden').value = "";
+      document.getElementById('modal-input-titulo').value = "";
+      document.getElementById('modal-input-desc').value = "";
+      document.getElementById('modal-input-agente').value = "";
+      document.getElementById('modal-input-tags').value = "";
+      document.getElementById('modal-select-prio').value = "alta";
+      document.getElementById('btn-modal-excluir').style.display = "none";
+      document.getElementById('modal-checklist-container').innerHTML = "";
+
+      preencherSelectColunas(colunaPreferida || (boardData.colunas[0] ? boardData.colunas[0].id : "col-todo"));
+
+      document.getElementById('modal-card').classList.add('open');
+      setTimeout(() => document.getElementById('modal-input-titulo').focus(), 50);
+    }
+
+    function abrirModalEditar(cardId) {
+      const card = (boardData.cartoes || []).find(c => c.id === cardId);
+      if (!card) return;
+
+      modalAberto = true;
+      document.getElementById('modal-card-title').innerText = "Editar Cartão";
+      document.getElementById('card-id-hidden').value = card.id;
+      document.getElementById('modal-input-titulo').value = card.titulo || "";
+      document.getElementById('modal-input-desc').value = card.descricao || "";
+      document.getElementById('modal-input-agente').value = card.agente || "";
+      document.getElementById('modal-input-tags').value = (card.etiquetas || []).join(", ");
+      document.getElementById('modal-select-prio').value = (card.prioridade || "media").toLowerCase();
+      document.getElementById('btn-modal-excluir').style.display = "inline-flex";
+
+      preencherSelectColunas(card.colunaId);
+
+      // Preenche checklist
+      const container = document.getElementById('modal-checklist-container');
+      container.innerHTML = "";
+      (card.checklist || []).forEach(item => {
+        adicionarItemChecklistModal(item.texto, item.concluido);
+      });
+
+      document.getElementById('modal-card').classList.add('open');
+    }
+
+    function preencherSelectColunas(colunaSelecionada) {
+      const select = document.getElementById('modal-select-coluna');
+      select.innerHTML = "";
+      (boardData.colunas || []).forEach(col => {
+        const opt = document.createElement('option');
+        opt.value = col.id;
+        opt.innerText = col.titulo;
+        if (col.id === colunaSelecionada) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function adicionarItemChecklistModal(texto = "", concluido = false) {
+      const container = document.getElementById('modal-checklist-container');
+      const itemEl = document.createElement('div');
+      itemEl.className = 'modal-chk-item';
+      itemEl.innerHTML = `
+        <input type="checkbox" ${concluido ? 'checked' : ''}>
+        <input type="text" placeholder="Nome da sub-tarefa ou entrega..." value="${texto.replace(/"/g, '&quot;')}">
+        <button type="button" class="modal-chk-remove" onclick="this.parentElement.remove()">&times;</button>
+      `;
+      container.appendChild(itemEl);
+    }
+
+    function fecharModal() {
+      document.getElementById('modal-card').classList.remove('open');
+      modalAberto = false;
+    }
+
+    function salvarCartaoModal() {
+      const id = document.getElementById('card-id-hidden').value;
+      const titulo = document.getElementById('modal-input-titulo').value.trim();
+      if (!titulo) {
+        alert("O título do cartão é obrigatório!");
+        return;
+      }
+
+      const descricao = document.getElementById('modal-input-desc').value.trim();
+      const colunaId = document.getElementById('modal-select-coluna').value;
+      const prioridade = document.getElementById('modal-select-prio').value;
+      const agente = document.getElementById('modal-input-agente').value.trim();
+      const tagsBrutas = document.getElementById('modal-input-tags').value;
+      const etiquetas = tagsBrutas.split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+
+      // Coleta checklist
+      const chkItems = [];
+      document.querySelectorAll('#modal-checklist-container .modal-chk-item').forEach((row, i) => {
+        const chk = row.querySelector('input[type="checkbox"]').checked;
+        const txt = row.querySelector('input[type="text"]').value.trim();
+        if (txt) {
+          chkItems.push({ id: `chk-${Date.now()}-${i}`, texto: txt, concluido: chk });
+        }
+      });
+
+      if (id) {
+        // Atualiza existente
+        const card = (boardData.cartoes || []).find(c => c.id === id);
+        if (card) {
+          card.titulo = titulo;
+          card.descricao = descricao;
+          card.colunaId = colunaId;
+          card.prioridade = prioridade;
+          card.agente = agente;
+          card.etiquetas = etiquetas;
+          card.checklist = chkItems;
+        }
+      } else {
+        // Cria novo
+        const novoCard = {
+          id: `card-${Date.now()}`,
+          colunaId: colunaId,
+          titulo: titulo,
+          descricao: descricao,
+          prioridade: prioridade,
+          agente: agente,
+          etiquetas: etiquetas,
+          checklist: chkItems,
+          criadoEm: new Date().toISOString()
+        };
+        boardData.cartoes.push(novoCard);
+      }
+
+      fecharModal();
+      renderizarQuadro();
+      salvarQuadroRemoto();
+    }
+
+    function excluirCartaoModal() {
+      const id = document.getElementById('card-id-hidden').value;
+      if (!id) return;
+      if (confirm("Deseja realmente excluir este cartão?")) {
+        boardData.cartoes = (boardData.cartoes || []).filter(c => c.id !== id);
+        fecharModal();
+        renderizarQuadro();
+        salvarQuadroRemoto();
+      }
+    }
+
+    function excluirCartaoDireto(id) {
+      if (confirm("Deseja realmente excluir este cartão?")) {
+        boardData.cartoes = (boardData.cartoes || []).filter(c => c.id !== id);
+        renderizarQuadro();
+        salvarQuadroRemoto();
+      }
+    }
+
+    // Inicialização e polling não-intrusivo
+    carregarQuadro(true);
+    setInterval(() => carregarQuadro(false), 4000);
+  </script>
+</body>
+</html>

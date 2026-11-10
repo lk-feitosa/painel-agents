@@ -650,6 +650,52 @@ def localizar_projeto_ativo():
     return Path("S:/DEV/test-maestri") if Path("S:/DEV/test-maestri").exists() else RAIZ
 
 
+def obter_ou_criar_board(projeto_dir):
+    """Retorna o dicionário do board.json do projeto, criando a estrutura padrão se não existir."""
+    board_path = projeto_dir / ".kanban" / "board.json"
+    if board_path.exists():
+        try:
+            return json.loads(board_path.read_text(encoding="utf-8", errors="ignore"))
+        except Exception:
+            pass
+
+    modelo = {
+        "versao": 1,
+        "workspace": str(projeto_dir),
+        "titulo": f"Kanban: {projeto_dir.name}",
+        "colunas": [
+            {"id": "col-backlog", "titulo": "Backlog", "cor": "#64748b"},
+            {"id": "col-todo", "titulo": "A Fazer", "cor": "#38bdf8"},
+            {"id": "col-progresso", "titulo": "Em Progresso", "cor": "#fbbf24"},
+            {"id": "col-revisao", "titulo": "Revisão", "cor": "#a855f7"},
+            {"id": "col-concluido", "titulo": "Concluído", "cor": "#22c55e"},
+        ],
+        "cartoes": [],
+    }
+    try:
+        board_path.parent.mkdir(parents=True, exist_ok=True)
+        comum.gravar_atomico(board_path, json.dumps(modelo, ensure_ascii=False, indent=2))
+    except Exception:
+        pass
+    return modelo
+
+
+def salvar_board(projeto_dir, dados_board):
+    """Salva atomicamente o board.json no projeto ativo e sincroniza com o painel."""
+    board_path = projeto_dir / ".kanban" / "board.json"
+    board_path.parent.mkdir(parents=True, exist_ok=True)
+    comum.gravar_atomico(board_path, json.dumps(dados_board, ensure_ascii=False, indent=2))
+    try:
+        comum.gravar_atomico(RAIZ / "publico" / "kanban.json", json.dumps(dados_board, ensure_ascii=False, indent=2))
+    except Exception:
+        pass
+    try:
+        if ESTADO_GLOBAL.get("terminais") is not None and ESTADO_GLOBAL.get("pasta_saida") is not None:
+            ciclo_coleta(ESTADO_GLOBAL["terminais"], ESTADO_GLOBAL["pasta_saida"])
+    except Exception:
+        pass
+
+
 def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
     """Sincroniza .kanban/board.json -> publico/kanban.json e injeta missões/pendências no Painel."""
     board_path = projeto_dir / ".kanban" / "board.json"
@@ -1028,6 +1074,20 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.path in ("/kanban", "/kanban/"):
+            self.path = "/kanban.html"
+            return super().do_GET()
+
+        if self.path.startswith("/api/kanban"):
+            proj = localizar_projeto_ativo()
+            board = obter_ou_criar_board(proj)
+            corpo = json.dumps(board, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
+
         if self.path.startswith("/health"):
             proj = localizar_projeto_ativo()
             corpo = json.dumps({
@@ -1047,6 +1107,24 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.path.startswith("/api/kanban"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                dados_recebidos = json.loads(payload_bruto.decode("utf-8"))
+                proj = localizar_projeto_ativo()
+                salvar_board(proj, dados_recebidos)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b'{"ok": true}')
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
         if self.path.startswith("/refresh"):
             try:
                 ESTADO_GLOBAL["cache_portas"]["lido_em"] = 0.0
