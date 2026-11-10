@@ -29,3 +29,4 @@ Qualquer agente pode abrir, verificar ou reativar silenciosamente o painel:
    - Tabela de **Alocação Consultiva de Modelos (Team CODES)** sugerida pela Minerva;
    - **Skills em Uso no Projeto** (`maestri`, `alethe`, `painel-agents`, `frontend-ui-engineering`, `tdd-workflow`, `security-review`, etc.);
    - **Servidores MCP & Barramentos Conectados** (`ai-memory`, `kan`, `maestri-ipc`, `agent-desktop`, `rea`, `magicpath`).
+5. **Mapa Dinâmico de Arquitetura (`🗺️ Arquitetura`):** Grafo interativo em tempo real dos módulos do repositório, com estatísticas de código e arquivos, nós arrastáveis (SVG 60 FPS com pan/zoom), destaque de arquivos alterados recentemente (< 15 min com pulso luminoso) e drawer para despachar missões (refatoração, testes, segurança e docs) diretamente aos agentes conectados no Maestri.
