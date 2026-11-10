@@ -127,12 +127,11 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
         "endereco": "127.0.0.1",
         "pid": os.getpid(),
         "processo": "python (painel-agents)",
-        "servico": "Painel de Agentes & Quadro Kanban",
+        "servico": "Painel de Agentes (Telemetria & Cotas)",
         "escopo": "projeto",
         "url": f"http://localhost:{porta_painel}",
         "urls_extras": [
             {"rotulo": "Painel", "url": f"http://localhost:{porta_painel}/"},
-            {"rotulo": "Kanban", "url": f"http://localhost:{porta_painel}/kanban.html"},
         ],
         "status": "Ativo · Exclusivo",
     }
@@ -257,7 +256,6 @@ def salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_portas):
         "atualizado_em": agora_str,
         "painel_porta": porta_painel,
         "painel_url": f"http://localhost:{porta_painel}/",
-        "kanban_url": f"http://localhost:{porta_painel}/kanban.html",
         "portas_ativas": lista_portas,
     }
 
@@ -287,8 +285,6 @@ def salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_portas):
         for p in lista_portas:
             if p["escopo"] == "projeto":
                 url_md = f"[`http://localhost:{p['porta']}`](http://localhost:{p['porta']})"
-                if p["porta"] == porta_painel:
-                    url_md += f" · [Kanban](http://localhost:{p['porta']}/kanban.html)"
                 linhas_md.append(
                     f"| **`{p['porta']}`** | {p['servico']} | {url_md} | `{p['pid']}` | `{p['endereco']}` | ✅ {p['status']} |"
                 )
@@ -824,10 +820,10 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
             "detalhe": "Memória semântica isolada na raiz do projeto (`.ai-memory/` + SQLite)",
         },
         {
-            "nome": "kan / Kanban Local",
+            "nome": "kan (@kan.bn/mcp)",
             "tipo": "MCP Gestão Ágil",
             "estado": "ativo" if tem_kanban else "disponível",
-            "detalhe": f"Quadro `.kanban/board.json` sincronizado em `localhost:{porta_atual}/kanban.html`",
+            "detalhe": "Quadro Kanban oficial do projeto (kan.bn / localhost:3000)",
         },
         {
             "nome": "maestri-ipc",
