@@ -121,7 +121,7 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
 
     flags_oculto = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     portas_detectadas = {}
-    # Sempre inclui o próprio Painel & Kanban na porta ativa
+    # Sempre inclui o próprio Painel e o Kanban nas portas ativas
     portas_detectadas[porta_painel] = {
         "porta": porta_painel,
         "endereco": "127.0.0.1",
@@ -129,9 +129,24 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
         "processo": "python (painel-agents)",
         "servico": "Painel de Agentes (Telemetria & Cotas)",
         "escopo": "projeto",
-        "url": f"http://localhost:{porta_painel}",
+        "url": f"http://localhost:{porta_painel}/",
         "urls_extras": [
             {"rotulo": "Painel", "url": f"http://localhost:{porta_painel}/"},
+        ],
+        "status": "Ativo · Exclusivo",
+    }
+
+    porta_kanban = ESTADO_GLOBAL.get("porta_kanban", 3334)
+    portas_detectadas[porta_kanban] = {
+        "porta": porta_kanban,
+        "endereco": "127.0.0.1",
+        "pid": os.getpid(),
+        "processo": "python (painel-agents)",
+        "servico": "Kanban Minimalista do Projeto",
+        "escopo": "projeto",
+        "url": f"http://localhost:{porta_kanban}/",
+        "urls_extras": [
+            {"rotulo": "Kanban", "url": f"http://localhost:{porta_kanban}/"},
         ],
         "status": "Ativo · Exclusivo",
     }
@@ -251,11 +266,14 @@ def salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_portas):
         return
 
     agora_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    porta_kanban = ESTADO_GLOBAL.get("porta_kanban", 3334)
     payload_ports = {
         "projeto": projeto_dir.name,
         "atualizado_em": agora_str,
         "painel_porta": porta_painel,
         "painel_url": f"http://localhost:{porta_painel}/",
+        "kanban_porta": porta_kanban,
+        "kanban_url": f"http://localhost:{porta_kanban}/",
         "portas_ativas": lista_portas,
     }
 
@@ -1146,16 +1164,86 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-def iniciar_servidor(porta):
-    """Inicia o servidor HTTP exclusivo e multi-thread em uma thread dedicada."""
+class HandlerKanban(http.server.SimpleHTTPRequestHandler):
+    """Serve a aplicação do Kanban dedicada na porta 3334."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(RAIZ / "publico"), **kwargs)
+
+    def end_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.end_headers()
+
+    def do_GET(self):
+        # Na porta do Kanban, raiz '/' carrega o kanban.html automaticamente
+        if self.path in ("/", ""):
+            self.path = "/kanban.html"
+            return super().do_GET()
+
+        if self.path.startswith("/api/kanban"):
+            proj = localizar_projeto_ativo()
+            board = obter_ou_criar_board(proj)
+            corpo = json.dumps(board, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
+
+        super().do_GET()
+
+    def do_POST(self):
+        if self.path.startswith("/api/kanban"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                dados_recebidos = json.loads(payload_bruto.decode("utf-8"))
+                proj = localizar_projeto_ativo()
+                salvar_board(proj, dados_recebidos)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b'{"ok": true}')
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
+        self.send_response(404)
+        self.end_headers()
+
+    def log_message(self, format, *args):
+        pass
+
+
+def iniciar_servidores(porta_painel, porta_kanban):
+    """Inicia ambos os servidores HTTP em threads dedicadas multi-thread."""
+    srv_painel = None
+    srv_kanban = None
+
     try:
-        servidor = ServidorTCPExclusivo(("0.0.0.0", porta), HandlerEstatico)
-        t = threading.Thread(target=servidor.serve_forever, daemon=True)
-        t.start()
-        return servidor
+        srv_painel = ServidorTCPExclusivo(("0.0.0.0", porta_painel), HandlerEstatico)
+        t1 = threading.Thread(target=srv_painel.serve_forever, daemon=True)
+        t1.start()
     except Exception as e:
-        print(f"[-] Erro ao subir servidor HTTP na porta {porta}: {e}")
-        return None
+        print(f"[-] Erro ao subir Painel na porta {porta_painel}: {e}")
+
+    try:
+        srv_kanban = ServidorTCPExclusivo(("0.0.0.0", porta_kanban), HandlerKanban)
+        t2 = threading.Thread(target=srv_kanban.serve_forever, daemon=True)
+        t2.start()
+    except Exception as e:
+        print(f"[-] Erro ao subir Kanban na porta {porta_kanban}: {e}")
+
+    return srv_painel, srv_kanban
 
 
 def main():
@@ -1228,18 +1316,22 @@ def main():
         print("[+] Coleta única concluída.")
         return
 
-    # Inicia o servidor web local antes da primeira coleta para que o scanner de portas já veja a porta ativa
-    porta = ESTADO_GLOBAL["porta_ativa"]
-    servidor = iniciar_servidor(porta)
-    if not servidor:
-        porta = achar_porta_inteligente(porta + 1)
-        ESTADO_GLOBAL["porta_ativa"] = porta
-        servidor = iniciar_servidor(porta)
+    # Inicia os servidores web locais dedicados (Painel 3333 e Kanban 3334 com salto inteligente)
+    porta_painel = ESTADO_GLOBAL["porta_ativa"]
+    porta_kanban = achar_porta_inteligente(3334)
+    if porta_kanban == porta_painel:
+        porta_kanban = achar_porta_inteligente(porta_painel + 1)
+    ESTADO_GLOBAL["porta_kanban"] = porta_kanban
 
-    url_painel = f"http://localhost:{porta}"
-    if porta != args.porta:
-        print(f"[!] Porta {args.porta} ocupada por aplicação externa -> Realocado automaticamente para {porta}!")
-    print(f"[+] Servidor web exclusivo ativo em: {url_painel}")
+    srv_painel, srv_kanban = iniciar_servidores(porta_painel, porta_kanban)
+
+    url_painel = f"http://localhost:{porta_painel}/"
+    url_kanban = f"http://localhost:{porta_kanban}/"
+
+    if porta_painel != args.porta:
+        print(f"[!] Porta {args.porta} ocupada por aplicação externa -> Painel realocado para {porta_painel}!")
+    print(f"[+] Painel de Agentes ativo em: {url_painel}")
+    print(f"[+] Kanban Minimalista ativo em: {url_kanban}")
     print(f"[+] Mapa de portas sincronizado em: {projeto_dir / 'docs' / 'ports.md'}")
 
     dados_iniciais = ciclo_coleta(terminais, pasta_publica)
@@ -1265,7 +1357,7 @@ def main():
             d = ciclo_coleta(terminais, pasta_publica)
             r = d["resumo"]
             hora = datetime.now().strftime("%H:%M:%S")
-            print(f"[{hora}] Porta {porta} | {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
+            print(f"[{hora}] Painel {porta_painel} & Kanban {porta_kanban} | {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
     except KeyboardInterrupt:
         print("\n\n[+] Painel finalizado com sucesso.")
 
