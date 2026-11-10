@@ -68,12 +68,12 @@ html[data-layout="minimo"] #contas { display: none; }
   100% { transform: rotate(0deg) scale(1); }
 }
 .card { --radius: 16px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 20px 22px 28px; box-sizing: border-box; min-width: 0; min-height: 330px; color: var(--c-tinta);
+  padding: 20px 22px 28px; box-sizing: border-box; min-width: 0; min-height: 360px; color: var(--c-tinta);
   box-shadow: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px var(--c-fio); }
 .card-verso { --radius: 16px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
-  padding: 20px 22px 24px; box-sizing: border-box;
+  padding: 18px 22px 20px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
-.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .card-cena.virado .card { pointer-events: none; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
@@ -352,8 +352,8 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
 .tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); }
 .tip-pace { font-size: 11px; padding-top: 4px; }
-.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 8px; padding-top: 8px; }
-.card-verso footer { color: var(--apagado); font-size: 11px; margin-top: 10px; }
+.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 6px; padding-top: 6px; }
+.card-verso footer { color: var(--apagado); font-size: 11px; margin-top: 6px; padding-bottom: 4px; }
 .card-verso footer p { margin: 0 0 4px; line-height: 1.35; }
 .card-verso footer p[hidden] { display: none; }
 .tip-error { margin-bottom: 4px; }

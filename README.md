@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/avatar.jpg" alt="Minerva" width="140" />
+<span style="font-size: 72px;">🦉</span>
 
 # painel-agents
 
