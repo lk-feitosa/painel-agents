@@ -801,17 +801,28 @@
     let cardArrastadoId = null;
     let modalAberto = false;
     let ultimaModificacaoLocal = 0;
+    let ultimoJsonStr = '';
+    let ultimoScrollUsuario = 0;
+    let isArrastando = false;
 
     // Carrega o quadro da API
     async function carregarQuadro(forcar = false) {
       if (modalAberto && !forcar) return;
+      if (isArrastando && !forcar) return;
       if (Date.now() - ultimaModificacaoLocal < 2500 && !forcar) return;
+      if (Date.now() - ultimoScrollUsuario < 2000 && !forcar) return;
 
       try {
         const res = await fetch('/api/kanban?t=' + Date.now());
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         
+        const novoJsonStr = JSON.stringify(data);
+        if (novoJsonStr === ultimoJsonStr && !forcar) {
+          // Dados idênticos: não refaz o DOM e preserva o scroll intacto!
+          return;
+        }
+        ultimoJsonStr = novoJsonStr;
         boardData = data;
         renderizarQuadro();
         document.getElementById('sync-text').innerText = "Sincronizado ao vivo (.kanban/board.json)";
@@ -826,6 +837,7 @@
     // Salva o quadro completo na API
     async function salvarQuadroRemoto() {
       ultimaModificacaoLocal = Date.now();
+      ultimoJsonStr = JSON.stringify(boardData);
       try {
         const res = await fetch('/api/kanban', {
           method: 'POST',
@@ -845,6 +857,15 @@
     // Renderiza colunas e cartões
     function renderizarQuadro() {
       const stage = document.getElementById('board-stage');
+      const stageScrollLeft = stage ? stage.scrollLeft : 0;
+
+      // Salva scroll de cada coluna antes de reconstruir
+      const scrollColunas = {};
+      document.querySelectorAll('.col-cards').forEach(el => {
+        const id = el.dataset.colId;
+        if (id) scrollColunas[id] = el.scrollTop;
+      });
+
       stage.innerHTML = '';
 
       const termoBusca = (document.getElementById('filtro-busca').value || "").toLowerCase().trim();
@@ -890,6 +911,20 @@
 
         stage.appendChild(colEl);
       });
+
+      // Restaura a posição de scroll horizontal do stage
+      if (stage) stage.scrollLeft = stageScrollLeft;
+
+      // Restaura o scroll vertical de cada coluna e monitora scroll do usuário
+      document.querySelectorAll('.col-cards').forEach(el => {
+        const id = el.dataset.colId;
+        if (id && scrollColunas[id] !== undefined) {
+          el.scrollTop = scrollColunas[id];
+        }
+        el.addEventListener('scroll', () => {
+          ultimoScrollUsuario = Date.now();
+        }, { passive: true });
+      });
     }
 
     // Cria o card DOM
@@ -901,12 +936,14 @@
 
       cardEl.ondragstart = (e) => {
         cardArrastadoId = c.id;
+        isArrastando = true;
         cardEl.classList.add('dragging');
         e.dataTransfer.setData('text/plain', c.id);
       };
 
       cardEl.ondragend = () => {
         cardArrastadoId = null;
+        isArrastando = false;
         cardEl.classList.remove('dragging');
       };
 
