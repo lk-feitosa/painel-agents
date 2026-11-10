@@ -44,6 +44,80 @@ NOME_FERRAMENTA = {
     "auto": "Agente IA",
 }
 
+MAPA_ROLES_MODELOS = {
+    "minerva": ("Antigravity", "Gemini 3.8 Flash"),
+    "orquestrador": ("Antigravity", "Gemini 3.8 Flash"),
+    "back-end": ("Codex CLI", "GPT-5.6-Luna"),
+    "backend": ("Codex CLI", "GPT-5.6-Luna"),
+    "front-end": ("Claude Code", "Claude Sonnet 4.6"),
+    "frontend": ("Claude Code", "Claude Sonnet 4.6"),
+    "test": ("Codex CLI", "GPT-5.6-Luna"),
+    "qa": ("Codex CLI", "GPT-5.6-Luna"),
+    "review": ("Claude Code", "Claude Sonnet 4.6"),
+    "gatekeeper": ("Claude Code", "Claude Sonnet 4.6"),
+    "bakeneko": ("Antigravity", "Gemini 3.8 Flash"),
+}
+
+HISTORICO_LOGS = []
+ESTADO_ANTERIOR_CARTOES = {}
+
+def carregar_logs(projeto_dir):
+    """Carrega logs persistidos em .maestri/activity.json."""
+    global HISTORICO_LOGS
+    if HISTORICO_LOGS:
+        return HISTORICO_LOGS
+    arq = projeto_dir / ".maestri" / "activity.json"
+    if arq.exists():
+        try:
+            HISTORICO_LOGS = json.loads(arq.read_text(encoding="utf-8"))
+            return HISTORICO_LOGS
+        except Exception:
+            pass
+    # Logs iniciais de boas-vindas caso ainda não haja histórico
+    agora_iso = datetime.now(timezone.utc).isoformat()
+    HISTORICO_LOGS = [
+        {
+            "id": "log-init-1",
+            "timestamp": agora_iso,
+            "autor": "Minerva",
+            "acao": "Atendeu solicitação do usuário",
+            "detalhe": "Pronta para planejar, rodar grill-me e orquestrar o workspace",
+            "tipo": "info",
+        },
+        {
+            "id": "log-init-2",
+            "timestamp": agora_iso,
+            "autor": "Sistema",
+            "acao": "Painel de Agentes conectado ao Maestri",
+            "detalhe": "Monitoramento em tempo real e telemetria de cotas ativos na porta 3333",
+            "tipo": "sucesso",
+        },
+    ]
+    return HISTORICO_LOGS
+
+def registrar_log(projeto_dir, autor, acao, detalhe="", tipo="info"):
+    """Registra novo evento na memória e persiste em .maestri/activity.json."""
+    global HISTORICO_LOGS
+    agora_iso = datetime.now(timezone.utc).isoformat()
+    evento = {
+        "id": f"log-{int(time.time() * 1000)}",
+        "timestamp": agora_iso,
+        "autor": autor,
+        "acao": acao,
+        "detalhe": detalhe,
+        "tipo": tipo,
+    }
+    HISTORICO_LOGS.insert(0, evento)
+    if len(HISTORICO_LOGS) > 100:
+        HISTORICO_LOGS.pop()
+    try:
+        pasta_m = projeto_dir / ".maestri"
+        pasta_m.mkdir(parents=True, exist_ok=True)
+        (pasta_m / "activity.json").write_text(json.dumps(HISTORICO_LOGS[:50], ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+    return evento
+
 ESTADO_GLOBAL = {
     "terminais": None,
     "pasta_saida": RAIZ / "publico",
@@ -784,6 +858,23 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
                     },
                 }
 
+    global ESTADO_ANTERIOR_CARTOES
+    for c in cartoes:
+        cid = c.get("id")
+        col = c.get("colunaId")
+        titulo = c.get("titulo", "Tarefa")
+        agente = c.get("agente", "Equipe")
+        if cid and cid in ESTADO_ANTERIOR_CARTOES:
+            col_antiga = ESTADO_ANTERIOR_CARTOES[cid]
+            if col != col_antiga:
+                if col == "col-concluido":
+                    registrar_log(projeto_dir, agente or "Equipe", f"Concluiu a tarefa: {titulo}", detalhe=f"Movido de {col_antiga} para Concluído", tipo="sucesso")
+                elif col == "col-progresso":
+                    registrar_log(projeto_dir, agente or "Equipe", f"Iniciou a tarefa: {titulo}", detalhe="Em execução pelo especialista", tipo="tarefa")
+                elif col == "col-revisao":
+                    registrar_log(projeto_dir, "Reviewer", f"Enviou para revisão: {titulo}", detalhe="Aguardando validação do Reviewer", tipo="aviso")
+        ESTADO_ANTERIOR_CARTOES[cid] = col
+
     for reg in leituras:
         nome_l = reg["nome"].lower()
         if not reg.get("missao"):
@@ -796,6 +887,28 @@ def sincronizar_kanban_e_missoes(projeto_dir, leituras, quadro, agora_iso):
                     if k in nome_l or nome_l in k:
                         reg["missao"] = v["missao"]
                         break
+
+        # Fallback amigável: nunca deixa a coluna de Missão vazia com traço
+        if not reg.get("missao") or not reg["missao"].get("texto"):
+            if "minerva" in nome_l:
+                reg["missao"] = {
+                    "texto": "Orquestrando o projeto e monitorando o time",
+                    "situacao": "trabalhando",
+                    "previsao": "Ativa",
+                }
+            elif reg.get("aguardando_recrutamento"):
+                reg["missao"] = {
+                    "texto": "Aguardando recrutamento do terminal pela Minerva",
+                    "situacao": "esperando",
+                    "esperando": "Minerva",
+                    "previsao": "Recrutamento",
+                }
+            else:
+                reg["missao"] = {
+                    "texto": "Pronto para receber tarefas no Kanban",
+                    "situacao": "na fila",
+                    "previsao": "Próxima tarefa",
+                }
 
     ids_existentes = {p.get("id") for p in quadro.get("pendencias", []) if p.get("id")}
     for pa in pendencias_auto:
@@ -991,12 +1104,28 @@ def ciclo_coleta(terminais, pasta_saida):
 
         if erro:
             reg = leitor.sem_leitura(ferramenta, erro)
+            if "not found" in str(erro).lower() or "não encontrado" in str(erro).lower():
+                reg["motivo"] = "Aguardando recrutamento no Maestri"
+                reg["aguardando_recrutamento"] = True
         else:
             reg = leitor.ler_tela(texto, ferramenta)
 
         reg["nome"] = nome
         ferr_real = reg.get("ferramenta") or ferramenta
-        reg["ferramenta_nome"] = NOME_FERRAMENTA.get(ferr_real, "Agente IA")
+
+        # Dedução inteligente de modelo / ferramenta por role caso não venha da tela
+        if not reg.get("modelo") or reg.get("ferramenta_nome") in ("Agente IA", None):
+            nome_low = nome.lower()
+            for chave_role, (ferr_sugerida, mod_sugerido) in MAPA_ROLES_MODELOS.items():
+                if chave_role in nome_low:
+                    reg["ferramenta_nome"] = ferr_sugerida
+                    if not reg.get("modelo"):
+                        reg["modelo"] = mod_sugerido
+                    break
+
+        if not reg.get("ferramenta_nome"):
+            reg["ferramenta_nome"] = NOME_FERRAMENTA.get(ferr_real, "Agente IA")
+
         reg["conta"] = "lukynnhas.feitosa@gmail.com"
         reg.setdefault("prs", [])
         reg.setdefault("missao", None)
@@ -1028,6 +1157,8 @@ def ciclo_coleta(terminais, pasta_saida):
         "sem_dono": [],
     }
 
+    logs_lista = carregar_logs(projeto_dir)
+
     dados = {
         "versao": "2.2.0",
         "gerado_em": agora_iso,
@@ -1038,6 +1169,7 @@ def ciclo_coleta(terminais, pasta_saida):
         "prs": prs,
         "contas": contas_info,
         "ecossistema": ecossistema,
+        "logs": logs_lista,
         "resumo": {
             "total": len(leituras),
             "trabalhando": trabalhando,
@@ -1106,6 +1238,16 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(corpo)
             return
 
+        if self.path.startswith("/api/logs"):
+            proj = localizar_projeto_ativo()
+            logs = carregar_logs(proj)
+            corpo = json.dumps(logs, ensure_ascii=False, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(corpo)
+            return
+
         if self.path.startswith("/health"):
             proj = localizar_projeto_ativo()
             corpo = json.dumps({
@@ -1136,6 +1278,30 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self.end_headers()
                 self.wfile.write(b'{"ok": true}')
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
+        if self.path.startswith("/api/logs"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                corpo_json = json.loads(payload_bruto.decode("utf-8"))
+                proj = localizar_projeto_ativo()
+                ev = registrar_log(
+                    proj,
+                    autor=corpo_json.get("autor", "Minerva"),
+                    acao=corpo_json.get("acao", "Movimentação registrada"),
+                    detalhe=corpo_json.get("detalhe", ""),
+                    tipo=corpo_json.get("tipo", "info"),
+                )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": True, "log": ev}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

@@ -298,6 +298,34 @@
   .rodape { margin: 12px 0 0; color: var(--apagado); font-size: 11px; }
   .rodape .erro { color: var(--critico-tinta); font-weight: 600; }
 
+  /* ---------- Abas Superiores ---------- */
+  .barra-abas { display: flex; align-items: center; gap: 8px; padding: 8px 24px; background: var(--sup); border-bottom: 1px solid var(--fio); }
+  .aba-btn { background: transparent; border: 1px solid transparent; color: var(--tinta2); font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 150ms ease; font-family: inherit; }
+  .aba-btn:hover { color: var(--tinta); background: var(--sup2); }
+  .aba-btn.ativa { background: var(--sup2); color: var(--tinta); border-color: var(--fio-forte); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .badge-log { font-size: 10px; background: var(--fio-forte); color: var(--tinta); padding: 1px 6px; border-radius: 999px; }
+
+  /* ---------- Timeline de Logs ---------- */
+  .timeline-logs { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+  .log-item { background: var(--sup2); border: 1px solid var(--fio); border-radius: 8px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 12px; transition: transform 120ms ease; }
+  .log-item:hover { transform: translateX(2px); border-color: var(--fio-forte); }
+  .log-icon { font-size: 18px; line-height: 1; margin-top: 2px; }
+  .log-corpo { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .log-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .log-autor { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--tinta); }
+  .log-autor.minerva { background: rgba(188, 140, 255, 0.18); color: #d2a8ff; }
+  .log-autor.backend { background: rgba(88, 166, 255, 0.18); color: #79c0ff; }
+  .log-autor.frontend { background: rgba(63, 185, 80, 0.18); color: #7ee787; }
+  .log-autor.qa { background: rgba(227, 179, 65, 0.18); color: #e3b341; }
+  .log-autor.reviewer { background: rgba(248, 81, 73, 0.18); color: #ff7b72; }
+  .log-autor.kanban { background: rgba(56, 189, 248, 0.18); color: #38bdf8; }
+  .log-hora { font-size: 11px; color: var(--apagado); font-variant-numeric: tabular-nums; }
+  .log-acao { font-size: 13px; font-weight: 600; color: var(--tinta); }
+  .log-detalhe { font-size: 11.5px; color: var(--tinta2); line-height: 1.4; }
+  .log-filtros { display: flex; align-items: center; gap: 6px; padding: 10px 16px 0; flex-wrap: wrap; }
+  .filtro-chip { background: var(--sup2); border: 1px solid var(--fio); color: var(--tinta2); font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; transition: all 120ms; }
+  .filtro-chip.ativo { background: var(--fio-forte); color: #fff; border-color: var(--fio-forte); }
+
   /* ---------- Ecossistema do Projeto: Skills, MCPs e Sugestão de Modelos ---------- */
   #ecossistema .eco-sub { margin: 0; padding: 6px 16px 4px; font-size: 11px; font-weight: 500; color: var(--apagado); text-transform: uppercase; letter-spacing: .5px; border-top: 1px solid var(--fio); }
   #ecossistema .eco-sub:first-child { border-top: 0; }
@@ -340,9 +368,41 @@
   </div>
 </header>
 
+<nav class="barra-abas" id="barra-abas" aria-label="Navegação do painel">
+  <button class="aba-btn ativa" id="btn-aba-geral" type="button" onclick="alternarAbaPainel('geral')">📊 Visão Geral</button>
+  <button class="aba-btn" id="btn-aba-logs" type="button" onclick="alternarAbaPainel('logs')">
+    📜 Logs de Atividades <span class="badge-log" id="badge-log-count">0</span>
+  </button>
+</nav>
+
 <div class="alerta" id="alerta" role="alert" hidden>
   <div class="sinal" aria-hidden="true">▲</div>
   <div><strong id="alerta-titulo"></strong><span id="alerta-texto"></span></div>
+</div>
+
+<!-- View de Logs de Atividades -->
+<div id="view-logs" style="display: none; padding: 20px 24px; max-width: 1400px; margin: 0 auto; width: 100%;">
+  <section class="cartao" style="width: 100%;">
+    <div class="cabeca">
+      <h2>Movimentações &amp; Logs em Tempo Real <span class="conta" id="logs-conta">0</span></h2>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="nota">Atualizado automaticamente</span>
+      </div>
+    </div>
+    <div class="log-filtros">
+      <span style="font-size:11px; color:var(--apagado); margin-right:4px;">Filtrar:</span>
+      <button class="filtro-chip ativo" data-autor="todos" onclick="filtrarLogsAutor('todos', this)">Todos</button>
+      <button class="filtro-chip" data-autor="minerva" onclick="filtrarLogsAutor('minerva', this)">🦉 Minerva</button>
+      <button class="filtro-chip" data-autor="kanban" onclick="filtrarLogsAutor('kanban', this)">📋 Kanban</button>
+      <button class="filtro-chip" data-autor="backend" onclick="filtrarLogsAutor('backend', this)">💻 Back-End</button>
+      <button class="filtro-chip" data-autor="frontend" onclick="filtrarLogsAutor('frontend', this)">🎨 Front-End</button>
+      <button class="filtro-chip" data-autor="qa" onclick="filtrarLogsAutor('qa', this)">🧪 QA</button>
+      <button class="filtro-chip" data-autor="reviewer" onclick="filtrarLogsAutor('reviewer', this)">🔍 Reviewer</button>
+    </div>
+    <div class="timeline-logs" id="timeline-logs">
+      <!-- Gerado via JS -->
+    </div>
+  </section>
 </div>
 
 <main id="principal">
@@ -598,14 +658,17 @@ var ROTULO_CI = { passou: ["✓", "passou"], rodando: ["◐", "rodando"], falhou
 
 function celAgente(v) {     /* nome e modelo; conta, plano e e-mail ficam nos cards de cota */
   var modelo = v.modelo ? String(v.modelo).replace(/^[\s\u2500-\u257f-]+/, "").replace(/\s*\([^)]*\)\s*$/, "") + (v.esforco && v.ferramenta === "codex" ? " " + v.esforco : "") : "";
-  var dica = [v.ferramenta_nome, modelo, v.esforco ? "esforço " + v.esforco : "", v.conta].filter(Boolean).join(" · ");
+  var ferr = v.ferramenta_nome || "Agente IA";
+  var dica = [ferr, modelo, v.esforco ? "esforço " + v.esforco : "", v.conta].filter(Boolean).join(" · ");
+  var subtitulo = [ferr, modelo].filter(Boolean).join(" · ") || ferr;
   return '<div class="nome" title="' + esc(dica) + '">' + esc(v.nome) + "</div>" +
-         '<div class="sub" title="' + esc(dica) + '">' + esc([v.ferramenta_nome, modelo].filter(Boolean).join(" · ")) + "</div>";
+         '<div class="sub" title="' + esc(dica) + '">' + esc(subtitulo) + "</div>";
 }
 function celEstado(v) {
   var sub = "";
   if (v.estado === "trabalhando" && v.trabalhando_ha) sub = "há " + v.trabalhando_ha;
   else if (v.estado === "ocioso" && v.ultima_resposta_as) sub = "desde " + v.ultima_resposta_as;
+  else if (v.aguardando_recrutamento) sub = "aguardando start";
   else if (v.estado === "indeterminado") sub = "a tela não diz";
   return '<span class="estado ' + esc(v.estado) + '"><i></i>' + esc(ROTULO_ESTADO[v.estado] || v.estado) + "</span>" +
          (sub ? '<div class="sub num" style="padding-left:15px">' + esc(sub) + "</div>" : "");
@@ -614,7 +677,7 @@ function ehVoce(quem) { return /^(o\s+)?(cau[eê]|voc[eê])\b/i.test(quem || "")
 function textoSituacao(m) { return m.situacao === "esperando" ? "esperando " + (m.esperando || "") : m.situacao; }
 function celMissao(v) {
   var m = v.missao;
-  if (!m || (!m.texto && !m.situacao)) return '<span class="vazio">—</span>';
+  if (!m || (!m.texto && !m.situacao)) return '<span class="vazio">Aguardando demanda no Kanban</span>';
   var voce = m.situacao === "esperando" && ehVoce(m.esperando);
   var ficha = m.situacao
     ? '<span class="situacao' + (voce ? " voce" : "") + '">' + (voce ? "▸ " : "") + esc(textoSituacao(m)) + "</span>"
@@ -661,7 +724,9 @@ function ultimaFrase(fala) {
 }
 function celAgora(v) {
   var html;
-  if (v.leitura !== "ok") {
+  if (v.aguardando_recrutamento || (v.motivo && /not found|não encontrado/i.test(v.motivo))) {
+    html = '<div class="agora motivo duas" style="color:var(--aviso); font-weight:550;">⚪ Terminal aguardando recrutamento no Maestri</div>';
+  } else if (v.leitura !== "ok") {
     html = '<div class="agora motivo duas">' + esc(v.motivo || "tela não lida") + "</div>";
   } else if (v.estado === "trabalhando") {
     html = v.atividade
@@ -1087,6 +1152,7 @@ function desenhar() {
   desenharPrecisa(agoraS);
   desenharPortas();
   desenharEcossistema();
+  desenharLogs();
   var problemas = (dados.quadro.erro ? ["▲ " + esc(dados.quadro.erro)] : []).concat(problemasDaSonda());
   por(el("rodape"), problemas.length ? '<span class="erro">' + problemas.join(" · ") + "</span>" : "");
   el("rodape").hidden = !problemas.length;
@@ -1165,6 +1231,103 @@ function desenharEcossistema() {
   }
 
   por(el("ecossistema-corpo"), html);
+}
+
+/* ---------- abas e timeline de logs ---------- */
+var abaPainelAtiva = "geral";
+var filtroAutorLog = "todos";
+
+window.alternarAbaPainel = function (aba) {
+  abaPainelAtiva = aba;
+  var btnGeral = el("btn-aba-geral");
+  var btnLogs = el("btn-aba-logs");
+  var viewPrincipal = el("principal");
+  var viewLogs = el("view-logs");
+
+  if (btnGeral) btnGeral.classList.toggle("ativa", aba === "geral");
+  if (btnLogs) btnLogs.classList.toggle("ativa", aba === "logs");
+
+  if (aba === "geral") {
+    if (viewPrincipal) viewPrincipal.style.display = "block";
+    if (viewLogs) viewLogs.style.display = "none";
+  } else if (aba === "logs") {
+    if (viewPrincipal) viewPrincipal.style.display = "none";
+    if (viewLogs) viewLogs.style.display = "block";
+    desenharLogs();
+  }
+};
+
+window.filtrarLogsAutor = function (autor, btn) {
+  filtroAutorLog = autor.toLowerCase();
+  document.querySelectorAll(".filtro-chip").forEach(function (b) { b.classList.remove("ativo"); });
+  if (btn) btn.classList.add("ativo");
+  desenharLogs();
+};
+
+function iconeDoLog(tipo, autor) {
+  if (tipo === "sucesso") return "✅";
+  if (tipo === "aviso") return "⚠️";
+  if (tipo === "erro") return "❌";
+  if (/minerva/i.test(autor)) return "🦉";
+  if (/kanban/i.test(autor)) return "📋";
+  if (/back-end|backend/i.test(autor)) return "💻";
+  if (/front-end|frontend/i.test(autor)) return "🎨";
+  if (/test|qa/i.test(autor)) return "🧪";
+  if (/review|auditor/i.test(autor)) return "🔍";
+  return "⚡";
+}
+
+function classeAutorLog(autor) {
+  var a = (autor || "").toLowerCase();
+  if (a.indexOf("minerva") !== -1) return "minerva";
+  if (a.indexOf("back") !== -1) return "backend";
+  if (a.indexOf("front") !== -1) return "frontend";
+  if (a.indexOf("qa") !== -1 || a.indexOf("test") !== -1) return "qa";
+  if (a.indexOf("review") !== -1) return "reviewer";
+  if (a.indexOf("kanban") !== -1) return "kanban";
+  return "";
+}
+
+function desenharLogs() {
+  var lista = (dados && Array.isArray(dados.logs)) ? dados.logs : [];
+  var badgeCount = el("badge-log-count");
+  var contaLogs = el("logs-conta");
+  if (badgeCount) badgeCount.textContent = String(lista.length);
+  if (contaLogs) contaLogs.textContent = String(lista.length);
+
+  var timeline = el("timeline-logs");
+  if (!timeline) return;
+
+  var filtrados = lista.filter(function (item) {
+    if (filtroAutorLog === "todos") return true;
+    var aut = (item.autor || "").toLowerCase();
+    return aut.indexOf(filtroAutorLog) !== -1;
+  });
+
+  if (filtrados.length === 0) {
+    timeline.innerHTML = '<div style="text-align:center; padding:30px; color:var(--apagado); font-size:13px;">Nenhum evento registrado para este filtro.</div>';
+    return;
+  }
+
+  var html = "";
+  filtrados.forEach(function (log) {
+    var hora = log.timestamp ? new Date(log.timestamp).toLocaleTimeString("pt-BR") : "";
+    var icone = iconeDoLog(log.tipo, log.autor);
+    var clsAutor = classeAutorLog(log.autor);
+    html += '<div class="log-item">' +
+              '<div class="log-icon">' + icone + '</div>' +
+              '<div class="log-corpo">' +
+                '<div class="log-topo">' +
+                  '<span class="log-autor ' + clsAutor + '">' + esc(log.autor) + '</span>' +
+                  '<span class="log-hora">' + esc(hora) + '</span>' +
+                '</div>' +
+                '<div class="log-acao">' + esc(log.acao) + '</div>' +
+                (log.detalhe ? '<div class="log-detalhe">' + esc(log.detalhe) + '</div>' : '') +
+              '</div>' +
+            '</div>';
+  });
+
+  timeline.innerHTML = html;
 }
 
 /* ---------- leitura dos dados ---------- */
