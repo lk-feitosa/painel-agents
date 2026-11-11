@@ -35,14 +35,14 @@ html[data-tema="escuro"] #contas { --c-alerta: #c98a52; }
 #contas .aviso-contas { padding: 0 16px 12px; color: var(--apagado); font-size: 11px; }
 #contas .aviso-contas[hidden] { display: none; }
 #contas .aviso-contas .erro { color: var(--critico-tinta); }
-.legenda-faixas { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 11px; color: var(--apagado);
-  margin: 0 4px 14px; padding: 7px 12px; background: color-mix(in srgb, var(--c-sup) 80%, transparent);
-  border: 1px solid var(--c-fio); border-radius: 8px; line-height: 1.4; }
-.legenda-item { display: inline-flex; align-items: center; gap: 6px; }
-.legenda-cor { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+.legenda-faixas { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 10.5px; color: var(--apagado);
+  margin: 0 2px 8px; padding: 5px 10px; background: color-mix(in srgb, var(--c-sup) 80%, transparent);
+  border: 1px solid var(--c-fio); border-radius: 6px; line-height: 1.35; }
+.legenda-item { display: inline-flex; align-items: center; gap: 5px; }
+.legenda-cor { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 .legenda-cor.faixa-tempo { background: var(--c-decorrido); border: 1px solid var(--c-borda); }
 .legenda-cor.faixa-consumo { background: var(--c-cheio); }
-.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; margin: 0; padding: 0 2px; }
+.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; margin: 0; padding: 0 2px; }
 #contas.cartao { background: none; border-radius: 0; }
 #contas .aviso-contas { padding-left: 4px; padding-right: 4px; }
 .contas-grade[hidden] { display: none; }
@@ -67,11 +67,11 @@ html[data-layout="minimo"] #contas { display: none; }
   85% { transform: rotate(calc(var(--giro, 0deg) * 0.02)) scale(1); }
   100% { transform: rotate(0deg) scale(1); }
 }
-.card { --radius: 16px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 20px 22px 28px; box-sizing: border-box; min-width: 0; min-height: 360px; color: var(--c-tinta);
-  box-shadow: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 16px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
-  padding: 18px 22px 20px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
+.card { --radius: 8px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
+  padding: 10px 12px 10px; box-sizing: border-box; min-width: 0; min-height: auto; color: var(--c-tinta);
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.1), 0px 0px 0px 1px var(--c-fio); }
+.card-verso { --radius: 8px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+  padding: 10px 12px 10px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
 .verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
 .card-cena.virado .card { pointer-events: none; }
@@ -127,41 +127,41 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
   .email-pixelado::before { background-position: calc(var(--i0) / (var(--quadros) - 1) * 100%) 0; opacity: calc(1 - (var(--q) - var(--i0))); }
   .email-pixelado::after { display: block; background-position: calc(min(var(--i0) + 1, var(--quadros) - 1) / (var(--quadros) - 1) * 100%) 0; opacity: calc(var(--q) - var(--i0)); }
 }
-.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
 .card .identity { min-width: 0; flex: 1; }
-.card-eyebrow { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--c-apagado); margin: 0 0 4px; }
-.card-title { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 17px; font-weight: 650; letter-spacing: -.3px; line-height: 1.25; margin: 0 0 3px;
+.card-eyebrow { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--c-apagado); margin: 0 0 1px; }
+.card-title { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13.5px; font-weight: 600; letter-spacing: -.2px; line-height: 1.2; margin: 0 0 1px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
-.card .account-label, .card .quem-usa { margin: 0; color: var(--c-apagado); font-size: 11px; line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .account-label, .card .quem-usa { margin: 0; color: var(--c-apagado); font-size: 10.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .quem-usa { color: var(--tinta2); }
-.model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 3px 9px; font-size: 10px; line-height: 1.35;
+.model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 1px 6px; font-size: 9.5px; line-height: 1.25;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; max-width: 50%; }
 .quota { position: relative; }
-.quota + .quota { margin-top: 20px; }
-.quota.weekly { margin-bottom: 12px; }
-.quota.weekly + .quota.primary { margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--c-fio); }
-.quota-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; font-variant-numeric: tabular-nums; }
-.quota-label { margin-right: auto; font-size: 12.5px; font-weight: 590; }
-.quota .used { font-size: 18px; font-weight: 680; letter-spacing: -.4px; line-height: 1.15; }
+.quota + .quota { margin-top: 4px; }
+.quota.weekly { margin-bottom: 2px; }
+.quota.weekly + .quota.primary { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--c-fio); }
+.quota-heading { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+.quota-label { margin-right: auto; font-size: 11px; font-weight: 550; }
+.quota .used { font-size: 14px; font-weight: 650; letter-spacing: -.2px; line-height: 1.1; }
 .lift-number { display: inline-flex; position: relative; font-variant-numeric: tabular-nums; }
 .lift-place { display: inline-grid; position: relative; white-space: pre; }
 .lift-digit { width: 1ch; }
 .lift-layer { grid-area: 1 / 1; transform: translateY(var(--lift-y, 0%)); opacity: var(--lift-opacity, 1);
   transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1), opacity 220ms cubic-bezier(0.23, 1, 0.32, 1); }
 .lift-removed { position: absolute; top: 0; pointer-events: none; }
-.quota .reopens { font-size: 11px; color: var(--c-apagado); white-space: nowrap; }
-.weekly .quota-heading { margin-bottom: 6px; }
-.weekly .quota-label, .weekly .used { font-size: 12px; font-weight: 570; letter-spacing: 0; }
+.quota .reopens { font-size: 10px; color: var(--c-apagado); white-space: nowrap; }
+.weekly .quota-heading { margin-bottom: 2px; }
+.weekly .quota-label, .weekly .used { font-size: 11px; font-weight: 550; letter-spacing: 0; }
 /* A cápsula: o uso (a barra na cor da ferramenta) e o tempo (uma faixa fina e neutra, preenchida até a agulha), separados por
    um fio, dentro de um contorno de altura fixa. O uso fica em cima; quando o decorrido passa do usado (.tempo-acima), só as duas
    faixas, o fio e o rótulo "Tempo" trocam de lugar. No realce (mouse com espera, foco do teclado) a faixa cresce, aparecem a hora
    ou o dia de cada corte e a pílula do tempo decorrido; os textos seguintes descem com a mesma transição. */
-.quota .quota-heading { margin-bottom: 4px; }
-.weekly .quota-heading { margin-bottom: 3px; }
-.visual { --slots: 5; --barra: 8px; --faixa-c: 4px; --faixa-d: 18px; --faixa: var(--faixa-c); --pilula: 16px; --meia-pilula: 66px; --meia-compacta: 31px; --folga-pilula: 2px;
+.quota .quota-heading { margin-bottom: 2px; }
+.weekly .quota-heading { margin-bottom: 2px; }
+.visual { --slots: 5; --barra: 7px; --faixa-c: 3px; --faixa-d: 14px; --faixa: var(--faixa-c); --pilula: 14px; --meia-pilula: 56px; --meia-compacta: 28px; --folga-pilula: 2px;
   --cap-d: calc(var(--barra) + 1px + var(--faixa-d) + 2px); --x: calc(48px + 1px + (100% - 48px - 2px) * var(--t, 0) / 100);
-  position: relative; z-index: 1; margin: 0 0 -1px; height: calc(var(--barra) + 1px + var(--faixa) + 2px + 6px);
+  position: relative; z-index: 1; margin: 0 0 -1px; height: calc(var(--barra) + 1px + var(--faixa) + 2px + 4px);
   transition: height 220ms cubic-bezier(.23, 1, .32, 1); }
 .weekly .visual { --slots: 7; --barra: 5px; --faixa-d: 16px; --meia-pilula: 84px; --meia-compacta: 46px; }
 .visual::before { content: ""; position: absolute; left: 0; right: 0; top: -3px; bottom: -3px; }
@@ -253,8 +253,8 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
   to { left: clamp(calc(48px + var(--meia-compacta) + var(--folga-pilula)), var(--x), calc(100% - var(--meia-compacta) - var(--folga-pilula))); }
 }
 /* Realce permanente por padrão: o usuário vê a régua de horas e o decorrido sempre abertos */
-.visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 3px + var(--pilula) + 6px); margin-bottom: 4px; }
-.weekly .visual { height: calc(3px + var(--cap-d) + 3px + var(--pilula) + 6px); margin-bottom: 8px; }
+.visual { --faixa: var(--faixa-d); height: calc(3px + var(--cap-d) + 2px + var(--pilula) + 2px); margin-bottom: 2px; }
+.weekly .visual { height: calc(3px + var(--cap-d) + 2px + var(--pilula) + 2px); margin-bottom: 2px; }
 .cap { --slot-gap: 0px; background: color-mix(in srgb, var(--c-sup) 72%, transparent);
   -webkit-backdrop-filter: blur(10px) saturate(1.25); backdrop-filter: blur(10px) saturate(1.25); border-color: var(--c-borda); box-shadow: var(--sombra-sm); }
 .marcas { opacity: 0.85; }

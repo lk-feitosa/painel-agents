@@ -24,7 +24,7 @@ import sys
 import threading
 import time
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # Adiciona a pasta lib/ ao sys.path

@@ -305,25 +305,59 @@
   .aba-btn.ativa { background: var(--sup2); color: var(--tinta); border-color: var(--fio-forte); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
   .badge-log { font-size: 10px; background: var(--fio-forte); color: var(--tinta); padding: 1px 6px; border-radius: 999px; }
 
-  /* ---------- Timeline de Logs ---------- */
-  .timeline-logs { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
-  .log-item { background: var(--sup2); border: 1px solid var(--fio); border-radius: 8px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 12px; transition: transform 120ms ease; }
-  .log-item:hover { transform: translateX(2px); border-color: var(--fio-forte); }
-  .log-icon { font-size: 18px; line-height: 1; margin-top: 2px; }
-  .log-corpo { flex: 1; display: flex; flex-direction: column; gap: 3px; }
-  .log-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .log-autor { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 7px; border-radius: 4px; background: rgba(255,255,255,0.06); color: var(--tinta); }
-  .log-autor.minerva { background: rgba(188, 140, 255, 0.18); color: #d2a8ff; }
-  .log-autor.backend { background: rgba(88, 166, 255, 0.18); color: #79c0ff; }
-  .log-autor.frontend { background: rgba(63, 185, 80, 0.18); color: #7ee787; }
-  .log-autor.qa { background: rgba(227, 179, 65, 0.18); color: #e3b341; }
-  .log-autor.reviewer { background: rgba(248, 81, 73, 0.18); color: #ff7b72; }
-  .log-autor.kanban { background: rgba(56, 189, 248, 0.18); color: #38bdf8; }
-  .log-hora { font-size: 11px; color: var(--apagado); font-variant-numeric: tabular-nums; }
-  .log-acao { font-size: 13px; font-weight: 600; color: var(--tinta); }
-  .log-detalhe { font-size: 11.5px; color: var(--tinta2); line-height: 1.4; }
-  .log-filtros { display: flex; align-items: center; gap: 6px; padding: 10px 16px 0; flex-wrap: wrap; }
-  .filtro-chip { background: var(--sup2); border: 1px solid var(--fio); color: var(--tinta2); font-size: 11px; padding: 3px 8px; border-radius: 12px; cursor: pointer; transition: all 120ms; }
+  /* ---------- Console de Logs (Terminal Minimalista) ---------- */
+  .timeline-logs {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 14px;
+    background: #090d13;
+    border: 1px solid var(--fio);
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 11.5px;
+    max-height: 540px;
+    overflow-y: auto;
+  }
+  .log-line {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    line-height: 1.5;
+    padding: 2px 4px;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+  .log-line:hover { background: rgba(255, 255, 255, 0.04); }
+  .log-time { color: #6e7681; font-variant-numeric: tabular-nums; flex-shrink: 0; font-size: 11px; }
+  .log-tag {
+    font-weight: 600;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+  .log-tag.minerva { background: rgba(188, 140, 255, 0.15); color: #d2a8ff; }
+  .log-tag.backend { background: rgba(88, 166, 255, 0.15); color: #79c0ff; }
+  .log-tag.frontend { background: rgba(63, 185, 80, 0.15); color: #7ee787; }
+  .log-tag.qa { background: rgba(227, 179, 65, 0.15); color: #e3b341; }
+  .log-tag.reviewer { background: rgba(248, 81, 73, 0.15); color: #ff7b72; }
+  .log-tag.kanban { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+  .log-level {
+    font-size: 10px;
+    color: #8b949e;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .log-level.erro { color: #f85149; font-weight: 600; }
+  .log-level.aviso { color: #d29922; font-weight: 600; }
+  .log-level.sucesso { color: #3fb950; }
+  .log-msg { color: #e6edf3; flex: 1; }
+  .log-extra { color: #8b949e; margin-left: 6px; font-size: 11px; }
+  .log-filtros { display: flex; align-items: center; gap: 6px; padding: 10px 16px 8px; flex-wrap: wrap; }
+  .filtro-chip { background: var(--sup2); border: 1px solid var(--fio); color: var(--tinta2); font-size: 11px; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: all 120ms; }
   .filtro-chip.ativo { background: var(--fio-forte); color: #fff; border-color: var(--fio-forte); }
 
   /* ---------- Ecossistema do Projeto: Skills, MCPs e Sugestão de Modelos ---------- */
@@ -401,15 +435,12 @@
 </header>
 
 <nav class="barra-abas" id="barra-abas" aria-label="Navegação do painel">
-  <button class="aba-btn ativa" id="btn-aba-geral" type="button" onclick="alternarAbaPainel('geral')">📊 Visão Geral</button>
+  <button class="aba-btn ativa" id="btn-aba-geral" type="button" onclick="alternarAbaPainel('geral')">Visão Geral</button>
   <button class="aba-btn" id="btn-aba-logs" type="button" onclick="alternarAbaPainel('logs')">
-    📜 Logs de Atividades <span class="badge-log" id="badge-log-count">0</span>
+    Logs <span class="badge-log" id="badge-log-count">0</span>
   </button>
   <button class="aba-btn" id="btn-aba-grafo" type="button" onclick="alternarAbaPainel('grafo')">
-    🗺️ Arquitetura <span class="badge-log" id="badge-grafo-count">0</span>
-  </button>
-  <button class="aba-btn" id="btn-aba-kanban" type="button" onclick="alternarAbaPainel('kanban')" title="Acessa o Kanban Minimalista na porta 3334">
-    🦉 Kanban (:3334)
+    Arquitetura <span class="badge-log" id="badge-grafo-count">0</span>
   </button>
 </nav>
 
@@ -422,20 +453,20 @@
 <div id="view-logs" style="display: none; padding: 20px 24px; max-width: 1400px; margin: 0 auto; width: 100%;">
   <section class="cartao" style="width: 100%;">
     <div class="cabeca">
-      <h2>Movimentações &amp; Logs em Tempo Real <span class="conta" id="logs-conta">0</span></h2>
+      <h2>Console de Atividades &amp; Logs <span class="conta" id="logs-conta">0</span></h2>
       <div style="display:flex; align-items:center; gap:8px;">
-        <span class="nota">Atualizado automaticamente</span>
+        <span class="nota">Console em tempo real</span>
       </div>
     </div>
     <div class="log-filtros">
       <span style="font-size:11px; color:var(--apagado); margin-right:4px;">Filtrar:</span>
       <button class="filtro-chip ativo" data-autor="todos" onclick="filtrarLogsAutor('todos', this)">Todos</button>
-      <button class="filtro-chip" data-autor="minerva" onclick="filtrarLogsAutor('minerva', this)">🦉 Minerva</button>
-      <button class="filtro-chip" data-autor="kanban" onclick="filtrarLogsAutor('kanban', this)">📋 Kanban</button>
-      <button class="filtro-chip" data-autor="backend" onclick="filtrarLogsAutor('backend', this)">💻 Back-End</button>
-      <button class="filtro-chip" data-autor="frontend" onclick="filtrarLogsAutor('frontend', this)">🎨 Front-End</button>
-      <button class="filtro-chip" data-autor="qa" onclick="filtrarLogsAutor('qa', this)">🧪 QA</button>
-      <button class="filtro-chip" data-autor="reviewer" onclick="filtrarLogsAutor('reviewer', this)">🔍 Reviewer</button>
+      <button class="filtro-chip" data-autor="minerva" onclick="filtrarLogsAutor('minerva', this)">Minerva</button>
+      <button class="filtro-chip" data-autor="kanban" onclick="filtrarLogsAutor('kanban', this)">Kanban</button>
+      <button class="filtro-chip" data-autor="backend" onclick="filtrarLogsAutor('backend', this)">Back-End</button>
+      <button class="filtro-chip" data-autor="frontend" onclick="filtrarLogsAutor('frontend', this)">Front-End</button>
+      <button class="filtro-chip" data-autor="qa" onclick="filtrarLogsAutor('qa', this)">QA</button>
+      <button class="filtro-chip" data-autor="reviewer" onclick="filtrarLogsAutor('reviewer', this)">Reviewer</button>
     </div>
     <div class="timeline-logs" id="timeline-logs">
       <!-- Gerado via JS -->
@@ -453,13 +484,13 @@
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
         <button class="filtro-chip ativo" data-cat="todas" onclick="filtrarCategoriaGrafo('todas', this)">Todas</button>
-        <button class="filtro-chip" data-cat="core" onclick="filtrarCategoriaGrafo('core', this)">⚙️ Core</button>
-        <button class="filtro-chip" data-cat="api" onclick="filtrarCategoriaGrafo('api', this)">⚡ API</button>
-        <button class="filtro-chip" data-cat="ui" onclick="filtrarCategoriaGrafo('ui', this)">🎨 UI</button>
-        <button class="filtro-chip" data-cat="database" onclick="filtrarCategoriaGrafo('database', this)">🗄️ Dados</button>
-        <button class="filtro-chip" data-cat="agents" onclick="filtrarCategoriaGrafo('agents', this)">🤖 Agentes</button>
-        <button class="filtro-chip" data-cat="docs" onclick="filtrarCategoriaGrafo('docs', this)">📄 Docs</button>
-        <button class="filtro-chip" type="button" onclick="recarregarGrafo()" title="Recarregar análise">🔄</button>
+        <button class="filtro-chip" data-cat="core" onclick="filtrarCategoriaGrafo('core', this)">Core</button>
+        <button class="filtro-chip" data-cat="api" onclick="filtrarCategoriaGrafo('api', this)">API</button>
+        <button class="filtro-chip" data-cat="ui" onclick="filtrarCategoriaGrafo('ui', this)">UI</button>
+        <button class="filtro-chip" data-cat="database" onclick="filtrarCategoriaGrafo('database', this)">Dados</button>
+        <button class="filtro-chip" data-cat="agents" onclick="filtrarCategoriaGrafo('agents', this)">Agentes</button>
+        <button class="filtro-chip" data-cat="docs" onclick="filtrarCategoriaGrafo('docs', this)">Docs</button>
+        <button class="filtro-chip" type="button" onclick="recarregarGrafo()" title="Recarregar análise">Recarregar</button>
       </div>
     </div>
 
@@ -492,7 +523,7 @@
       <div class="grafo-drawer" id="grafo-drawer">
         <div class="grafo-drawer-header">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;" id="drawer-icone">📁</span>
+            <span style="font-size:11px; font-weight:700; color:var(--apagado);" id="drawer-icone">MOD</span>
             <div>
               <strong style="font-size:13px; color:var(--tinta);" id="drawer-titulo">Selecione um Módulo</strong>
               <div style="font-size:10px; color:var(--apagado);" id="drawer-subtitulo">Clique em qualquer nó do mapa</div>
@@ -521,19 +552,19 @@
             <div style="display:flex; flex-direction:column; gap:4px;">
               <label style="font-size:10px; color:var(--tinta2);">Agente:</label>
               <select id="drawer-select-agente" style="background:var(--sup); border:1px solid var(--fio); color:var(--tinta); padding:4px 8px; border-radius:4px; font-size:11px; font-family:inherit;">
-                <option value="Minerva">🦉 Minerva (Orquestradora)</option>
-                <option value="Claude Code">🟣 Claude Code (Front / Review)</option>
-                <option value="Codex">🟢 Codex (Back-End / QA)</option>
+                <option value="Minerva">Minerva (Orquestradora)</option>
+                <option value="Claude Code">Claude Code (Front / Review)</option>
+                <option value="Codex">Codex (Back-End / QA)</option>
               </select>
             </div>
 
             <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
               <label style="font-size:10px; color:var(--tinta2);">Ação Rápida:</label>
               <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
-                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('refatorar')">⚡ Refatorar</button>
-                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('testes')">🧪 Criar Testes</button>
-                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('seguranca')">🛡️ Auditar</button>
-                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('documentar')">📝 Documentar</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('refatorar')">Refatorar</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('testes')">Criar Testes</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('seguranca')">Auditar</button>
+                <button class="grafo-btn-acao" type="button" onclick="setarPromptPredefinido('documentar')">Documentar</button>
               </div>
             </div>
 
@@ -558,11 +589,6 @@
       </div>
     </div>
   </section>
-</div>
-
-<!-- View do Kanban Embutido (:3334) -->
-<div id="view-kanban" style="display: none; width: 100%; height: calc(100vh - 110px); padding: 8px 16px;">
-  <iframe id="kanban-iframe" src="" style="width: 100%; height: 100%; border: 1px solid var(--fio); border-radius: 8px; background: #0d1117;" title="Kanban (:3334)"></iframe>
 </div>
 
 <main id="principal">
@@ -604,7 +630,7 @@
       <div class="legenda-faixas">
         <span class="legenda-item"><span class="legenda-cor faixa-tempo"></span> <b>Faixa cinza com agulha:</b> Tempo decorrido da janela (5h ou semanal)</span>
         <span class="legenda-item"><span class="legenda-cor faixa-consumo"></span> <b>Faixa colorida:</b> Cota consumida (se a barra estiver atrás da agulha, consumo está com folga)</span>
-        <span class="legenda-item">💡 Clique no card para girar e ver o verso detalhado</span>
+        <span class="legenda-item">Clique no card para girar e ver o verso detalhado</span>
       </div>
       <p class="aviso-contas" hidden></p>
       <div class="contas-grade" id="contas-grade"></div>
@@ -885,7 +911,7 @@ function ultimaFrase(fala) {
 function celAgora(v) {
   var html;
   if (v.aguardando_recrutamento || (v.motivo && /not found|não encontrado/i.test(v.motivo))) {
-    html = '<div class="agora motivo duas" style="color:var(--aviso); font-weight:550;">⚪ Terminal aguardando recrutamento no Maestri</div>';
+    html = '<div class="agora motivo duas" style="color:var(--aviso); font-weight:550;">Terminal aguardando recrutamento no Maestri</div>';
   } else if (v.leitura !== "ok") {
     html = '<div class="agora motivo duas">' + esc(v.motivo || "tela não lida") + "</div>";
   } else if (v.estado === "trabalhando") {
@@ -1402,45 +1428,28 @@ window.alternarAbaPainel = function (aba) {
   var btnGeral = el("btn-aba-geral");
   var btnLogs = el("btn-aba-logs");
   var btnGrafo = el("btn-aba-grafo");
-  var btnKanban = el("btn-aba-kanban");
   var viewPrincipal = el("principal");
   var viewLogs = el("view-logs");
   var viewGrafo = el("view-grafo");
-  var viewKanban = el("view-kanban");
-  var iframeKanban = el("kanban-iframe");
 
   if (btnGeral) btnGeral.classList.toggle("ativa", aba === "geral");
   if (btnLogs) btnLogs.classList.toggle("ativa", aba === "logs");
   if (btnGrafo) btnGrafo.classList.toggle("ativa", aba === "grafo");
-  if (btnKanban) btnKanban.classList.toggle("ativa", aba === "kanban");
 
   if (aba === "geral") {
     if (viewPrincipal) viewPrincipal.style.display = "block";
     if (viewLogs) viewLogs.style.display = "none";
     if (viewGrafo) viewGrafo.style.display = "none";
-    if (viewKanban) viewKanban.style.display = "none";
   } else if (aba === "logs") {
     if (viewPrincipal) viewPrincipal.style.display = "none";
     if (viewLogs) viewLogs.style.display = "block";
     if (viewGrafo) viewGrafo.style.display = "none";
-    if (viewKanban) viewKanban.style.display = "none";
     desenharLogs();
   } else if (aba === "grafo") {
     if (viewPrincipal) viewPrincipal.style.display = "none";
     if (viewLogs) viewLogs.style.display = "none";
     if (viewGrafo) viewGrafo.style.display = "block";
-    if (viewKanban) viewKanban.style.display = "none";
     carregarERenderizarGrafo();
-  } else if (aba === "kanban") {
-    if (viewPrincipal) viewPrincipal.style.display = "none";
-    if (viewLogs) viewLogs.style.display = "none";
-    if (viewGrafo) viewGrafo.style.display = "none";
-    if (viewKanban) {
-      viewKanban.style.display = "block";
-      if (iframeKanban && (!iframeKanban.src || iframeKanban.src === 'about:blank' || iframeKanban.src === window.location.href)) {
-        iframeKanban.src = "http://" + (window.location.hostname || "localhost") + ":3334/";
-      }
-    }
   }
 
   try {
@@ -1589,7 +1598,7 @@ window.selecionarNoGrafo = function (nodeId) {
   // Preenche o Drawer
   el("drawer-icone").textContent = node.icone;
   el("drawer-titulo").textContent = node.label;
-  el("drawer-subtitulo").textContent = node.rotulo + (node.modificado_recente ? " · 🟢 Alterado recentemente" : "");
+  el("drawer-subtitulo").textContent = node.rotulo + (node.modificado_recente ? " · [Alterado recentemente]" : "");
   el("drawer-categoria-tag").textContent = node.categoria.toUpperCase();
   el("drawer-stat-arqs").textContent = node.arquivos_count;
   el("drawer-stat-linhas").textContent = node.linhas_count;
@@ -1658,9 +1667,9 @@ window.despacharAcaoModulo = function () {
     btn.disabled = false;
     btn.innerHTML = "<span>Despachar para Terminal</span>";
     if (res.ok) {
-      alert("✓ " + (res.mensagem || "Tarefa enviada ao agente!"));
+      alert(res.mensagem || "Tarefa enviada ao agente!");
     } else {
-      alert("❌ " + (res.erro || "Falha ao enviar"));
+      alert("Erro: " + (res.erro || "Falha ao enviar"));
     }
   })
   .catch(function (err) {
@@ -1746,19 +1755,6 @@ window.filtrarLogsAutor = function (autor, btn) {
   desenharLogs();
 };
 
-function iconeDoLog(tipo, autor) {
-  if (tipo === "sucesso") return "✅";
-  if (tipo === "aviso") return "⚠️";
-  if (tipo === "erro") return "❌";
-  if (/minerva/i.test(autor)) return "🦉";
-  if (/kanban/i.test(autor)) return "📋";
-  if (/back-end|backend/i.test(autor)) return "💻";
-  if (/front-end|frontend/i.test(autor)) return "🎨";
-  if (/test|qa/i.test(autor)) return "🧪";
-  if (/review|auditor/i.test(autor)) return "🔍";
-  return "⚡";
-}
-
 function classeAutorLog(autor) {
   var a = (autor || "").toLowerCase();
   if (a.indexOf("minerva") !== -1) return "minerva";
@@ -1787,25 +1783,24 @@ function desenharLogs() {
   });
 
   if (filtrados.length === 0) {
-    timeline.innerHTML = '<div style="text-align:center; padding:30px; color:var(--apagado); font-size:13px;">Nenhum evento registrado para este filtro.</div>';
+    timeline.innerHTML = '<div style="text-align:center; padding:24px; color:#6e7681; font-family:monospace; font-size:11.5px;">Nenhum evento registrado.</div>';
     return;
   }
 
   var html = "";
   filtrados.forEach(function (log) {
-    var hora = log.timestamp ? new Date(log.timestamp).toLocaleTimeString("pt-BR") : "";
-    var icone = iconeDoLog(log.tipo, log.autor);
+    var hora = log.timestamp ? new Date(log.timestamp).toLocaleTimeString("pt-BR") : "--:--:--";
     var clsAutor = classeAutorLog(log.autor);
-    html += '<div class="log-item">' +
-              '<div class="log-icon">' + icone + '</div>' +
-              '<div class="log-corpo">' +
-                '<div class="log-topo">' +
-                  '<span class="log-autor ' + clsAutor + '">' + esc(log.autor) + '</span>' +
-                  '<span class="log-hora">' + esc(hora) + '</span>' +
-                '</div>' +
-                '<div class="log-acao">' + esc(log.acao) + '</div>' +
-                (log.detalhe ? '<div class="log-detalhe">' + esc(log.detalhe) + '</div>' : '') +
-              '</div>' +
+    var tipo = (log.tipo || "info").toLowerCase();
+    var tipoLabel = tipo === "erro" ? "ERR" : (tipo === "aviso" ? "WARN" : (tipo === "sucesso" ? "OK" : "INFO"));
+    var autorLabel = (log.autor || "SISTEMA").toUpperCase();
+    var detalhe = log.detalhe ? '<span class="log-extra">' + esc(log.detalhe) + '</span>' : '';
+
+    html += '<div class="log-line">' +
+              '<span class="log-time">' + esc(hora) + '</span>' +
+              '<span class="log-tag ' + clsAutor + '">' + esc(autorLabel) + '</span>' +
+              '<span class="log-level ' + esc(tipo) + '">[' + esc(tipoLabel) + ']</span>' +
+              '<span class="log-msg">' + esc(log.acao) + detalhe + '</span>' +
             '</div>';
   });
 

@@ -1,7 +1,7 @@
 {
   "versao": 1,
-  "workspace": "S:\\DEV\\test-maestri",
-  "titulo": "Kanban: test-maestri (Minerva & Team CODES)",
+  "workspace": "S:\\DEV\\dash-mei",
+  "titulo": "Kanban: dash-mei",
   "colunas": [
     {
       "id": "col-backlog",
@@ -31,138 +31,131 @@
   ],
   "cartoes": [
     {
-      "id": "card-bootstrap",
+      "id": "card-cnd-1",
       "colunaId": "col-concluido",
-      "titulo": "KB-001: Bootstrap de Governança e Infraestrutura",
-      "descricao": "Configuração de .gitignore, diretrizes .agents/, papéis Team CODES, documentação docs/, ADRs, inicialização de memória e kanban.",
-      "prioridade": "alta",
-      "agente": "Minerva",
-      "etiquetas": [
-        "infra",
-        "governanca",
-        "setup"
-      ],
-      "checklist": [
-        {
-          "id": "chk-1",
-          "texto": "Blindagem do .gitignore",
-          "concluido": true
-        },
-        {
-          "id": "chk-2",
-          "texto": "Diretrizes .agents/ e papéis Team CODES",
-          "concluido": true
-        },
-        {
-          "id": "chk-3",
-          "texto": "Estrutura docs/ e ADRs iniciais",
-          "concluido": true
-        },
-        {
-          "id": "chk-4",
-          "texto": "Inicialização de ai-memory e Kanban minimalista",
-          "concluido": true
-        }
-      ],
-      "criadoEm": "2026-11-10T01:00:00.000Z"
-    },
-    {
-      "id": "card-alinhamento-spec",
-      "colunaId": "col-todo",
-      "titulo": "KB-002: Alinhamento da Demanda e Aprovação da Spec",
-      "descricao": "Validação da primeira demanda com o usuário, refinamento de docs/spec.md e aprovação formal.",
-      "prioridade": "alta",
-      "agente": "Minerva",
-      "etiquetas": [
-        "planejamento",
-        "spec",
-        "alinhamento"
-      ],
-      "checklist": [
-        {
-          "id": "chk-a1",
-          "texto": "Definição do escopo da primeira demanda",
-          "concluido": false
-        },
-        {
-          "id": "chk-a2",
-          "texto": "Refinamento de docs/spec.md e arquitetura",
-          "concluido": false
-        },
-        {
-          "id": "chk-a3",
-          "texto": "Aprovação formal do usuário (Zero-HITL após aceite)",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-10T01:05:00.000Z"
-    },
-    {
-      "id": "card-alocacao-modelos",
-      "colunaId": "col-todo",
-      "titulo": "KB-003: Alocação Consultiva de Modelos do Team CODES",
-      "descricao": "Consulta às cotas do workspace (Codex, Claude Code, Gemini/Antigravity) e apresentação de sugestão de modelo por terminal para aprovação.",
-      "prioridade": "alta",
-      "agente": "Minerva",
-      "etiquetas": [
-        "alocacao",
-        "modelos",
-        "team-codes"
-      ],
-      "checklist": [
-        {
-          "id": "chk-m1",
-          "texto": "Consultar dados.json e cotas em tempo real",
-          "concluido": false
-        },
-        {
-          "id": "chk-m2",
-          "texto": "Apresentar sugestão por terminal (Back, Front, QA, Review)",
-          "concluido": false
-        },
-        {
-          "id": "chk-m3",
-          "texto": "Recrutar os terminais autorizados via maestri recruit",
-          "concluido": false
-        }
-      ],
-      "criadoEm": "2026-11-10T01:10:00.000Z"
-    },
-    {
-      "id": "card-dev-fatia-1",
-      "colunaId": "col-backlog",
-      "titulo": "KB-004: Desenvolvimento da Fatia 1 (Back-End & Front-End)",
-      "descricao": "Execução concorrente em branches isoladas (agent/backend e agent/ui) respeitando contratos de interface.",
-      "prioridade": "media",
-      "agente": "Team CODES",
-      "etiquetas": [
-        "desenvolvimento",
+      "titulo": "Motor de Validade e Dados de Certidões (CNDs)",
+      "descricao": "Modelagem de certidões (Federal, CNDT, FGTS, Municipal, Estadual), regras de contagem de dias restantes, semáforo de status (válida, atenção, vencida) e armazenamento local.",
+      "agente": "Back-End",
+      "tags": [
         "backend",
-        "frontend"
+        "cnd",
+        "regras"
       ],
+      "prioridade": "alta",
+      "criadoEm": "2026-11-11T00:07:00.000Z",
       "checklist": [
         {
-          "id": "chk-d1",
-          "texto": "Implementação do domínio e repositórios",
-          "concluido": false
+          "texto": "Definição de tipos e links oficiais padrão de emissão",
+          "concluido": true
         },
         {
-          "id": "chk-d2",
-          "texto": "Implementação dos componentes de UI",
-          "concluido": false
+          "texto": "Cálculo preciso de dias até o vencimento",
+          "concluido": true
         },
         {
-          "id": "chk-d3",
-          "texto": "Testes unitários e integração QA",
-          "concluido": false
-        },
-        {
-          "id": "chk-d4",
-          "texto": "Auditoria e Merge pelo Reviewer",
-          "concluido": false
+          "texto": "Função para atualizar data de validade de certidão avulsa",
+          "concluido": true
         }
+      ]
+    },
+    {
+      "id": "card-cnd-2",
+      "colunaId": "col-concluido",
+      "titulo": "Radar Visual de Certidões & Renovação Rápida",
+      "descricao": "Componente de cards visuais para cada certidão com alerta de status em cores, botão de link direto ao órgão oficial e modal rápido para atualizar apenas a certidão vencida.",
+      "agente": "Front-End",
+      "tags": [
+        "frontend",
+        "ui",
+        "cnd"
       ],
-      "criadoEm": "2026-11-10T01:15:00.000Z"
+      "prioridade": "alta",
+      "criadoEm": "2026-11-11T00:07:15.000Z",
+      "checklist": [
+        {
+          "texto": "Card de certidão com indicador verde/amarelo/vermelho",
+          "concluido": true
+        },
+        {
+          "texto": "Botão de atalho direto para o órgão emissor",
+          "concluido": true
+        },
+        {
+          "texto": "Ação rápida de renovação isolada de certidão",
+          "concluido": true
+        }
+      ]
+    },
+    {
+      "id": "card-cnd-3",
+      "colunaId": "col-concluido",
+      "titulo": "Hub de Emissão de Notas por Empresa Contratante",
+      "descricao": "Interface e cadastro de empresas/tomadores com links rápidos diretos para emissão de NFS-e e histórico rápido.",
+      "agente": "Front-End",
+      "tags": [
+        "frontend",
+        "notas",
+        "empresas"
+      ],
+      "prioridade": "media",
+      "criadoEm": "2026-11-11T00:07:30.000Z",
+      "checklist": [
+        {
+          "texto": "Listagem de empresas cadastradas com atalhos de emissão",
+          "concluido": true
+        },
+        {
+          "texto": "Formulário simples para cadastrar nova empresa e link",
+          "concluido": true
+        }
+      ]
+    },
+    {
+      "id": "card-cnd-4",
+      "colunaId": "col-concluido",
+      "titulo": "Testes Automatizados de Validade e Alertas de CNDs",
+      "descricao": "Suíte de testes unitários para cálculo de dias, datas no passado/futuro e classificação correta dos alertas.",
+      "agente": "Test-QA",
+      "tags": [
+        "qa",
+        "testes",
+        "tdd"
+      ],
+      "prioridade": "alta",
+      "criadoEm": "2026-11-11T00:07:45.000Z",
+      "checklist": [
+        {
+          "texto": "Testes de certidões vencidas, próximas e válidas",
+          "concluido": true
+        },
+        {
+          "texto": "Validação de renovação individual",
+          "concluido": true
+        }
+      ]
+    },
+    {
+      "id": "card-cnd-5",
+      "colunaId": "col-concluido",
+      "titulo": "Auditoria de Segurança, Usabilidade e Code Review",
+      "descricao": "Revisar segurança de links externos (rel='noopener noreferrer'), tipagem estrita e fluxo sem atrito.",
+      "agente": "Reviewer",
+      "tags": [
+        "review",
+        "seguranca"
+      ],
+      "prioridade": "media",
+      "criadoEm": "2026-11-11T00:08:00.000Z",
+      "checklist": [
+        {
+          "texto": "Auditoria de links externos e sanitização",
+          "concluido": true
+        },
+        {
+          "texto": "Revisão e merge da branch feature/dashboard-notas-certidoes-mei",
+          "concluido": true
+        }
+      ]
     }
   ]
 }
