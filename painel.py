@@ -970,6 +970,27 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
             "descricao": "Testes unitários de regras de negócio (PIN/Whitelist) e validação automatizada de acessibilidade.",
         },
         {
+            "nome": "taste-skill & awesome-design-md",
+            "categoria": "Design Systems & Anti-Slop UI",
+            "papel": "Front-End Specialist",
+            "estado": "ativa",
+            "descricao": "Engenharia de interface nível figma.com/x.ai e catálogo de 84 design systems de ponta (Linear, Stripe, Apple, Vercel).",
+        },
+        {
+            "nome": "react-best-practices (Vercel)",
+            "categoria": "Performance & Otimização React",
+            "papel": "Front-End Specialist",
+            "estado": "ativa",
+            "descricao": "70 regras de performance, eliminação de waterfalls e otimização de bundle size mantidas pela engenharia da Vercel.",
+        },
+        {
+            "nome": "playwright-cli (Microsoft)",
+            "categoria": "Automação & Testes E2E",
+            "papel": "Test & QA Specialist",
+            "estado": "ativa",
+            "descricao": "Automação de navegador via terminal, inspeção com snapshot de elementos e suporte nativo a WebMCP.",
+        },
+        {
             "nome": "code-review-and-quality & security-review",
             "categoria": "Auditoria & Segurança",
             "papel": "Reviewer & Auditor",
