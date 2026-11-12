@@ -15,6 +15,7 @@ Qualquer agente pode abrir, verificar ou reativar silenciosamente o painel:
 ### Comandos disponíveis:
 
 - `painel` — Inicia o monitor e abre automaticamente o card de Portal no canvas do Maestri (`http://localhost:3333`).
+- `painel --mock` ou `painel-mock` — Inicia o painel com **dados fictícios ricos** e abre automaticamente no navegador padrão (`http://localhost:3333`) para desenvolvimento e alterações de UI.
 - `wscript.exe "S:\DEV\painel-agents\iniciar-silencioso.vbs"` — **(Auto-Heal no Windows)** Verifica se a porta `3333` já está ativa (`--ensure`) e, se estiver desligada (ex.: após reiniciar o PC), sobe o servidor silenciosamente em segundo plano sem bloquear o terminal.
 - `python "S:\DEV\painel-agents\painel.py" --sem-portal --ensure` — Garante que o coletor/servidor na porta `3333` esteja ativo sem criar janelas duplicadas.
 - `painel --uma-vez` — Faz uma passada única de leitura dos agentes, cotas, Kanban e Skills/MCPs e atualiza `publico/dados.json` e `publico/dados.js`.

@@ -211,20 +211,21 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
         "status": "Ativo · Exclusivo",
     }
 
-    porta_kanban = ESTADO_GLOBAL.get("porta_kanban", 3334)
-    portas_detectadas[porta_kanban] = {
-        "porta": porta_kanban,
-        "endereco": "127.0.0.1",
-        "pid": os.getpid(),
-        "processo": "python (painel-agents)",
-        "servico": "Kanban Minimalista do Projeto",
-        "escopo": "projeto",
-        "url": f"http://localhost:{porta_kanban}/",
-        "urls_extras": [
-            {"rotulo": "Kanban", "url": f"http://localhost:{porta_kanban}/"},
-        ],
-        "status": "Ativo · Exclusivo",
-    }
+    porta_kanban = ESTADO_GLOBAL.get("porta_kanban")
+    if porta_kanban:
+        portas_detectadas[porta_kanban] = {
+            "porta": porta_kanban,
+            "endereco": "127.0.0.1",
+            "pid": os.getpid(),
+            "processo": "python (painel-agents)",
+            "servico": "Kanban Minimalista do Projeto",
+            "escopo": "projeto",
+            "url": f"http://localhost:{porta_kanban}/",
+            "urls_extras": [
+                {"rotulo": "Kanban", "url": f"http://localhost:{porta_kanban}/"},
+            ],
+            "status": "Ativo · Exclusivo",
+        }
 
     if sys.platform == "win32":
         ps_cmd = (
@@ -341,16 +342,17 @@ def salvar_mapa_portas_projeto(projeto_dir, porta_painel, lista_portas):
         return
 
     agora_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    porta_kanban = ESTADO_GLOBAL.get("porta_kanban", 3334)
+    porta_kanban = ESTADO_GLOBAL.get("porta_kanban")
     payload_ports = {
         "projeto": projeto_dir.name,
         "atualizado_em": agora_str,
         "painel_porta": porta_painel,
         "painel_url": f"http://localhost:{porta_painel}/",
-        "kanban_porta": porta_kanban,
-        "kanban_url": f"http://localhost:{porta_kanban}/",
         "portas_ativas": lista_portas,
     }
+    if porta_kanban:
+        payload_ports["kanban_porta"] = porta_kanban
+        payload_ports["kanban_url"] = f"http://localhost:{porta_kanban}/"
 
     try:
         pasta_maestri = projeto_dir / ".maestri"
@@ -743,8 +745,88 @@ def localizar_projeto_ativo():
     return Path("S:/DEV/test-maestri") if Path("S:/DEV/test-maestri").exists() else RAIZ
 
 
+MOCK_BOARD = {
+    "versao": 1,
+    "titulo": "Painel de Agentes (Ambiente de Testes & Mudanças)",
+    "colunas": [
+        {"id": "col-backlog", "titulo": "Backlog", "cor": "#64748b"},
+        {"id": "col-todo", "titulo": "A Fazer", "cor": "#38bdf8"},
+        {"id": "col-progresso", "titulo": "Em Progresso", "cor": "#fbbf24"},
+        {"id": "col-revisao", "titulo": "Revisão", "cor": "#a855f7"},
+        {"id": "col-concluido", "titulo": "Concluído", "cor": "#22c55e"},
+    ],
+    "cartoes": [
+        {
+            "id": "card-1",
+            "colunaId": "col-progresso",
+            "titulo": "Orquestração do Team CODES",
+            "agente": "Minerva",
+            "criadoEm": "2026-11-11T19:00:00Z",
+            "checklist": [
+                {"texto": "Definição de papéis e modelos", "concluido": True},
+                {"texto": "Aprovação do usuário na spec", "concluido": False},
+            ],
+        },
+        {
+            "id": "card-2",
+            "colunaId": "col-progresso",
+            "titulo": "Implementação da API e Endpoints",
+            "agente": "Back-End",
+            "criadoEm": "2026-11-11T19:05:00Z",
+            "checklist": [
+                {"texto": "Rotas de telemetria", "concluido": True},
+                {"texto": "Cache HTTP e compressão", "concluido": False},
+            ],
+        },
+        {
+            "id": "card-3",
+            "colunaId": "col-progresso",
+            "titulo": "Redesign dos Cards 3D e Responsividade",
+            "agente": "Front-End",
+            "criadoEm": "2026-11-11T19:10:00Z",
+            "checklist": [
+                {"texto": "Efeito tilt com CSS 3D", "concluido": True},
+                {"texto": "Ajuste WCAG AAA para modo escuro", "concluido": True},
+            ],
+        },
+        {
+            "id": "card-4",
+            "colunaId": "col-revisao",
+            "titulo": "Auditoria de Segurança e Code Review",
+            "agente": "Reviewer",
+            "criadoEm": "2026-11-11T18:50:00Z",
+            "checklist": [
+                {"texto": "Verificar OWASP Top 10 e permissões", "concluido": True},
+            ],
+        },
+        {
+            "id": "card-5",
+            "colunaId": "col-concluido",
+            "titulo": "Configuração da Suíte E2E Playwright",
+            "agente": "QA / Test",
+            "criadoEm": "2026-11-11T18:30:00Z",
+            "checklist": [
+                {"texto": "Testes de navegação e abas", "concluido": True},
+            ],
+        },
+        {
+            "id": "card-6",
+            "colunaId": "col-todo",
+            "titulo": "Telemetria de Conexão WebSocket",
+            "agente": "Back-End",
+            "criadoEm": "2026-11-11T19:12:00Z",
+            "checklist": [
+                {"texto": "Suporte a live streaming de logs", "concluido": False},
+            ],
+        },
+    ],
+}
+
+
 def obter_ou_criar_board(projeto_dir):
     """Retorna o dicionário do board.json do projeto, criando a estrutura padrão se não existir."""
+    if ESTADO_GLOBAL.get("modo_mock"):
+        return MOCK_BOARD
     board_path = projeto_dir / ".kanban" / "board.json"
     if board_path.exists():
         try:
@@ -1096,8 +1178,510 @@ def descobrir_ecossistema_projeto(projeto_dir, contas_info):
     }
 
 
+def gerar_dados_mock(pasta_saida, porta_painel=3333):
+    """Gera dados ricos e fictícios para testes visuais, desenvolvimento e refatoração da UI."""
+    agora_dt = comum.agora()
+    agora_iso = comum.iso(agora_dt)
+    agora_epoch = time.time()
+    projeto_dir = RAIZ
+
+    leituras = [
+        {
+            "nome": "Minerva",
+            "ferramenta": "agy",
+            "ferramenta_nome": "Antigravity",
+            "leitura": "ok",
+            "motivo": None,
+            "estado": "trabalhando",
+            "estado_bruto": "working",
+            "modelo": "Gemini 3.8 Flash",
+            "esforco": "medium",
+            "contexto_pct": 34,
+            "sessao_5h_pct": 18,
+            "semanal_pct": 15,
+            "outras_cotas": {},
+            "grupo_cota": "Gemini",
+            "branch": "main",
+            "prompt_vazio": False,
+            "trabalhando_ha": "2m 14s",
+            "ultima_resposta_as": "19h10",
+            "atividade": "Orquestrando o fluxo do Team CODES e inspecionando arquitetura modular",
+            "ultima_fala": "Spec técnica aprovada e tarefas alocadas nos terminais.",
+            "aviso": None,
+            "conta": "lukas.feitosa@gmail.com",
+            "prs": [
+                {
+                    "numero": 42,
+                    "titulo": "feat(core): orquestracao e telemetria",
+                    "ci": "passando",
+                    "aprovado": True,
+                    "url": "https://github.com/lukas/painel-agents/pull/42",
+                }
+            ],
+            "missao": {
+                "texto": "Orquestração do Team CODES",
+                "situacao": "trabalhando",
+                "esperando": None,
+                "previsao": "Ciclo atual",
+            },
+        },
+        {
+            "nome": "Back-End",
+            "ferramenta": "codex",
+            "ferramenta_nome": "Codex CLI",
+            "leitura": "ok",
+            "motivo": None,
+            "estado": "trabalhando",
+            "estado_bruto": "Working",
+            "modelo": "gpt-5.6-luna",
+            "esforco": "high",
+            "contexto_pct": 58,
+            "sessao_5h_pct": 32,
+            "semanal_pct": 28,
+            "outras_cotas": {},
+            "grupo_cota": "",
+            "branch": "feat/api-routes",
+            "prompt_vazio": False,
+            "trabalhando_ha": "5m 20s",
+            "ultima_resposta_as": "19h12",
+            "atividade": "Construindo rotas de API com validação Zod e cache inteligente",
+            "ultima_fala": "Endpoints REST implementados com cobertura de testes unitários.",
+            "aviso": None,
+            "conta": "lukas.feitosa@gmail.com",
+            "prs": [
+                {
+                    "numero": 43,
+                    "titulo": "feat(api): streaming e middleware de seguranca",
+                    "ci": "passando",
+                    "aprovado": False,
+                    "url": "https://github.com/lukas/painel-agents/pull/43",
+                }
+            ],
+            "missao": {
+                "texto": "Implementação da API e Endpoints",
+                "situacao": "trabalhando",
+                "esperando": None,
+                "previsao": "12 min",
+            },
+        },
+        {
+            "nome": "Front-End",
+            "ferramenta": "claude",
+            "ferramenta_nome": "Claude Code",
+            "leitura": "ok",
+            "motivo": None,
+            "estado": "trabalhando",
+            "estado_bruto": "tool_use",
+            "modelo": "claude-sonnet-4-6",
+            "esforco": "high",
+            "contexto_pct": 44,
+            "sessao_5h_pct": 25,
+            "semanal_pct": 19,
+            "outras_cotas": {},
+            "grupo_cota": "",
+            "branch": "feat/ui-3d-cards",
+            "prompt_vazio": False,
+            "trabalhando_ha": "1m 15s",
+            "ultima_resposta_as": "19h14",
+            "atividade": "Refatorando cartões 3D com perspectiva e gradientes dinâmicos",
+            "ultima_fala": "Ajustei o contraste WCAG AAA e transições a 60 FPS nas cápsulas.",
+            "aviso": None,
+            "conta": "lukas.feitosa@gmail.com",
+            "prs": [
+                {
+                    "numero": 44,
+                    "titulo": "fix(ui): tilt 3D e sombras nos cards de cota",
+                    "ci": "passando",
+                    "aprovado": True,
+                    "url": "https://github.com/lukas/painel-agents/pull/44",
+                }
+            ],
+            "missao": {
+                "texto": "Redesign dos Cards 3D e Responsividade",
+                "situacao": "trabalhando",
+                "esperando": None,
+                "previsao": "8 min",
+            },
+        },
+        {
+            "nome": "QA / Test",
+            "ferramenta": "codex",
+            "ferramenta_nome": "Codex CLI",
+            "leitura": "ok",
+            "motivo": None,
+            "estado": "ocioso",
+            "estado_bruto": "idle",
+            "modelo": "gpt-5.6-luna",
+            "esforco": "medium",
+            "contexto_pct": 21,
+            "sessao_5h_pct": 14,
+            "semanal_pct": 10,
+            "outras_cotas": {},
+            "grupo_cota": "",
+            "branch": "test/e2e-suite",
+            "prompt_vazio": True,
+            "trabalhando_ha": None,
+            "ultima_resposta_as": "19h08",
+            "atividade": None,
+            "ultima_fala": "Todos os 42 testes E2E executados com sucesso (100% verde).",
+            "aviso": None,
+            "conta": "lukas.feitosa@gmail.com",
+            "prs": [],
+            "missao": {
+                "texto": "Validação E2E com Playwright",
+                "situacao": "ocioso",
+                "esperando": None,
+                "previsao": "Aguardando novo commit",
+            },
+        },
+        {
+            "nome": "Reviewer",
+            "ferramenta": "claude",
+            "ferramenta_nome": "Claude Code",
+            "leitura": "ok",
+            "motivo": None,
+            "estado": "ocioso",
+            "estado_bruto": "idle",
+            "modelo": "claude-sonnet-4-6",
+            "esforco": "high",
+            "contexto_pct": 29,
+            "sessao_5h_pct": 16,
+            "semanal_pct": 12,
+            "outras_cotas": {},
+            "grupo_cota": "",
+            "branch": "main",
+            "prompt_vazio": True,
+            "trabalhando_ha": None,
+            "ultima_resposta_as": "19h05",
+            "atividade": None,
+            "ultima_fala": "Auditoria de permissões e segurança concluída: nenhuma vulnerabilidade.",
+            "aviso": None,
+            "conta": "lukas.feitosa@gmail.com",
+            "prs": [],
+            "missao": {
+                "texto": "Auditoria de Código e Políticas de Segurança",
+                "situacao": "ocioso",
+                "esperando": None,
+                "previsao": "Aguardando PR #43",
+            },
+        },
+    ]
+
+    contas_lista = [
+        {
+            "id": "antigravity:lukas.feitosa@gmail.com",
+            "ferramenta": "agy",
+            "ferramenta_nome": "Antigravity",
+            "titulo": "Google AI Pro",
+            "email": "lukas.feitosa@gmail.com",
+            "plano": "Google AI Pro",
+            "agentes": ["Minerva"],
+            "terminais": ["Minerva"],
+            "modelo": "Gemini 3.8 Flash",
+            "esforco": "medium",
+            "situacao": "ok",
+            "consultando": False,
+            "intervalo_s": 1200,
+            "lido_em_epoch": agora_epoch,
+            "erro": None,
+            "erro_detalhe": None,
+            "barras": [
+                {
+                    "grupo": "Gemini",
+                    "tipo": "5h",
+                    "rotulo": "Gemini · 5 horas",
+                    "usado_pct": 18,
+                    "renova_epoch": agora_epoch + 11700,
+                    "janela_min": 300,
+                    "origem": "tela",
+                    "lido_em_epoch": agora_epoch,
+                    "como_soube": "status line",
+                    "membros": ["Gemini 3.8 Flash", "Gemini 3.1 Pro"],
+                },
+                {
+                    "grupo": "Gemini",
+                    "tipo": "semana",
+                    "rotulo": "Gemini · Semana",
+                    "usado_pct": 15,
+                    "renova_epoch": agora_epoch + 432000,
+                    "janela_min": 10080,
+                    "origem": "tela",
+                    "lido_em_epoch": agora_epoch,
+                    "como_soube": "status line",
+                },
+            ],
+        },
+        {
+            "id": "codex:lukas.feitosa@gmail.com",
+            "ferramenta": "codex",
+            "ferramenta_nome": "Codex",
+            "titulo": "Codex (Plus / Pro)",
+            "email": "lukas.feitosa@gmail.com",
+            "plano": "Plus / Pro",
+            "agentes": ["Back-End", "QA / Test"],
+            "terminais": ["Back-End", "QA / Test"],
+            "modelo": "gpt-5.6-luna",
+            "esforco": "high",
+            "situacao": "ok",
+            "consultando": False,
+            "intervalo_s": 300,
+            "lido_em_epoch": agora_epoch,
+            "erro": None,
+            "erro_detalhe": None,
+            "barras": [
+                {
+                    "grupo": "",
+                    "tipo": "5h",
+                    "rotulo": "5 horas",
+                    "usado_pct": 32,
+                    "renova_epoch": agora_epoch + 9600,
+                    "janela_min": 300,
+                    "origem": "cli",
+                    "lido_em_epoch": agora_epoch,
+                },
+                {
+                    "grupo": "",
+                    "tipo": "semana",
+                    "rotulo": "Semana",
+                    "usado_pct": 28,
+                    "renova_epoch": agora_epoch + 345600,
+                    "janela_min": 10080,
+                    "origem": "cli",
+                    "lido_em_epoch": agora_epoch,
+                },
+            ],
+        },
+        {
+            "id": "claude:lukas.feitosa@gmail.com",
+            "ferramenta": "claude",
+            "ferramenta_nome": "Claude Code",
+            "titulo": "Claude Pro / Team",
+            "email": "lukas.feitosa@gmail.com",
+            "plano": "Pro / Team",
+            "agentes": ["Front-End", "Reviewer"],
+            "terminais": ["Front-End", "Reviewer"],
+            "modelo": "claude-sonnet-4-6",
+            "esforco": "high",
+            "situacao": "ok",
+            "consultando": False,
+            "intervalo_s": 300,
+            "lido_em_epoch": agora_epoch,
+            "erro": None,
+            "erro_detalhe": None,
+            "barras": [
+                {
+                    "grupo": "",
+                    "tipo": "5h",
+                    "rotulo": "5 horas",
+                    "usado_pct": 25,
+                    "renova_epoch": agora_epoch + 15000,
+                    "janela_min": 300,
+                    "origem": "tela",
+                    "lido_em_epoch": agora_epoch,
+                },
+                {
+                    "grupo": "",
+                    "tipo": "semana",
+                    "rotulo": "Semana",
+                    "usado_pct": 19,
+                    "renova_epoch": agora_epoch + 518400,
+                    "janela_min": 10080,
+                    "origem": "tela",
+                    "lido_em_epoch": agora_epoch,
+                },
+            ],
+        },
+    ]
+
+    contas_info = {
+        "consultadas": True,
+        "erro": None,
+        "intervalos_s": {"codex": 300, "claude": 300, "antigravity": 1200},
+        "lista": contas_lista,
+    }
+
+    pendencias = [
+        {
+            "id": "pend-spec-1",
+            "tipo": "pergunta",
+            "texto": "Aprovação de Arquitetura e Alocação do Team CODES",
+            "criada_em": agora_iso,
+            "recomendacao": "Aprovar a especificação em docs/spec.md e autorizar o roteamento de modelos sugerido pela Minerva.",
+            "destrava": "Recrutamento dos terminais Back-End, Front-End, QA e Reviewer com modelos otimizados",
+            "tempo": "1 min",
+            "passos": [
+                "Revise os contratos de arquitetura em `docs/architecture.md` e decisões em `docs/adr/`",
+                "Confirme a alocação consultiva de modelos para o Team CODES",
+                "Clique em Aprovar ou envie o OK no terminal da Minerva",
+            ],
+            "fontes": ["docs/spec.md", "docs/architecture.md", ".kanban/board.json"],
+        },
+        {
+            "id": "pend-sec-2",
+            "tipo": "acao",
+            "texto": "Auditoria de Variáveis de Ambiente e Segredos (.env)",
+            "criada_em": agora_iso,
+            "recomendacao": "Validar que nenhuma chave de API ou credencial está exposta no repositório antes do merge.",
+            "destrava": "Pipeline de CI/CD e deploy seguro em produção",
+            "tempo": "30s",
+            "passos": [
+                "Verifique se o `.env.example` sanitizado contém todos os novos parâmetros",
+                "Confirme que `.env` está presente no `.gitignore`",
+            ],
+            "fontes": [".env.example", ".gitignore", "SECURITY.md"],
+        },
+    ]
+
+    resolvidas = ESTADO_GLOBAL.get("mock_pendencias_resolvidas", set())
+    pendencias_ativas = [p for p in pendencias if p.get("id") not in resolvidas]
+
+    quadro = {
+        "versao": 1,
+        "editado_em": agora_iso,
+        "missoes": {a["nome"].lower(): a["missao"] for a in leituras},
+        "pendencias": pendencias_ativas,
+        "erro": None,
+    }
+
+    try:
+        comum.gravar_atomico(
+            pasta_saida / "kanban.json",
+            json.dumps(MOCK_BOARD, ensure_ascii=False, indent=2),
+        )
+    except Exception:
+        pass
+
+    ecossistema = descobrir_ecossistema_projeto(RAIZ, contas_info)
+    ecossistema["portas"] = [
+        {
+            "porta": porta_painel,
+            "endereco": "127.0.0.1",
+            "pid": os.getpid(),
+            "processo": "python (painel-agents)",
+            "servico": "Painel de Agentes (Telemetria & Cotas)",
+            "escopo": "projeto",
+            "url": f"http://localhost:{porta_painel}/",
+            "urls_extras": [{"rotulo": "Painel", "url": f"http://localhost:{porta_painel}/"}],
+            "status": "Ativo · Modo Mock Dev",
+        },
+        {
+            "porta": 5173,
+            "endereco": "127.0.0.1",
+            "pid": 4128,
+            "processo": "node.exe",
+            "servico": "Vite Dev Server (Frontend App)",
+            "escopo": "projeto",
+            "url": "http://localhost:5173",
+            "status": "Ativo no Workspace",
+        },
+        {
+            "porta": 8000,
+            "endereco": "127.0.0.1",
+            "pid": 5892,
+            "processo": "python.exe",
+            "servico": "FastAPI Service (Backend REST)",
+            "escopo": "projeto",
+            "url": "http://localhost:8000",
+            "status": "Ativo no Workspace",
+        },
+    ]
+
+    mock_logs = [
+        {
+            "id": "log-m-1",
+            "timestamp": agora_iso,
+            "autor": "Front-End",
+            "acao": "Atualizou estilização dos cards de cota 3D",
+            "detalhe": "Efeito tilt e sombreamento suave aplicados com sucesso",
+            "tipo": "sucesso",
+        },
+        {
+            "id": "log-m-2",
+            "timestamp": agora_iso,
+            "autor": "Back-End",
+            "acao": "Rotas de API com validação Zod concluídas",
+            "detalhe": "Endpoints /api/architecture e /api/kanban sincronizados",
+            "tipo": "info",
+        },
+        {
+            "id": "log-m-3",
+            "timestamp": agora_iso,
+            "autor": "QA / Test",
+            "acao": "Executou suíte de testes de integração",
+            "detalhe": "42/42 cenários aprovados sem regressões",
+            "tipo": "sucesso",
+        },
+        {
+            "id": "log-m-4",
+            "timestamp": agora_iso,
+            "autor": "Minerva",
+            "acao": "Aprovou o plano de execução e distribuiu missões",
+            "detalhe": "Team CODES operando com alocação ótima de modelos",
+            "tipo": "info",
+        },
+        {
+            "id": "log-m-5",
+            "timestamp": agora_iso,
+            "autor": "Reviewer",
+            "acao": "Auditoria de permissões e segurança concluída",
+            "detalhe": "Nenhuma credencial exposta ou vulnerabilidade detectada",
+            "tipo": "sucesso",
+        },
+        {
+            "id": "log-m-6",
+            "timestamp": agora_iso,
+            "autor": "Sistema",
+            "acao": "Painel de Agentes iniciado em modo Demonstração / Mock",
+            "detalhe": "Dados fictícios carregados para desenvolvimento e ajustes de UI",
+            "tipo": "info",
+        },
+    ]
+
+    dados = {
+        "versao": "2.2.0",
+        "gerado_em": agora_iso,
+        "gerado_em_epoch": agora_epoch,
+        "origem": "mock",
+        "agentes": leituras,
+        "quadro": quadro,
+        "prs": {
+            "consultado": True,
+            "erro": None,
+            "lido_em_epoch": agora_epoch,
+            "intervalo_s": 300,
+            "sem_dono": [],
+        },
+        "contas": contas_info,
+        "ecossistema": ecossistema,
+        "logs": mock_logs,
+        "resumo": {
+            "total": len(leituras),
+            "trabalhando": 3,
+            "ociosos": 2,
+        },
+    }
+
+    pasta_saida.mkdir(parents=True, exist_ok=True)
+    json_str = json.dumps(dados, ensure_ascii=False)
+    comum.gravar_atomico(pasta_saida / "dados.json", json.dumps(dados, ensure_ascii=False, indent=2))
+
+    js_payload = f"""(function() {{
+  var d = {json_str};
+  window.DADOS_DO_PAINEL = d;
+  if (typeof window.__painelDados === "function") {{
+    window.__painelDados(d);
+  }}
+}})();"""
+    comum.gravar_atomico(pasta_saida / "dados.js", js_payload)
+
+    return dados
+
+
 def ciclo_coleta(terminais, pasta_saida):
     """Executa uma rodada de leitura dos agentes e salva publico/dados.json e dados.js."""
+    if ESTADO_GLOBAL.get("modo_mock"):
+        return gerar_dados_mock(pasta_saida, ESTADO_GLOBAL.get("porta_ativa", 3333))
+
     mapa = comum.carregar_mapa()
     agentes_cfg = mapa.get("agentes", [])
 
@@ -1232,6 +1816,14 @@ class ServidorTCPExclusivo(socketserver.ThreadingMixIn, socketserver.TCPServer):
 class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
     """Serve os arquivos de publico/ com CORS, /health e suporte a POST /refresh."""
 
+    extensions_map = http.server.SimpleHTTPRequestHandler.extensions_map.copy()
+    extensions_map.update({
+        '.js': 'application/javascript; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.html': 'text/html; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+    })
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(RAIZ / "publico"), **kwargs)
 
@@ -1299,6 +1891,49 @@ class HandlerEstatico(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.path.startswith("/api/acao-pendencia"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                corpo = json.loads(payload_bruto.decode("utf-8"))
+                pend_id = corpo.get("id", "")
+                acao = corpo.get("acao", "aprovar")
+                texto = corpo.get("texto", "")
+                proj = localizar_projeto_ativo()
+
+                if ESTADO_GLOBAL.get("mock_pendencias_resolvidas") is None:
+                    ESTADO_GLOBAL["mock_pendencias_resolvidas"] = set()
+                if pend_id:
+                    ESTADO_GLOBAL["mock_pendencias_resolvidas"].add(str(pend_id))
+
+                tipo_log = "sucesso" if acao in ("aprovar", "executar") else "aviso"
+                verbo_passado = "aprovada" if acao == "aprovar" else ("rejeitada" if acao == "rejeitar" else f"{acao}da")
+                registrar_log(
+                    proj,
+                    autor="Lukas",
+                    acao=f"Pendência '{texto or pend_id}' {verbo_passado} com sucesso",
+                    detalhe=f"Ação executada diretamente via Action Card do Painel de Agentes",
+                    tipo=tipo_log,
+                )
+
+                if ESTADO_GLOBAL.get("pasta_saida"):
+                    gerar_dados_mock(ESTADO_GLOBAL["pasta_saida"], ESTADO_GLOBAL.get("porta_ativa", 3333))
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "ok": True,
+                    "mensagem": f"Ação '{texto or pend_id}' {verbo_passado} com sucesso!",
+                    "id": pend_id,
+                }, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
         if self.path.startswith("/api/kanban"):
             try:
                 tamanho = int(self.headers.get("Content-Length", 0))
@@ -1418,6 +2053,49 @@ class HandlerKanban(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self.path.startswith("/api/acao-pendencia"):
+            try:
+                tamanho = int(self.headers.get("Content-Length", 0))
+                payload_bruto = self.rfile.read(tamanho)
+                corpo = json.loads(payload_bruto.decode("utf-8"))
+                pend_id = corpo.get("id", "")
+                acao = corpo.get("acao", "aprovar")
+                texto = corpo.get("texto", "")
+                proj = localizar_projeto_ativo()
+
+                if ESTADO_GLOBAL.get("mock_pendencias_resolvidas") is None:
+                    ESTADO_GLOBAL["mock_pendencias_resolvidas"] = set()
+                if pend_id:
+                    ESTADO_GLOBAL["mock_pendencias_resolvidas"].add(str(pend_id))
+
+                tipo_log = "sucesso" if acao in ("aprovar", "executar") else "aviso"
+                verbo_passado = "aprovada" if acao == "aprovar" else ("rejeitada" if acao == "rejeitar" else f"{acao}da")
+                registrar_log(
+                    proj,
+                    autor="Lukas",
+                    acao=f"Pendência '{texto or pend_id}' {verbo_passado} com sucesso",
+                    detalhe=f"Ação executada diretamente via Action Card do Painel de Agentes",
+                    tipo=tipo_log,
+                )
+
+                if ESTADO_GLOBAL.get("pasta_saida"):
+                    gerar_dados_mock(ESTADO_GLOBAL["pasta_saida"], ESTADO_GLOBAL.get("porta_ativa", 3333))
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "ok": True,
+                    "mensagem": f"Ação '{texto or pend_id}' {verbo_passado} com sucesso!",
+                    "id": pend_id,
+                }, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "erro": str(e)}).encode("utf-8"))
+            return
+
         if self.path.startswith("/api/kanban"):
             try:
                 tamanho = int(self.headers.get("Content-Length", 0))
@@ -1443,8 +2121,8 @@ class HandlerKanban(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-def iniciar_servidores(porta_painel, porta_kanban):
-    """Inicia ambos os servidores HTTP em threads dedicadas multi-thread."""
+def iniciar_servidores(porta_painel, porta_kanban=None):
+    """Inicia o servidor HTTP do Painel (e opcionalmente o Kanban se explicitamente configurado)."""
     srv_painel = None
     srv_kanban = None
 
@@ -1455,12 +2133,13 @@ def iniciar_servidores(porta_painel, porta_kanban):
     except Exception as e:
         print(f"[-] Erro ao subir Painel na porta {porta_painel}: {e}")
 
-    try:
-        srv_kanban = ServidorTCPExclusivo(("0.0.0.0", porta_kanban), HandlerKanban)
-        t2 = threading.Thread(target=srv_kanban.serve_forever, daemon=True)
-        t2.start()
-    except Exception as e:
-        print(f"[-] Erro ao subir Kanban na porta {porta_kanban}: {e}")
+    if porta_kanban is not None:
+        try:
+            srv_kanban = ServidorTCPExclusivo(("0.0.0.0", porta_kanban), HandlerKanban)
+            t2 = threading.Thread(target=srv_kanban.serve_forever, daemon=True)
+            t2.start()
+        except Exception as e:
+            print(f"[-] Erro ao subir Kanban na porta {porta_kanban}: {e}")
 
     return srv_painel, srv_kanban
 
@@ -1468,15 +2147,21 @@ def iniciar_servidores(porta_painel, porta_kanban):
 def main():
     parser = argparse.ArgumentParser(
         prog="painel",
-        description="Painel de Agentes - Monitor em tempo real de tarefas, cotas 3D, Kanban, Portas e Skills para o Maestri."
+        description="Painel de Agentes - Monitor em tempo real de tarefas, cotas, Portas e Skills para o Maestri."
     )
     parser.add_argument("--porta", type=int, default=3333, help="Porta HTTP preferencial (padrão: 3333, com salto inteligente se ocupada)")
     parser.add_argument("--intervalo", type=int, default=10, help="Intervalo de atualização em segundos (padrão: 10)")
     parser.add_argument("--sem-portal", action="store_true", help="Não abre o Portal do Maestri automaticamente")
+    parser.add_argument("--mock", "--ficticio", "--demo", dest="mock", action="store_true", help="Executa com dados fictícios ricos para testes e desenvolvimento de UI")
+    parser.add_argument("--navegador", "--browser", dest="navegador", action="store_true", help="Abre automaticamente o painel no navegador padrão")
+    parser.add_argument("--kanban", action="store_true", help="Inicia também servidor Kanban na porta 3334 (desativado por padrão, pois são projetos independentes)")
     parser.add_argument("--uma-vez", action="store_true", help="Executa apenas uma coleta e sai")
     parser.add_argument("--ensure", action="store_true", help="Sai se já houver uma instância legítima do painel ativa")
     parser.add_argument("--projeto", type=str, default=None, help="Caminho do projeto ativo para sincronizar Kanban, Portas e Skills")
     args = parser.parse_args()
+
+    if args.mock:
+        ESTADO_GLOBAL["modo_mock"] = True
 
     if args.projeto:
         ESTADO_GLOBAL["workspace_projeto"] = args.projeto
@@ -1535,22 +2220,26 @@ def main():
         print("[+] Coleta única concluída.")
         return
 
-    # Inicia os servidores web locais dedicados (Painel 3333 e Kanban 3334 com salto inteligente)
+    # Inicia o servidor web local dedicado do Painel (e só inicia Kanban se explicitamente solicitado via --kanban)
     porta_painel = ESTADO_GLOBAL["porta_ativa"]
-    porta_kanban = achar_porta_inteligente(3334)
-    if porta_kanban == porta_painel:
-        porta_kanban = achar_porta_inteligente(porta_painel + 1)
-    ESTADO_GLOBAL["porta_kanban"] = porta_kanban
+    porta_kanban = None
+    if args.kanban:
+        porta_kanban = achar_porta_inteligente(3334)
+        if porta_kanban == porta_painel:
+            porta_kanban = achar_porta_inteligente(porta_painel + 1)
+        ESTADO_GLOBAL["porta_kanban"] = porta_kanban
+    else:
+        ESTADO_GLOBAL["porta_kanban"] = None
 
     srv_painel, srv_kanban = iniciar_servidores(porta_painel, porta_kanban)
 
     url_painel = f"http://localhost:{porta_painel}/"
-    url_kanban = f"http://localhost:{porta_kanban}/"
 
     if porta_painel != args.porta:
         print(f"[!] Porta {args.porta} ocupada por aplicação externa -> Painel realocado para {porta_painel}!")
     print(f"[+] Painel de Agentes ativo em: {url_painel}")
-    print(f"[+] Kanban Minimalista ativo em: {url_kanban}")
+    if porta_kanban:
+        print(f"[+] Kanban dedicado ativo em: http://localhost:{porta_kanban}/")
     print(f"[+] Mapa de portas sincronizado em: {projeto_dir / 'docs' / 'ports.md'}")
 
     dados_iniciais = ciclo_coleta(terminais, pasta_publica)
@@ -1561,12 +2250,21 @@ def main():
         mod = a.get("modelo") or a.get("ferramenta") or "IA"
         print(f"    - {a['nome']}: {st} ({mod})")
 
-    if not args.sem_portal and hasattr(terminais, "abrir_portal"):
+    if not args.sem_portal and hasattr(terminais, "abrir_portal") and not args.mock:
         print("[+] Abrindo Portal no canvas do Maestri...")
         if terminais.abrir_portal(url_painel, "Painel de Agentes"):
             print("  ✔ Portal criado com sucesso no seu workspace!")
         else:
             print("  (Aviso: Para abrir manualmente, adicione um Portal apontando para a URL acima)")
+
+    if args.mock or args.navegador:
+        print("[+] Abrindo Painel de Agentes no seu navegador...")
+        try:
+            import webbrowser
+            webbrowser.open(url_painel)
+            print("  ✔ Navegador aberto em:", url_painel)
+        except Exception as e:
+            print(f"  [-] Erro ao abrir navegador: {e}")
 
     print(f"\n[+] Monitorando a cada {args.intervalo}s. Pressione Ctrl+C para encerrar.\n")
 
@@ -1576,7 +2274,8 @@ def main():
             d = ciclo_coleta(terminais, pasta_publica)
             r = d["resumo"]
             hora = datetime.now().strftime("%H:%M:%S")
-            print(f"[{hora}] Painel {porta_painel} & Kanban {porta_kanban} | {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
+            msg_k = f" & Kanban {porta_kanban}" if porta_kanban else ""
+            print(f"[{hora}] Painel {porta_painel}{msg_k} | {r['total']} agentes | {r['trabalhando']} trabalhando | {r['ociosos']} ociosos", end="\r", flush=True)
     except KeyboardInterrupt:
         print("\n\n[+] Painel finalizado com sucesso.")
 

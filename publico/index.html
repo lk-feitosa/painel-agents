@@ -22,44 +22,82 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) {
       color-scheme: dark;
-      --plano: #121212; --sup: #1c1c1b; --sup2: #262624;
-      --tinta: #f0f0ec; --tinta2: #b9b9b2; --apagado: #92928c;
-      --fio: #2b2b29; --fio-forte: #3b3b38; --barra: #676761;
-      --bom: #3fc265; --bom-tinta: #5fd57f;
-      --aviso: #f0b429; --aviso-tinta: #f0b429;
-      --critico: #e85c5c; --critico-tinta: #f28a8a;
-      --voce: #8fb4ee; --voce-tinta: #a7c4f2; --voce-fundo: #1f2a3c;
-      --foco: #8fb4ee;
+      --plano: #0e0e11;
+      --sup: #161619;
+      --sup2: #1f1f24;
+      --sup3: #28282f;
+      --tinta: #f4f4f5;
+      --tinta2: #a1a1aa;
+      --apagado: #71717a;
+      --fio: #27272c;
+      --fio-forte: #383842;
+      --barra: #52525b;
+      --bom: #22c55e;
+      --bom-tinta: #4ade80;
+      --aviso: #f59e0b;
+      --aviso-tinta: #fbbf24;
+      --critico: #ef4444;
+      --critico-tinta: #f87171;
+      --voce: #d4d4d8;
+      --voce-tinta: #f4f4f5;
+      --voce-fundo: #25252b;
+      --foco: #71717a;
     }
   }
   :root[data-tema="escuro"] {
     color-scheme: dark;
-    --plano: #121212; --sup: #1c1c1b; --sup2: #262624;
-    --tinta: #f0f0ec; --tinta2: #b9b9b2; --apagado: #92928c;
-    --fio: #2b2b29; --fio-forte: #3b3b38; --barra: #676761;
-    --bom: #3fc265; --bom-tinta: #5fd57f;
-    --aviso: #f0b429; --aviso-tinta: #f0b429;
-    --critico: #e85c5c; --critico-tinta: #f28a8a;
-    --voce: #8fb4ee; --voce-tinta: #a7c4f2; --voce-fundo: #1f2a3c;
-    --foco: #8fb4ee;
+    --plano: #0e0e11;
+    --sup: #161619;
+    --sup2: #1f1f24;
+    --sup3: #28282f;
+    --tinta: #f4f4f5;
+    --tinta2: #a1a1aa;
+    --apagado: #71717a;
+    --fio: #27272c;
+    --fio-forte: #383842;
+    --barra: #52525b;
+    --bom: #22c55e;
+    --bom-tinta: #4ade80;
+    --aviso: #f59e0b;
+    --aviso-tinta: #fbbf24;
+    --critico: #ef4444;
+    --critico-tinta: #f87171;
+    --voce: #d4d4d8;
+    --voce-tinta: #f4f4f5;
+    --voce-fundo: #25252b;
+    --foco: #71717a;
   }
 
   /* Uma escala só: tamanhos 11 / 12.5 / 14 / 20, espaços múltiplos de 4. */
   * { box-sizing: border-box; }
-  html { background: var(--plano); }
+  html {
+    background-color: var(--plano);
+    min-height: 100vh;
+  }
   body {
-    margin: 0; padding: 12px 20px 12px;
-    background: var(--plano); color: var(--tinta);
-    font: 12.5px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0; padding: 14px 22px 18px;
+    background: transparent; color: var(--tinta);
+    font: 12.5px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   .num { font-variant-numeric: tabular-nums; }
   :focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
 
   /* ---------- topo ---------- */
-  .topo { display: flex; align-items: baseline; gap: 16px; margin: 0 0 12px; min-height: 24px; }
+  .topo { display: flex; align-items: center; gap: 20px; margin: 0 0 14px; min-height: 38px; }
+  .brand-profile { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; cursor: default; }
+  .profile-avatar-img {
+    width: 36px; height: 36px; border-radius: 6px;
+    object-fit: cover; border: 1px solid var(--fio-forte);
+    background: #18181b; flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+  .brand-title {
+    font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+    color: var(--tinta); line-height: 1.1;
+  }
   .so-leitor { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-  .resumo { color: var(--tinta2); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .resumo { color: var(--tinta2); font-size: 13.5px; font-variant-numeric: tabular-nums; display: flex; align-items: center; flex-wrap: wrap; }
   .resumo b { color: var(--tinta); font-weight: 600; }
   .resumo .sep { color: var(--apagado); margin: 0 6px; }
   .resumo .voce, .resumo .voce b { color: var(--voce-tinta); font-weight: 600; }
@@ -106,59 +144,64 @@
   .alerta span { color: var(--tinta2); }
 
   /* ---------- superfícies ---------- */
-  .cartao { background: var(--sup); border-radius: 10px; }
-  .rolagem { overflow-x: auto; border-radius: 10px 10px 0 0; }
-  h2 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
-  h2 .conta { color: var(--voce-tinta); font-variant-numeric: tabular-nums; }
-  h2 .conta.zero { color: var(--apagado); font-weight: 400; }
-  .cabeca { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 10px 16px 6px; }
+  .cartao { background: var(--sup); border: 1px solid var(--fio); border-radius: 12px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45); }
+  .rolagem { overflow-x: auto; border-radius: 12px 12px 0 0; }
+  h2 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  h2 .conta {
+    color: var(--voce-tinta); background: var(--voce-fundo);
+    border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 999px;
+    padding: 1px 8px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  h2 .conta.zero { color: var(--apagado); background: var(--sup2); border-color: var(--fio); font-weight: 400; }
+  .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px 8px; }
   .cabeca .nota { color: var(--apagado); font-size: 11px; }
 
   /* Botão de recolher/expandir seções */
   .btn-recolher {
     font: inherit; font-size: 11px; color: var(--apagado); background: var(--sup2);
-    border: 1px solid var(--fio); border-radius: 6px; padding: 2px 8px; cursor: pointer;
+    border: 1px solid var(--fio); border-radius: 6px; padding: 3px 9px; cursor: pointer;
     display: inline-flex; align-items: center; gap: 5px; transition: color 140ms ease, border-color 140ms ease;
   }
-  .btn-recolher:hover { color: var(--tinta); border-color: var(--fio-forte); }
+  .btn-recolher:hover { color: var(--tinta); border-color: var(--fio-forte); background: var(--sup3); }
   .btn-recolher svg { width: 10px; height: 10px; transition: transform 200ms ease; }
   .secao-recolhida .btn-recolher svg { transform: rotate(-90deg); }
   .secao-recolhida .corpo-recolhivel { display: none !important; }
 
-  /* ---------- quadro dos Agentes: linhas com frente e verso ----------
-     A linha agora traz Missão e Contexto/Previsão juntos na frente quando houver espaço.
-     O clique vira para o verso completo (PRs detalhados, agora/atividade, CI e histórico). */
-  .cabecalho, .face { display: grid; align-items: center; column-gap: 12px; padding: 0 16px 0 10px; }
-  .cabecalho { grid-template-columns: 20px 190px 110px 1fr 130px 140px; padding-top: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--fio-forte); }
+  /* ---------- quadro dos Agentes: linha unificada e rica ----------
+     Missão, Atividade Atual (Agora/Última fala), PR & CI, Contexto e Previsão unificados
+     em uma única visão completa, sem necessidade de clicar ou alternar modos. */
+  .cabecalho, .face { display: grid; align-items: center; column-gap: 16px; padding: 0 16px 0 12px; }
+  .cabecalho {
+    grid-template-columns: 20px minmax(220px, 250px) 125px minmax(280px, 1fr) 90px 135px minmax(195px, 225px);
+    padding-top: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--fio);
+    background: var(--sup2);
+    border-radius: 10px 10px 0 0;
+  }
   .cabecalho span { font-size: 11px; font-weight: 500; color: var(--apagado); white-space: nowrap; }
-  .face.frente { grid-template-columns: 20px 190px 110px 1fr 130px 140px; }
-  .face.verso { grid-template-columns: 20px 190px 110px 1fr; cursor: pointer; }
-  /* O verso usa o mesmo molde da frente (alça, nome, estado), e os campos começam onde a missão
-     começa. Entre eles, o mesmo espaço (column-gap), seja qual for a largura de cada um. */
-  .campos { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 36px; row-gap: 6px; min-width: 0; }
-  .campos .campo { flex: none; min-width: 0; }
-  .campos .campo.ctx { width: 150px; }
-  .campos .campo.pr-ci { max-width: 240px; }
-  .campos .campo.agora-v { flex: 1 1 220px; min-width: 180px; }
-  .face { min-height: 48px; padding-top: 5px; padding-bottom: 5px; }
-  .linha-cena > .frente.solta, .linha-cena > .verso.solta { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-  .linha-cena > .frente.oculta, .linha-cena > .verso.oculta { visibility: hidden; }
-  .linha { border-bottom: 1px solid var(--fio); }
+  .face.frente {
+    grid-template-columns: 20px minmax(220px, 250px) 125px minmax(280px, 1fr) 90px 135px minmax(195px, 225px);
+  }
+  .face.verso { display: none; }
+  .cel-alca { display: flex; align-items: center; justify-content: center; }
+  .cel-agente { min-width: 0; }
+  .cel-previsao { min-width: 0; }
+  .cel-missao-atividade { display: flex; flex-direction: column; gap: 3px; min-width: 0; justify-content: center; }
+  .missao-linha { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 13px; font-weight: 550; color: var(--tinta); }
+  .missao-texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agora-linha { font-size: 11px; color: var(--tinta2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
+  .agora-linha .rotulo-sub { color: var(--apagado); font-weight: 500; margin-right: 4px; }
+  .agora-linha.motivo { color: var(--apagado); font-style: italic; }
+  .face { min-height: 52px; padding-top: 6px; padding-bottom: 6px; }
+  .linha { border-bottom: 1px solid var(--fio); transition: background 150ms ease; }
+  .linha:hover { background: rgba(255, 255, 255, 0.02); }
   .linha:last-child { border-bottom: 0; }
-  .linha-cena { position: relative; overflow: hidden; transform-origin: 50% 50%; cursor: pointer; }
-  .linha-cena > .frente, .linha-cena > .verso { position: relative; }
-  /* O brilho que segue o cursor, como nos cards: luz difusa e um grão fino por cima, presos ao ponteiro. */
-  .brilho-linha { --brilho: .035; --grao: .12; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 220ms; -webkit-clip-path: inset(0); clip-path: inset(0); }
-  .brilho-linha::before, .brilho-linha::after { content: ""; position: absolute; left: -240px; top: -240px; width: 480px; height: 480px;
-    transform: translate3d(var(--spot-x, 0px), var(--spot-y, 0px), 0); }
-  .brilho-linha::before { opacity: var(--brilho); background: radial-gradient(closest-side, rgba(255,255,255,1) 0%, rgba(255,255,255,.5) 28%, rgba(255,255,255,.16) 58%, rgba(255,255,255,0) 100%); }
-  .brilho-linha::after { opacity: var(--grao); mix-blend-mode: soft-light; background-size: 180px 180px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
-    -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.5) 45%, transparent 100%); mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.5) 45%, transparent 100%); }
-  @media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) .brilho-linha { --brilho: .04; --grao: .14; } }
-  html[data-tema="escuro"] .brilho-linha { --brilho: .04; --grao: .14; }
-  @media (prefers-reduced-motion: reduce) { .brilho-linha { display: none; } }
-  .linha-cena.pop { animation: pop-da-linha 400ms cubic-bezier(.3, .6, .3, 1) both; }
+  .linha-cena { position: relative; overflow: hidden; cursor: default; }
+  .linha-cena > .frente { position: relative; }
+  .linha-cena > .solta { position: absolute; inset: 0; pointer-events: none; }
+  .linha-cena > .oculta { display: none !important; visibility: hidden; }
+  .brilho-linha { display: none !important; }
+  .linha-cena.pop { animation: none !important; }
   @keyframes pop-da-linha {
     0% { transform: rotate(0deg) scale(1); }
     30% { transform: rotate(var(--giro, 0deg)) scale(1.004); }
@@ -219,7 +262,7 @@
   .ci.falhou { color: var(--critico-tinta); font-weight: 600; }
   .ci.rodando .g { color: var(--aviso-tinta); }
 
-  .previsao { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .previsao { font-size: 12.5px; font-weight: 550; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--tinta); }
   .falta { font-size: 11px; color: var(--apagado); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .falta.atrasada { color: var(--critico-tinta); font-weight: 600; }
 
@@ -230,33 +273,42 @@
   .semdono[hidden] { display: none; }
   .semdono .pr { font-size: 11px; max-width: 420px; }
 
-  /* ---------- Precisa de você: uma linha por pedido, com verso para o passo a passo ---------- */
-  /* O mesmo espaço entre os três blocos (Agentes, cards de cota, Precisa de você). */
-  #principal > section + section { margin-top: 22px; }
-  #precisa h3 { margin: 0; padding: 6px 16px 2px; font-size: 11px; font-weight: 500; color: var(--apagado); }
-  #precisa h3 small { font-weight: 400; margin-left: 6px; }
+  /* ---------- Precisa de você: lista dinâmica, expansível e com auto-redimensionamento ---------- */
+  #principal > section + section { margin-top: 18px; }
+  #precisa { height: auto; min-height: auto; }
+  /* ---------- Precisa de você: lista limpa e minimalista ---------- */
+  #principal > section + section { margin-top: 18px; }
+  #precisa { height: auto; min-height: 0; }
+  #precisa-corpo { height: auto; min-height: 0; padding-bottom: 4px; }
+  #precisa h3 { margin: 0; padding: 6px 16px 2px; font-size: 11px; font-weight: 500; color: var(--apagado); display: flex; align-items: center; gap: 6px; }
+  #precisa h3 small { font-weight: 400; margin-left: 6px; color: var(--apagado); }
   #precisa ol { list-style: none; margin: 0; padding: 0 8px 6px; }
   #precisa li { border-top: 1px solid var(--fio); }
   #precisa li:first-child { border-top: 0; }
   #precisa .nada { padding: 4px 16px 14px; color: var(--apagado); }
+
   .pedido { display: grid; grid-template-columns: 20px 1fr auto; align-items: baseline; column-gap: 10px; padding: 6px 8px; min-height: 34px; }
   .pedido.frente { cursor: default; }
   .pedido.frente.tem-verso { cursor: pointer; }
+  .pedido.frente.tem-verso:hover { background: rgba(255, 255, 255, 0.02); }
 
   .pedido .n { color: var(--apagado); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
-  .pedido .t { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pedido .t { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; font-weight: 500; }
   .pedido .r { display: block; margin-top: 2px; font-size: 11px; color: var(--apagado); white-space: normal; }
   .pedido .q { color: var(--apagado); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
   .pedido.verso { grid-template-columns: 20px 1fr auto; align-items: start; cursor: pointer; }
   .pedido.verso .detalhe { padding: 2px 0 6px; color: var(--tinta); }
   .pedido.verso .alto { color: var(--tinta2); font-size: 11px; margin-bottom: 6px; display: flex; gap: 16px; flex-wrap: wrap; }
   .pedido.verso .alto b { color: var(--tinta2); font-weight: 500; }
   .pedido.verso ol.passos { list-style: none; margin: 0; padding: 0; counter-reset: passo; }
-  .pedido.verso ol.passos li { counter-increment: passo; display: flex; gap: 10px; padding: 3px 0; border: 0; }
+  .pedido.verso ol.passos li { counter-increment: passo; display: flex; gap: 10px; padding: 3px 0; border: 0; font-size: 11.5px; }
   .pedido.verso ol.passos li::before { content: counter(passo) "."; flex: none; width: 20px; text-align: right; color: var(--apagado); font-variant-numeric: tabular-nums; }
   .pedido.verso .fontes { margin-top: 6px; font-size: 11px; color: var(--apagado); display: flex; gap: 6px 10px; flex-wrap: wrap; align-items: baseline; }
+
   .voltar-linha { font: inherit; font-size: 11px; color: var(--tinta2); background: var(--sup2); border: 1px solid var(--fio); border-radius: 999px; padding: 2px 10px; cursor: pointer; align-self: start; }
   .voltar-linha:hover { color: var(--tinta); border-color: var(--fio-forte); }
+
   .cod {
     font: 11.5px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--tinta); background: var(--sup2);
     border: 1px solid var(--fio); border-radius: 4px; padding: 0 5px; cursor: copy; user-select: text; position: relative;
@@ -276,7 +328,7 @@
   .cel-nome { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .quem { flex: 1; min-width: 0; }
   button.alca {
-    flex: none; width: 16px; height: 28px; margin-left: -6px; padding: 0; border: 0; border-radius: 4px; background: none;
+    flex: none; width: 16px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: 4px; background: none;
     color: var(--apagado); cursor: grab; opacity: 0.45; touch-action: none; position: relative;
   }
   button.alca::before {      /* seis pontinhos (2 x 3) desenhados em CSS */
@@ -299,21 +351,21 @@
   .rodape .erro { color: var(--critico-tinta); font-weight: 600; }
 
   /* ---------- Abas Superiores ---------- */
-  .barra-abas { display: flex; align-items: center; gap: 8px; padding: 8px 24px; background: var(--sup); border-bottom: 1px solid var(--fio); }
-  .aba-btn { background: transparent; border: 1px solid transparent; color: var(--tinta2); font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 150ms ease; font-family: inherit; }
-  .aba-btn:hover { color: var(--tinta); background: var(--sup2); }
-  .aba-btn.ativa { background: var(--sup2); color: var(--tinta); border-color: var(--fio-forte); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-  .badge-log { font-size: 10px; background: var(--fio-forte); color: var(--tinta); padding: 1px 6px; border-radius: 999px; }
+  .barra-abas { display: flex; align-items: center; gap: 8px; padding: 10px 24px; background: #121215; border-bottom: 1px solid var(--fio); }
+  .aba-btn { background: transparent; border: 1px solid transparent; color: var(--tinta2); font-size: 12.5px; font-weight: 550; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 140ms ease; font-family: inherit; }
+  .aba-btn:hover { color: var(--tinta); background: #1a1a1f; }
+  .aba-btn.ativa { background: #232328; color: #ffffff; border-color: #383842; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .badge-log { font-size: 10px; background: #18181b; border: 1px solid #2d2d34; color: var(--tinta2); padding: 1px 6px; border-radius: 999px; }
 
   /* ---------- Console de Logs (Terminal Minimalista) ---------- */
   .timeline-logs {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 10px 14px;
-    background: #090d13;
+    padding: 12px 16px;
+    background: #111114;
     border: 1px solid var(--fio);
-    border-radius: 6px;
+    border-radius: 8px;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 11.5px;
     max-height: 540px;
@@ -416,6 +468,13 @@
 <body>
 
 <header class="topo">
+  <div class="brand-profile" title="Painel de Agentes · Minerva OS">
+    <img src="/assets/avatar.jpg" alt="Minerva" class="profile-avatar-img" onerror="this.src='/assets/logo.png'">
+    <div style="display:flex; flex-direction:column; gap:1px;">
+      <span class="brand-title">Painel</span>
+      <span style="font-size:10px; color:var(--apagado); font-weight:550; letter-spacing:0.3px; text-transform:uppercase;">Minerva OS</span>
+    </div>
+  </div>
   <h1 class="so-leitor">Agentes</h1>
   <div class="resumo" id="resumo"></div>
   <div class="direita">
@@ -458,15 +517,27 @@
         <span class="nota">Console em tempo real</span>
       </div>
     </div>
-    <div class="log-filtros">
-      <span style="font-size:11px; color:var(--apagado); margin-right:4px;">Filtrar:</span>
-      <button class="filtro-chip ativo" data-autor="todos" onclick="filtrarLogsAutor('todos', this)">Todos</button>
-      <button class="filtro-chip" data-autor="minerva" onclick="filtrarLogsAutor('minerva', this)">Minerva</button>
-      <button class="filtro-chip" data-autor="kanban" onclick="filtrarLogsAutor('kanban', this)">Kanban</button>
-      <button class="filtro-chip" data-autor="backend" onclick="filtrarLogsAutor('backend', this)">Back-End</button>
-      <button class="filtro-chip" data-autor="frontend" onclick="filtrarLogsAutor('frontend', this)">Front-End</button>
-      <button class="filtro-chip" data-autor="qa" onclick="filtrarLogsAutor('qa', this)">QA</button>
-      <button class="filtro-chip" data-autor="reviewer" onclick="filtrarLogsAutor('reviewer', this)">Reviewer</button>
+    <div class="log-filtros" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding: 10px 16px 12px; border-bottom: 1px solid var(--fio);">
+      <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+        <span style="font-size:11px; color:var(--apagado); margin-right:2px;">Agente:</span>
+        <button class="filtro-chip ativo" data-autor="todos" onclick="filtrarLogsAutor('todos', this)">Todos</button>
+        <button class="filtro-chip" data-autor="minerva" onclick="filtrarLogsAutor('minerva', this)">Minerva</button>
+        <button class="filtro-chip" data-autor="kanban" onclick="filtrarLogsAutor('kanban', this)">Kanban</button>
+        <button class="filtro-chip" data-autor="backend" onclick="filtrarLogsAutor('backend', this)">Back-End</button>
+        <button class="filtro-chip" data-autor="frontend" onclick="filtrarLogsAutor('frontend', this)">Front-End</button>
+        <button class="filtro-chip" data-autor="qa" onclick="filtrarLogsAutor('qa', this)">QA</button>
+        <button class="filtro-chip" data-autor="reviewer" onclick="filtrarLogsAutor('reviewer', this)">Reviewer</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="font-size:11px; color:var(--apagado);">Nível:</span>
+          <button class="filtro-chip ativo" data-nivel="todos" onclick="filtrarLogsNivel('todos', this)">Todos</button>
+          <button class="filtro-chip" data-nivel="erro" onclick="filtrarLogsNivel('erro', this)">Erros</button>
+          <button class="filtro-chip" data-nivel="aviso" onclick="filtrarLogsNivel('aviso', this)">Avisos</button>
+          <button class="filtro-chip" data-nivel="sucesso" onclick="filtrarLogsNivel('sucesso', this)">Sucesso</button>
+        </div>
+        <input type="text" id="busca-logs" placeholder="🔍 Buscar eventos..." oninput="filtrarLogsTexto(this.value)" style="background:var(--sup2); border:1px solid var(--fio); color:var(--tinta); padding:4px 10px; border-radius:6px; font-size:11.5px; font-family:inherit; outline:none; width:160px;">
+      </div>
     </div>
     <div class="timeline-logs" id="timeline-logs">
       <!-- Gerado via JS -->
@@ -605,7 +676,8 @@
         <span></span>
         <span>Agente</span>
         <span>Estado</span>
-        <span>Missão <small style="font-weight:400">· clique na linha para ver verso completo</small></span>
+        <span>Missão &amp; Atividade Atual</span>
+        <span>PR &amp; CI</span>
         <span>Contexto</span>
         <span>Previsão</span>
       </div>
@@ -620,7 +692,7 @@
 
   <section class="cartao" id="contas" aria-label="Cotas das contas">
     <div class="cabeca" style="padding-bottom: 4px;">
-      <h2>Cotas por Conta (3D) <span class="conta" id="contas-conta">0</span></h2>
+      <h2>Cotas por Conta <span class="conta" id="contas-conta">0</span></h2>
       <button class="btn-recolher" type="button" data-alvo="contas" aria-label="Recolher ou expandir cotas">
         <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3.5L5 6.5L8 3.5"/></svg>
         <span>Recolher</span>
@@ -925,6 +997,33 @@ function celAgora(v) {
   }
   return html;
 }
+function celMissaoEAtividade(v) {
+  var m = v.missao;
+  var missaoHtml = "";
+  if (m && (m.texto || m.situacao)) {
+    var voce = m.situacao === "esperando" && ehVoce(m.esperando);
+    var ficha = m.situacao
+      ? '<span class="situacao' + (voce ? " voce" : "") + '">' + (voce ? "▸ " : "") + esc(textoSituacao(m)) + "</span>"
+      : "";
+    missaoHtml = '<div class="missao-linha" title="' + esc((m.situacao ? textoSituacao(m) + " · " : "") + (m.texto || "")) + '">' +
+                 ficha + '<span class="missao-texto">' + esc(m.texto || "") + "</span></div>";
+  } else {
+    missaoHtml = '<div class="missao-linha"><span class="vazio">Aguardando demanda no Kanban</span></div>';
+  }
+
+  var agoraHtml = "";
+  if (v.aguardando_recrutamento || (v.motivo && /not found|não encontrado/i.test(v.motivo))) {
+    agoraHtml = '<div class="agora-linha motivo" style="color:var(--aviso); font-weight:550;">Terminal aguardando recrutamento no Maestri</div>';
+  } else if (v.leitura !== "ok") {
+    agoraHtml = '<div class="agora-linha motivo">' + esc(v.motivo || "tela não lida") + "</div>";
+  } else if (v.estado === "trabalhando" && v.atividade) {
+    agoraHtml = '<div class="agora-linha trabalhando" title="' + esc(v.atividade) + '"><span class="rotulo-sub">Agora:</span>' + esc(fazendoAgora(v.atividade)) + "</div>";
+  } else if (v.ultima_fala) {
+    agoraHtml = '<div class="agora-linha ocioso" title="' + esc(v.ultima_fala) + '"><span class="rotulo-sub">Última fala:</span>' + esc(ultimaFrase(v.ultima_fala)) + "</div>";
+  }
+
+  return '<div class="cel-missao-atividade">' + missaoHtml + agoraHtml + "</div>";
+}
 function medidorDeContexto(valor, dicaSemDado) {
   if (valor == null) {
     return '<div class="medidor sem" title="' + esc(dicaSemDado) + '"><div class="trilho"></div><span class="valor">—</span></div>';
@@ -980,13 +1079,9 @@ function criarLinha(nome) {
   cena.className = "linha-cena";
   var frente = document.createElement("div");
   frente.className = "face frente";
-  var verso = document.createElement("div");
-  verso.className = "face verso";
-  cena.appendChild(frente); cena.appendChild(verso);
+  cena.appendChild(frente);
   no.appendChild(cena);
-  var l = { no: no, cena: cena, frente: frente, verso: verso, virador: criarVirador(cena, frente, verso) };
-  /* Qualquer ponto do retângulo da linha vira (ou desvira). */
-  cena.addEventListener("click", function (ev) { if (cliqueLimpo(ev, cena)) { if (l.virador.virado) l.virador.desvirar(); else l.virador.virar(); } });
+  var l = { no: no, cena: cena, frente: frente, verso: frente, virador: { virado: false, virar: function(){}, desvirar: function(){} } };
   return l;
 }
 function htmlAlca(nome) {
@@ -1073,17 +1168,13 @@ function desenharTabela(agoraS) {
     if (!arrastando && corpo.children[i] !== l.no) corpo.insertBefore(l.no, corpo.children[i] || null);
     else if (arrastando && !l.no.parentNode) corpo.appendChild(l.no);
     classe(l.no, "recua", v.estado !== "trabalhando");
-    var quem = '<div class="cel-nome">' + htmlAlca(v.nome) + '<div class="quem">' + celAgente(v) + "</div></div>";
+    var alcaHtml = htmlAlca(v.nome);
+    var quem = '<div class="quem">' + celAgente(v) + "</div>";
     var ctxFrente = medidorDeContexto(v.contexto_pct, v.leitura === "ok" ? "Sem dado de contexto" : "Sem leitura");
     var prevFrente = celPrevisao(v.missao);
-    por(l.frente, lb(0, "") + lb(1, quem) + lb(2, celEstado(v)) + lb(3, celMissao(v)) + lb(4, ctxFrente, "campo ctx") + lb(5, prevFrente, "campo"));
-    por(l.verso, lb(0, "") + lb(1, quem) + lb(2, celEstado(v)) +
-        '<div class="campos">' +
-          lb(3, '<span class="rotulo-v">Contexto</span>' + medidorDeContexto(v.contexto_pct, v.leitura === "ok" ? "Sem dado: a ferramenta ainda não informou o contexto desta sessão" : "Sem leitura"), "campo ctx") +
-          lb(4, '<span class="rotulo-v">PR e CI</span>' + celPrs(v), "campo pr-ci") +
-          lb(5, '<span class="rotulo-v">Previsão</span>' + celPrevisao(v.missao), "campo") +
-          lb(6, '<span class="rotulo-v">Agora</span>' + celAgora(v), "campo agora-v") +
-        "</div>");
+    var missaoEAtiv = celMissaoEAtividade(v);
+    var prsHtml = celPrs(v);
+    por(l.frente, lb(0, alcaHtml, "cel-alca") + lb(1, quem, "cel-agente") + lb(2, celEstado(v)) + lb(3, missaoEAtiv) + lb(4, prsHtml, "campo pr-ci") + lb(5, ctxFrente, "campo ctx") + lb(6, prevFrente, "campo cel-previsao"));
   });
   atualizarBotaoOrdem();
 }
@@ -1143,29 +1234,26 @@ function comCodigo(texto) {
 }
 function htmlFrentePedido(p, agoraS) {
   var t = Date.parse(p.criada_em);
-  var rec = p.tipo === "pergunta" && p.recomendacao ? '<span class="r">Recomendo: ' + esc(p.recomendacao) + "</span>" : "";
-  var idade = isNaN(t) ? "" : '<span class="q" title="' + esc(quando(p.criada_em)) + '">há ' + esc(haMinutos(agoraS - t / 1000)) + "</span>";
-  return lb(0, '<span class="n"></span>') + lb(1, '<span class="t" title="' + esc(p.texto) + '">' + esc(p.texto) + rec + "</span>") + lb(2, idade);
+  var rec = p.tipo === "pergunta" && p.recomendacao ? '<span class="r">Recomendo: ' + esc(p.recomendacao) + '</span>' : '';
+  var idade = isNaN(t) ? '' : '<span class="q" title="' + esc(quando(p.criada_em)) + '">há ' + esc(haMinutos(agoraS - t / 1000)) + '</span>';
+  return lb(0, '<span class="n"></span>') + lb(1, '<span class="t" title="' + esc(p.texto) + '">' + esc(p.texto) + rec + '</span>') + lb(2, idade);
 }
 function htmlVersoPedido(p, agoraS) {
-  if (!temPassos(p)) return "";
+  if (!temPassos(p)) return '';
   var t = Date.parse(p.criada_em);
-  var alto = ["<span><b>" + esc(p.texto) + "</b></span>"];
-  if (p.destrava) alto.push("<span><b>Destrava:</b> " + esc(p.destrava) + "</span>");
-  if (p.tempo) alto.push("<span><b>Tempo:</b> " + esc(p.tempo) + "</span>");
-  var html = '<div class="alto">' + alto.join("") + "</div>";
-  html += '<ol class="passos">' + p.passos.map(function (passo) { return "<li><span>" + comCodigo(passo) + "</span></li>"; }).join("") + "</ol>";
+  var alto = ['<span><b>' + esc(p.texto) + '</b></span>'];
+  if (p.destrava) alto.push('<span><b>Destrava:</b> ' + esc(p.destrava) + '</span>');
+  if (p.tempo) alto.push('<span><b>Tempo:</b> ' + esc(p.tempo) + '</span>');
+  var html = '<div class="alto">' + alto.join('') + '</div>';
+  html += '<ol class="passos">' + p.passos.map(function (passo) { return '<li><span>' + comCodigo(passo) + '</span></li>'; }).join('') + '</ol>';
   if (p.fontes && p.fontes.length) {
-    html += '<div class="fontes"><span>' + (p.fontes.length === 1 ? "Fonte" : "Fontes") + ":</span>" +
-            p.fontes.map(function (f) { return '<span class="cod" role="button" tabindex="0" title="Clique para copiar">' + esc(f) + "</span>"; }).join("") + "</div>";
+    html += '<div class="fontes"><span>' + (p.fontes.length === 1 ? 'Fonte' : 'Fontes') + ':</span>' +
+            p.fontes.map(function (f) { return '<span class="cod" role="button" tabindex="0" title="Clique para copiar">' + esc(f) + '</span>'; }).join('') + '</div>';
   }
-  var idade = isNaN(t) ? "" : '<span class="q" title="' + esc(quando(p.criada_em)) + '">há ' + esc(haMinutos(agoraS - t / 1000)) + "</span>";
-  return lb(0, '<span class="n"></span>') + lb(1, '<div class="detalhe">' + html + "</div>") +
-         lb(2, '<button type="button" class="voltar-linha">Voltar</button>' + (idade ? "<br>" + idade : ""));
+  var idade = isNaN(t) ? '' : '<span class="q" title="' + esc(quando(p.criada_em)) + '">há ' + esc(haMinutos(agoraS - t / 1000)) + '</span>';
+  return lb(0, '<span class="n"></span>') + lb(1, '<div class="detalhe">' + html + '</div>') +
+         lb(2, '<button type="button" class="voltar-linha">Voltar</button>' + (idade ? '<br>' + idade : ''));
 }
-/* Um <li> por pendência, guardado pela chave e só criado uma vez: a atualização dos dados troca o
-   texto do que mudou e não mexe no resto, por isso a ação virada continua virada, a rolagem não
-   pula e um texto selecionado não se perde. */
 var itens = {};
 function itemDe(p, chave) {
   var it = itens[chave];
@@ -1180,7 +1268,6 @@ function itemDe(p, chave) {
   cena.appendChild(frente); cena.appendChild(verso);
   li.appendChild(cena);
   it = itens[chave] = { li: li, cena: cena, frente: frente, verso: verso, p: p, virador: criarVirador(cena, frente, verso) };
-  /* Qualquer ponto do retângulo do pedido vira (ou desvira), quando ele tem passo a passo. */
   cena.addEventListener("click", function (ev) { if (temPassos(it.p) && cliqueLimpo(ev, cena)) alternar(it, chave, !it.virador.virado); });
   return it;
 }
@@ -1195,7 +1282,7 @@ function aplicarEstado(it, chave) {
   if (aberta) it.virador.virar(); else it.virador.desvirar();
 }
 function desenharPrecisa(agoraS) {
-  var lista = dados.quadro.pendencias;
+  var lista = (dados && dados.quadro && Array.isArray(dados.quadro.pendencias)) ? dados.quadro.pendencias : [];
   var conta = el("precisa-conta");
   por(conta, String(lista.length));
   classe(conta, "zero", lista.length === 0);
@@ -1207,13 +1294,11 @@ function desenharPrecisa(agoraS) {
     itens = {};
     return;
   }
-  /* Perguntas primeiro (uma resposta do dono do painel resolve), ações depois; a numeração segue de uma parte para a outra. */
   var perguntas = lista.filter(function (p) { return p.tipo === "pergunta"; });
   var acoes = lista.filter(function (p) { return p.tipo !== "pergunta"; });
   var comPassos = acoes.filter(temPassos).length;
   por(el("precisa-nota"), comPassos ? (comPassos === 1 ? "1 ação com passo a passo: clique nela para virar" : comPassos + " ações com passo a passo: clique nelas para virar") : "");
 
-  /* A estrutura (títulos e listas) só é refeita quando a divisão muda; os <li> são reaproveitados. */
   var estrutura = perguntas.length + "|" + acoes.length;
   if (corpo.getAttribute("data-estrutura") !== estrutura) {
     var html = "";
@@ -1224,8 +1309,6 @@ function desenharPrecisa(agoraS) {
     corpo.setAttribute("data-estrutura", estrutura);
   }
   var vivas = {};
-  /* Mais novas por cima, dentro de cada parte; sem data, vão para o fim, na ordem em que vieram.
-     A idade de cada pedido fica só à direita dele (sem títulos de grupo: pedido do dono do painel, 08/10). */
   function ordenar(itensDaParte) {
     var tempo = function (p) { var t = Date.parse(p.criada_em); return isNaN(t) ? null : t; };
     return itensDaParte.map(function (p, i) { return { p: p, t: tempo(p), i: i }; })
@@ -1748,10 +1831,26 @@ setTimeout(function () {
   }, { passive: false });
 }, 500);
 
+var filtroAutorLog = "todos";
+var filtroNivelLog = "todos";
+var buscaTextoLog = "";
+
 window.filtrarLogsAutor = function (autor, btn) {
   filtroAutorLog = autor.toLowerCase();
-  document.querySelectorAll(".filtro-chip").forEach(function (b) { b.classList.remove("ativo"); });
+  document.querySelectorAll(".log-filtros [data-autor]").forEach(function (b) { b.classList.remove("ativo"); });
   if (btn) btn.classList.add("ativo");
+  desenharLogs();
+};
+
+window.filtrarLogsNivel = function (nivel, btn) {
+  filtroNivelLog = nivel.toLowerCase();
+  document.querySelectorAll(".log-filtros [data-nivel]").forEach(function (b) { b.classList.remove("ativo"); });
+  if (btn) btn.classList.add("ativo");
+  desenharLogs();
+};
+
+window.filtrarLogsTexto = function (txt) {
+  buscaTextoLog = (txt || "").toLowerCase().trim();
   desenharLogs();
 };
 
@@ -1777,13 +1876,23 @@ function desenharLogs() {
   if (!timeline) return;
 
   var filtrados = lista.filter(function (item) {
-    if (filtroAutorLog === "todos") return true;
-    var aut = (item.autor || "").toLowerCase();
-    return aut.indexOf(filtroAutorLog) !== -1;
+    if (filtroAutorLog !== "todos") {
+      var aut = (item.autor || "").toLowerCase();
+      if (aut.indexOf(filtroAutorLog) === -1) return false;
+    }
+    if (filtroNivelLog !== "todos") {
+      var tipo = (item.tipo || "info").toLowerCase();
+      if (tipo !== filtroNivelLog) return false;
+    }
+    if (buscaTextoLog) {
+      var txt = ((item.acao || "") + " " + (item.detalhe || "") + " " + (item.autor || "")).toLowerCase();
+      if (txt.indexOf(buscaTextoLog) === -1) return false;
+    }
+    return true;
   });
 
   if (filtrados.length === 0) {
-    timeline.innerHTML = '<div style="text-align:center; padding:24px; color:#6e7681; font-family:monospace; font-size:11.5px;">Nenhum evento registrado.</div>';
+    timeline.innerHTML = '<div style="text-align:center; padding:24px; color:#6e7681; font-family:monospace; font-size:11.5px;">Nenhum evento corresponde aos filtros.</div>';
     return;
   }
 

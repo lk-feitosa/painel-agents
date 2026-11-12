@@ -1,0 +1,114 @@
+{
+  "projeto": "painel-agents",
+  "atualizado_em": "2026-11-11 22:42:37",
+  "painel_porta": 3333,
+  "painel_url": "http://localhost:3333/",
+  "portas_ativas": [
+    {
+      "porta": 3333,
+      "endereco": "127.0.0.1",
+      "pid": 36604,
+      "processo": "python (painel-agents)",
+      "servico": "Painel de Agentes (Telemetria & Cotas)",
+      "escopo": "projeto",
+      "url": "http://localhost:3333/",
+      "urls_extras": [
+        {
+          "rotulo": "Painel",
+          "url": "http://localhost:3333/"
+        }
+      ],
+      "status": "Ativo · Exclusivo"
+    },
+    {
+      "porta": 3334,
+      "endereco": "0.0.0.0",
+      "pid": 1684,
+      "processo": "python.exe",
+      "servico": "python.exe",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 5040,
+      "endereco": "0.0.0.0",
+      "pid": 936,
+      "processo": "svchost.exe",
+      "servico": "svchost.exe",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 5357,
+      "endereco": "::",
+      "pid": 4,
+      "processo": "System",
+      "servico": "System",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 6463,
+      "endereco": "127.0.0.1",
+      "pid": 19488,
+      "processo": "DiscordPTB.exe",
+      "servico": "DiscordPTB.exe",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 7070,
+      "endereco": "::",
+      "pid": 4368,
+      "processo": "AnyDesk.exe",
+      "servico": "AnyDesk (Serviço Local)",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 7679,
+      "endereco": "::1",
+      "pid": 23236,
+      "processo": "GoogleDriveFS.exe",
+      "servico": "Google Drive FS",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 8128,
+      "endereco": "127.0.0.1",
+      "pid": 34056,
+      "processo": "lu-llama-server.exe",
+      "servico": "lu-llama-server.exe",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 8188,
+      "endereco": "127.0.0.1",
+      "pid": 34680,
+      "processo": "python.exe",
+      "servico": "python.exe",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    },
+    {
+      "porta": 9977,
+      "endereco": "127.0.0.1",
+      "pid": 16440,
+      "processo": "GalaxyCommunication.exe",
+      "servico": "GOG Galaxy Communication",
+      "escopo": "externo",
+      "url": null,
+      "status": "Porta Externa Ocupada"
+    }
+  ]
+}

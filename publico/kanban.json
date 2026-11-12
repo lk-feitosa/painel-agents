@@ -1,7 +1,6 @@
 {
   "versao": 1,
-  "workspace": "S:\\DEV\\dash-mei",
-  "titulo": "Kanban: dash-mei",
+  "titulo": "Painel de Agentes (Ambiente de Testes & Mudanças)",
   "colunas": [
     {
       "id": "col-backlog",
@@ -31,129 +30,92 @@
   ],
   "cartoes": [
     {
-      "id": "card-cnd-1",
-      "colunaId": "col-concluido",
-      "titulo": "Motor de Validade e Dados de Certidões (CNDs)",
-      "descricao": "Modelagem de certidões (Federal, CNDT, FGTS, Municipal, Estadual), regras de contagem de dias restantes, semáforo de status (válida, atenção, vencida) e armazenamento local.",
+      "id": "card-1",
+      "colunaId": "col-progresso",
+      "titulo": "Orquestração do Team CODES",
+      "agente": "Minerva",
+      "criadoEm": "2026-11-11T19:00:00Z",
+      "checklist": [
+        {
+          "texto": "Definição de papéis e modelos",
+          "concluido": true
+        },
+        {
+          "texto": "Aprovação do usuário na spec",
+          "concluido": false
+        }
+      ]
+    },
+    {
+      "id": "card-2",
+      "colunaId": "col-progresso",
+      "titulo": "Implementação da API e Endpoints",
       "agente": "Back-End",
-      "tags": [
-        "backend",
-        "cnd",
-        "regras"
-      ],
-      "prioridade": "alta",
-      "criadoEm": "2026-11-11T00:07:00.000Z",
+      "criadoEm": "2026-11-11T19:05:00Z",
       "checklist": [
         {
-          "texto": "Definição de tipos e links oficiais padrão de emissão",
+          "texto": "Rotas de telemetria",
           "concluido": true
         },
         {
-          "texto": "Cálculo preciso de dias até o vencimento",
-          "concluido": true
-        },
-        {
-          "texto": "Função para atualizar data de validade de certidão avulsa",
-          "concluido": true
+          "texto": "Cache HTTP e compressão",
+          "concluido": false
         }
       ]
     },
     {
-      "id": "card-cnd-2",
-      "colunaId": "col-concluido",
-      "titulo": "Radar Visual de Certidões & Renovação Rápida",
-      "descricao": "Componente de cards visuais para cada certidão com alerta de status em cores, botão de link direto ao órgão oficial e modal rápido para atualizar apenas a certidão vencida.",
+      "id": "card-3",
+      "colunaId": "col-progresso",
+      "titulo": "Redesign dos Cards 3D e Responsividade",
       "agente": "Front-End",
-      "tags": [
-        "frontend",
-        "ui",
-        "cnd"
-      ],
-      "prioridade": "alta",
-      "criadoEm": "2026-11-11T00:07:15.000Z",
+      "criadoEm": "2026-11-11T19:10:00Z",
       "checklist": [
         {
-          "texto": "Card de certidão com indicador verde/amarelo/vermelho",
+          "texto": "Efeito tilt com CSS 3D",
           "concluido": true
         },
         {
-          "texto": "Botão de atalho direto para o órgão emissor",
-          "concluido": true
-        },
-        {
-          "texto": "Ação rápida de renovação isolada de certidão",
+          "texto": "Ajuste WCAG AAA para modo escuro",
           "concluido": true
         }
       ]
     },
     {
-      "id": "card-cnd-3",
-      "colunaId": "col-concluido",
-      "titulo": "Hub de Emissão de Notas por Empresa Contratante",
-      "descricao": "Interface e cadastro de empresas/tomadores com links rápidos diretos para emissão de NFS-e e histórico rápido.",
-      "agente": "Front-End",
-      "tags": [
-        "frontend",
-        "notas",
-        "empresas"
-      ],
-      "prioridade": "media",
-      "criadoEm": "2026-11-11T00:07:30.000Z",
-      "checklist": [
-        {
-          "texto": "Listagem de empresas cadastradas com atalhos de emissão",
-          "concluido": true
-        },
-        {
-          "texto": "Formulário simples para cadastrar nova empresa e link",
-          "concluido": true
-        }
-      ]
-    },
-    {
-      "id": "card-cnd-4",
-      "colunaId": "col-concluido",
-      "titulo": "Testes Automatizados de Validade e Alertas de CNDs",
-      "descricao": "Suíte de testes unitários para cálculo de dias, datas no passado/futuro e classificação correta dos alertas.",
-      "agente": "Test-QA",
-      "tags": [
-        "qa",
-        "testes",
-        "tdd"
-      ],
-      "prioridade": "alta",
-      "criadoEm": "2026-11-11T00:07:45.000Z",
-      "checklist": [
-        {
-          "texto": "Testes de certidões vencidas, próximas e válidas",
-          "concluido": true
-        },
-        {
-          "texto": "Validação de renovação individual",
-          "concluido": true
-        }
-      ]
-    },
-    {
-      "id": "card-cnd-5",
-      "colunaId": "col-concluido",
-      "titulo": "Auditoria de Segurança, Usabilidade e Code Review",
-      "descricao": "Revisar segurança de links externos (rel='noopener noreferrer'), tipagem estrita e fluxo sem atrito.",
+      "id": "card-4",
+      "colunaId": "col-revisao",
+      "titulo": "Auditoria de Segurança e Code Review",
       "agente": "Reviewer",
-      "tags": [
-        "review",
-        "seguranca"
-      ],
-      "prioridade": "media",
-      "criadoEm": "2026-11-11T00:08:00.000Z",
+      "criadoEm": "2026-11-11T18:50:00Z",
       "checklist": [
         {
-          "texto": "Auditoria de links externos e sanitização",
+          "texto": "Verificar OWASP Top 10 e permissões",
           "concluido": true
-        },
+        }
+      ]
+    },
+    {
+      "id": "card-5",
+      "colunaId": "col-concluido",
+      "titulo": "Configuração da Suíte E2E Playwright",
+      "agente": "QA / Test",
+      "criadoEm": "2026-11-11T18:30:00Z",
+      "checklist": [
         {
-          "texto": "Revisão e merge da branch feature/dashboard-notas-certidoes-mei",
+          "texto": "Testes de navegação e abas",
           "concluido": true
+        }
+      ]
+    },
+    {
+      "id": "card-6",
+      "colunaId": "col-todo",
+      "titulo": "Telemetria de Conexão WebSocket",
+      "agente": "Back-End",
+      "criadoEm": "2026-11-11T19:12:00Z",
+      "checklist": [
+        {
+          "texto": "Suporte a live streaming de logs",
+          "concluido": false
         }
       ]
     }

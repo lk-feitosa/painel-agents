@@ -27,6 +27,7 @@ import os
 import re
 import secrets
 import tempfile
+import time
 import unicodedata
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -147,7 +148,23 @@ def gravar_atomico(caminho, texto):
             f.flush()
             os.fsync(f.fileno())
         os.chmod(tmp, 0o644)
-        os.replace(tmp, str(caminho))
+        for tentativa in range(6):
+            try:
+                os.replace(tmp, str(caminho))
+                break
+            except PermissionError:
+                if tentativa == 5:
+                    try:
+                        with open(caminho, "w", encoding="utf-8") as f:
+                            f.write(texto)
+                        try:
+                            os.unlink(tmp)
+                        except OSError:
+                            pass
+                    except Exception:
+                        pass
+                    break
+                time.sleep(0.06)
     except BaseException:
         try:
             os.unlink(tmp)

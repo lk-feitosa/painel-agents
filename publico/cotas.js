@@ -25,13 +25,11 @@ var ESTILO = `
           --c-pilula: rgba(255,255,255,.74); --c-pulso: rgba(85,85,79,.6);
           --sombra-sm: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08);
           --sombra-md: 0px 0px 0px 1px rgba(0,0,0,0.06), 0px 1px 1px -0.5px rgba(0,0,0,0.06), 0px 3px 3px -1.5px rgba(0,0,0,0.06), 0px 6px 6px -3px rgba(0,0,0,0.06), 0px 12px 12px -6px rgba(0,0,0,0.06), 0px 24px 24px -12px rgba(0,0,0,0.06); }
-/* No escuro, a cápsula ganha contorno, decorrido, agulha, marcas e pílula próprios. */
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-borda: #6a6a65; --c-decorrido: #6e6e68; --c-agulha: #f7f7f3; --c-marca: rgba(255,255,255,.52); --c-pilula: rgba(40,40,38,.74); --c-pulso: rgba(202,202,195,.55); } }
-html[data-tema="escuro"] #contas { --c-borda: #6a6a65; --c-decorrido: #6e6e68; --c-agulha: #f7f7f3; --c-marca: rgba(255,255,255,.52); --c-pilula: rgba(40,40,38,.74); --c-pulso: rgba(202,202,195,.55); }
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-sup: #242423; --c-fio: #34342f; --c-etiqueta: #2e2e2c; } }
-html[data-tema="escuro"] #contas { --c-sup: #242423; --c-fio: #34342f; --c-etiqueta: #2e2e2c; }
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-alerta: #c98a52; } }
-html[data-tema="escuro"] #contas { --c-alerta: #c98a52; }
+/* No escuro, a cápsula ganha contorno, decorrido, agulha, marcas e pílula próprios na paleta preto e cinza. */
+@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-sup: #161619; --c-fio: #27272c; --c-etiqueta: #202025; --c-borda: #34343a; --c-decorrido: #3f3f46; --c-agulha: #f4f4f5; --c-marca: rgba(255,255,255,.5); --c-pilula: rgba(30,30,35,.85); --c-pulso: rgba(161,161,170,.5); } }
+html[data-tema="escuro"] #contas { --c-sup: #161619; --c-fio: #27272c; --c-etiqueta: #202025; --c-borda: #34343a; --c-decorrido: #3f3f46; --c-agulha: #f4f4f5; --c-marca: rgba(255,255,255,.5); --c-pilula: rgba(30,30,35,.85); --c-pulso: rgba(161,161,170,.5); }
+@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-alerta: #f59e0b; } }
+html[data-tema="escuro"] #contas { --c-alerta: #f59e0b; }
 #contas .aviso-contas { padding: 0 16px 12px; color: var(--apagado); font-size: 11px; }
 #contas .aviso-contas[hidden] { display: none; }
 #contas .aviso-contas .erro { color: var(--critico-tinta); }
@@ -52,46 +50,40 @@ html[data-layout="minimo"] #contas { display: none; }
 
 .card-slot { position: relative; display: grid; min-width: 0; }
 .card-slot:hover, .card-slot:focus-within { z-index: 1; }
-/* Frente e verso no mesmo lugar: a frente é o card de sempre (superfície, sombra, tilt); o verso é
-   só conteúdo, absoluto por cima, sem fundo próprio. A troca é um "pop" do conjunto e a transição
-   vertical dos blocos; nada gira nem se desloca. */
+/* Frente e verso no mesmo lugar: a frente é o card com as réguas de tempo e consumo; o verso é
+   o detalhe expandido com tempos e cotas detalhadas. Sem efeito de hover, sem tilt e sem scrollbar. */
 .card-cena { position: relative; display: grid; min-width: 0; }
-.card-pilha { position: relative; display: grid; min-width: 0; will-change: transform; cursor: pointer; }
-/* O pop: escala com overshoot e um giro no plano (--giro, sorteado pelo JS a cada clique) que volta
-   em mola: passa do zero para o outro lado, bem menos, e assenta. */
-.card-cena.pop { animation: pop-do-card 400ms cubic-bezier(.3, .6, .3, 1) both; transform-origin: 50% 50%; }
-@keyframes pop-do-card {
-  0% { transform: rotate(0deg) scale(1); }
-  30% { transform: rotate(var(--giro, 0deg)) scale(1.008); }
-  65% { transform: rotate(calc(var(--giro, 0deg) * -0.08)) scale(1); }
-  85% { transform: rotate(calc(var(--giro, 0deg) * 0.02)) scale(1); }
-  100% { transform: rotate(0deg) scale(1); }
-}
-.card { --radius: 8px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 10px 12px 10px; box-sizing: border-box; min-width: 0; min-height: auto; color: var(--c-tinta);
-  box-shadow: 0px 1px 2px rgba(0,0,0,0.1), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 8px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
-  padding: 10px 12px 10px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin;
+.card-pilha { position: relative; display: grid; min-width: 0; cursor: pointer; transform: none !important; will-change: auto; }
+.card-cena.pop { animation: none !important; }
+
+.card { --radius: 10px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
+  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 220px; color: var(--c-tinta);
+  background: var(--c-sup, #161619);
+  transform: none !important; transition: none !important;
+  box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio); }
+.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+  padding: 12px 14px; box-sizing: border-box; overflow: hidden !important; scrollbar-width: none !important; -ms-overflow-style: none;
+  background: var(--c-sup, #161619);
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
-.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.card-slot, .card-cena, .card-pilha, .card, .card *, .card-verso, .card-verso *, .verso-corpo, .verso-corpo * {
+  scrollbar-width: none !important; -ms-overflow-style: none !important;
+}
+.card-slot::-webkit-scrollbar, .card-cena::-webkit-scrollbar, .card-pilha::-webkit-scrollbar, .card-verso::-webkit-scrollbar, .verso-corpo::-webkit-scrollbar, .card *::-webkit-scrollbar {
+  display: none !important; width: 0 !important; height: 0 !important;
+}
+.verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; justify-content: space-between; overflow: hidden !important; scrollbar-width: none !important; }
+.verso-corpo::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
 .card-cena.virado .card { pointer-events: none; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
-/* Os blocos de texto saltam: o que sai encolhe um pouco e some em 100 ms; o que entra vem 5 px de
-   baixo, um pouco menor, e assenta com uma mola curta (overshoot da curva), 10 ms depois do bloco
-   anterior (--i), o bastante para não parecer um corte, pouco para não virar cascata. */
-.card .bloco, .card-verso .bloco { transition: transform 190ms cubic-bezier(.2, .9, .3, 1.18), opacity 110ms ease-out; transition-delay: calc(50ms + var(--i, 0) * 10ms); }
-.card-cena.virado .card .bloco { transform: translateY(-3px) scale(.975); opacity: 0; transition: transform 100ms ease-in, opacity 80ms ease-in; transition-delay: calc(var(--i, 0) * 6ms); }
-.card-cena:not(.virado) .card-verso .bloco { transform: translateY(5px) scale(.965); opacity: 0; transition: transform 100ms ease-in, opacity 80ms ease-in; transition-delay: calc(var(--i, 0) * 6ms); }
+.card .bloco, .card-verso .bloco { transition: opacity 120ms ease-out; }
+.card-cena.virado .card .bloco { opacity: 0; }
+.card-cena:not(.virado) .card-verso .bloco { opacity: 0; }
 .card-surface { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; overflow: visible; pointer-events: none; fill: var(--c-sup); }
-.card::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: var(--radius); pointer-events: none; opacity: 0; transition: opacity 200ms;
-  box-shadow: 0px 1px 1px -0.5px rgba(0,0,0,0.06), 0px 3px 3px -1.5px rgba(0,0,0,0.06), 0px 6px 6px -3px rgba(0,0,0,0.06), 0px 12px 12px -6px rgba(0,0,0,0.06), 0px 24px 24px -12px rgba(0,0,0,0.06); }
-.card-slot:hover .card::before, .card-slot:focus-within .card::before { opacity: 1; }
-/* O brilho sob o cursor: uma luz difusa (gradiente largo, com queda suave) e, por cima, um grão fino
-   (ruído fractal em SVG, misturado em soft-light), os dois presos ao mesmo ponto. --brilho e --grao
-   são as intensidades; o JS só liga, desliga e move. */
-.card-spotlight { --brilho: .04; --grao: .14; position: absolute; inset: 0; border-radius: var(--radius); overflow: hidden;
-  -webkit-clip-path: inset(0 round var(--radius)); clip-path: inset(0 round var(--radius)); pointer-events: none; opacity: 0; transition: opacity 260ms; }
+.card::before { display: none; }
+.card-slot:hover .card::before, .card-slot:focus-within .card::before { opacity: 0 !important; }
+.card:hover, .card-slot:hover .card { transform: none !important; box-shadow: 0px 1px 2px rgba(0,0,0,0.1), 0px 0px 0px 1px var(--c-fio) !important; }
+.card-spotlight { display: none !important; }
 @media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) .card-spotlight { --brilho: .035; --grao: .16; } }
 html[data-tema="escuro"] .card-spotlight { --brilho: .035; --grao: .16; }
 /* No escuro, trilho e preenchimento das barras ganham contraste próprio, para a luz do hover não
@@ -305,60 +297,59 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .card[aria-busy="true"] .query-ring > span { animation-play-state: running; }
 @keyframes consultando { 0%, 100% { opacity: .18; } 50% { opacity: .55; } }
 
-.verso-cabeca { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex: none; }
-.verso-cabeca .card-eyebrow { margin: 0 0 2px; }
+.verso-cabeca { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex: none; }
+.verso-cabeca .card-eyebrow { margin: 0 0 1px; font-size: 8.5px; }
 .verso-cabeca .identity { flex: 1; min-width: 0; }
-.verso-titulo { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.2px; line-height: 1.25; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.verso-titulo { margin: 0; font-size: 13px; font-weight: 650; letter-spacing: -.2px; line-height: 1.2; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .verso-titulo::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
-.voltar { flex: none; font: inherit; font-size: 11px; color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.voltar { flex: none; font: inherit; font-size: 10px; color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 2px 8px; cursor: pointer; }
 .voltar:hover { color: var(--c-tinta); border-color: var(--c-fio-forte); }
 .voltar:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
-.card-verso h3 { margin: 0; font-size: 11px; font-weight: 650; color: var(--apagado); letter-spacing: .7px; display: block; }
-.card-verso footer { margin-top: auto; font-size: 10.5px; line-height: 1.35; }
+.card-verso h3 { margin: 0; font-size: 10.5px; font-weight: 650; color: var(--apagado); letter-spacing: .5px; display: block; }
+.card-verso footer { margin-top: 2px; padding-top: 2px; font-size: 9.5px; line-height: 1.2; }
 .card-verso .tip-main .tip-window-heading { display: none; }   /* o título do verso já diz a janela */
-.card-verso .tip-main .tip-time { margin-top: 2px; }
-.card-verso .tip-main .tip-time strong { font-size: 24px; }
-.card-verso .tip-main .tip-meter { margin: 8px 0; }
-.card-verso .tip-main .tip-quota { margin-top: 6px; }
-.card-verso .tip-main + .tip-window { margin-top: 6px; padding-top: 6px; }
-.tip-window-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.tip-reset { font-size: 11px; color: var(--apagado); font-variant-numeric: tabular-nums; }
-.tip-time { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--apagado); }
+.card-verso .tip-main .tip-time { margin-top: 1px; }
+.card-verso .tip-main .tip-time strong { font-size: 14.5px; line-height: 1.15; }
+.card-verso .tip-main .tip-meter { margin: 3px 0; }
+.card-verso .tip-main .tip-quota { margin-top: 1px; }
+.card-verso .tip-main + .tip-window { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--c-fio); }
+.tip-window-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; flex-wrap: nowrap; }
+.tip-reset { font-size: 9.5px; color: var(--c-apagado); font-variant-numeric: tabular-nums; }
+.tip-time { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 2px; font-size: 10px; color: var(--apagado); }
 .tip-time strong { font-variant-numeric: tabular-nums; font-weight: 590; color: var(--tinta); }
-.card-verso .tip-main .tip-time { display: grid; grid-template-columns: 1fr auto; margin-top: 6px; }
+.card-verso .tip-main .tip-time { display: grid; grid-template-columns: 1fr auto; margin-top: 1px; }
 .tip-main .tip-time > span:first-child { grid-column: 1 / -1; }
-.tip-main .tip-time strong { font-size: 20px; line-height: 1.15; font-weight: 680; letter-spacing: -.6px; }
+.tip-main .tip-time strong { font-size: 15.5px; line-height: 1.1; font-weight: 680; letter-spacing: -.4px; }
 .tip-main .tip-window-heading .tip-reset { display: none; }
-.tip-main .tip-time .tip-reset { display: block; align-self: end; padding-bottom: 2px; letter-spacing: 0; }
-.tip-meter { position: relative; height: 5px; background: var(--sup2); border-radius: 999px; margin: 6px 0; overflow: hidden; }
+.tip-main .tip-time .tip-reset { display: block; align-self: end; padding-bottom: 1px; letter-spacing: 0; }
+.tip-meter { position: relative; height: 4px; background: var(--sup2); border-radius: 999px; margin: 3px 0; overflow: hidden; }
 .tip-meter.is-weekly { overflow: visible; }
 .tip-fill { display: block; height: 100%; background: var(--accent, var(--barra)); border-radius: inherit; }
-.tip-cursor { position: absolute; top: -3px; height: 11px; width: 1px; background: var(--tinta); transform: translateX(-50%); }
+.tip-cursor { position: absolute; top: -3px; height: 10px; width: 1px; background: var(--tinta); transform: translateX(-50%); }
 .tip-cursor[hidden] { display: none; }
-.card-verso dl { margin: 0; font-variant-numeric: tabular-nums; }
-.card-verso dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.card-verso dl { margin: 0; font-variant-numeric: tabular-nums; font-size: 10.5px; }
+.card-verso dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .card-verso dt { color: var(--apagado); }
 .card-verso dd { margin: 0; text-align: right; }
 .card-verso dl[hidden] { display: none; }
-.tip-main .tip-quota { margin-top: 6px; }
+.tip-main .tip-quota { margin-top: 2px; }
 .tip-main dd { font-weight: 650; }
-.tip-window { font-size: 11px; line-height: 14px; }
+.tip-window { font-size: 10.5px; line-height: 13px; }
 .tip-window[hidden] { display: none; }
 .tip-window .tip-window-heading { flex-wrap: nowrap; }
-.tip-reset-row { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tip-reset-row { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 10px; }
 .tip-duration { font-weight: 590; }
 .tip-duration::after { content: " ·"; font-weight: 400; color: var(--apagado); }
-.tip-compact-usage { display: flex; align-items: center; gap: 12px; margin-top: 3px; }
+.tip-compact-usage { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
-.tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); }
-.tip-pace { font-size: 11px; padding-top: 4px; }
-.tip-main + .tip-window, .card-verso footer { border-top: 1px solid var(--fio); margin-top: 6px; padding-top: 6px; }
-.card-verso footer { color: var(--apagado); font-size: 11px; margin-top: 6px; padding-bottom: 4px; }
-.card-verso footer p { margin: 0 0 4px; line-height: 1.35; }
+.tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); font-size: 10px; }
+.tip-pace { font-size: 10px; padding-top: 2px; }
+.card-verso footer { color: var(--apagado); font-size: 10px; margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--c-fio); }
+.card-verso footer p { margin: 0 0 2px; line-height: 1.25; }
 .card-verso footer p[hidden] { display: none; }
-.tip-error { margin-bottom: 4px; }
+.tip-error { margin-bottom: 2px; }
 .tip-error dd { color: var(--critico-tinta); }
-.tip-observation { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; font-size: 11px; padding-top: 2px; }
+.tip-observation { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; font-size: 10px; padding-top: 1px; }
 @media (prefers-reduced-motion: reduce) {
   .query-ring > span { animation: none; opacity: .25; }
   .orbita i { animation: none; }
@@ -555,65 +546,20 @@ var observadorDeForma = new ResizeObserver(function (entradas) {
   });
 });
 
-/* ---------- tilt do card: inclina sob o ponteiro ---------- */
-/* Cada card cuida de si: entrou, acompanha; saiu, descansa. Não há "card ativo" único nem área
-   congelada (a versão anterior parava sobre as barras e, depois de uma virada, só voltava a reagir
-   quando o ponteiro saía e entrava de novo). A inclinação vale para a pilha inteira, frente e verso. */
-var TILT = { angulo: 6, escala: 1.02, perspectiva: 1200, duracao: 200 };   /* a intensidade do brilho está no CSS (--brilho, --grao) */
-var tilt = (function () {
-  var reduzir = matchMedia("(prefers-reduced-motion: reduce)"), mouse = matchMedia("(hover: hover) and (pointer: fine)");
-  var porSlot = new WeakMap();
-  function pode() { return !reduzir.matches && mouse.matches; }
-  function deslizar(t) { t.alvo.style.transition = "transform " + TILT.duracao + "ms ease-out, --angulo " + TILT.duracao + "ms ease-out"; }
-  function pintar(t) {
-    t.quadro = 0;
-    if (!t.dentro || !pode()) return;
-    var r = t.slot.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    var px = Math.min(1, Math.max(0, (t.x - r.left) / r.width)), py = Math.min(1, Math.max(0, (t.y - r.top) / r.height));
-    var xRot = (py - 0.5) * TILT.angulo * 2, yRot = -(px - 0.5) * TILT.angulo * 2;
-    t.alvo.style.setProperty("--angulo", String(Math.round(Apoio.intensidadeDoAngulo(xRot, yRot, TILT.angulo) * 1000) / 1000));
-    t.alvo.style.transform = "perspective(" + TILT.perspectiva + "px) rotateX(" + xRot + "deg) rotateY(" + yRot + "deg) scale3d(" + TILT.escala + ", " + TILT.escala + ", " + TILT.escala + ")";
-    t.brilho.style.setProperty("--spot-x", px * r.width + "px");
-    t.brilho.style.setProperty("--spot-y", py * r.height + "px");
-    t.brilho.style.opacity = "1";
-  }
-  function agendar(t) { if (!t.quadro) t.quadro = requestAnimationFrame(function () { pintar(t); }); }
-  function descansar(t) {
-    t.dentro = false;
-    cancelAnimationFrame(t.quadro); t.quadro = 0;
-    deslizar(t);
-    t.alvo.style.transform = "";
-    t.alvo.style.removeProperty("--angulo");
-    t.brilho.style.opacity = "0";
-  }
-  function ligar(slot, alvo, brilho) {
-    var t = { slot: slot, alvo: alvo, brilho: brilho, x: 0, y: 0, quadro: 0, dentro: false };
-    porSlot.set(slot, t);
-    function seguir(ev) {
-      if (ev.pointerType === "touch" || !pode()) return;
-      if (!t.dentro) { t.dentro = true; deslizar(t); }
-      t.x = ev.clientX; t.y = ev.clientY;
-      agendar(t);
+/* ---------- tilt desativado: cards estáticos e limpos sem hover ---------- */
+var tilt = {
+  ligar: function (slot, alvo, brilho) {
+    if (alvo) {
+      alvo.style.transform = "none";
+      alvo.style.transition = "none";
     }
-    function aoSair() { descansar(t); }
-    function fimDaTransicao(ev) { if (ev.target === alvo && ev.propertyName === "transform") alvo.style.transition = ""; }
-    slot.addEventListener("pointerenter", seguir);
-    slot.addEventListener("pointermove", seguir);
-    slot.addEventListener("pointerleave", aoSair);
-    slot.addEventListener("pointercancel", aoSair);
-    alvo.addEventListener("transitionend", fimDaTransicao);
-    return function () {
-      slot.removeEventListener("pointerenter", seguir); slot.removeEventListener("pointermove", seguir);
-      slot.removeEventListener("pointerleave", aoSair); slot.removeEventListener("pointercancel", aoSair);
-      alvo.removeEventListener("transitionend", fimDaTransicao);
-      descansar(t);
-    };
-  }
-  function seMudou() { if (!pode()) Object.keys(cards).forEach(function (id) { var t = porSlot.get(cards[id].slot); if (t) descansar(t); }); }
-  reduzir.addEventListener("change", seMudou); mouse.addEventListener("change", seMudou);
-  return { ligar: ligar, descansar: function (slot) { var t = porSlot.get(slot); if (t) descansar(t); } };
-})();
+    if (brilho) {
+      brilho.style.display = "none";
+    }
+    return function () {};
+  },
+  descansar: function () {}
+};
 
 /* ---------- privacidade: o miolo do e-mail vira bloco pixelado ---------- */
 var TRANSLUCIDEZ = 0.82;
