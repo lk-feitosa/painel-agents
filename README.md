@@ -102,9 +102,32 @@ Opções:
   --porta INT        Porta do servidor local (padrão: 3333, com auto-fallback)
   --intervalo INT    Taxa de amostragem das telas em segundos (padrão: 10s)
   --sem-portal       Inicia o coletor e o servidor web sem abrir o nó de Portal
+  --projeto CAMINHO  Vincula a telemetria, Kanban e portas a um workspace específico
+  --navegador        Abre automaticamente a interface no navegador padrão
+  --mock             Executa com dados fictícios ricos para testes de UI
   --uma-vez          Executa uma única amostragem analítica e encerra no terminal
+  --ensure           Verifica se o servidor já está ativo e sai sem duplicar
   -h, --help         Exibe a mensagem de ajuda e opções
 ```
+
+### 🖥️ Uso em Monitor Secundário (Modo App Dedicado)
+
+Se você deseja manter o painel sempre visível em um monitor secundário sem ocupar o espaço do canvas do Maestri:
+
+1. **Iniciar vinculado a um workspace específico (sem criar portal):**
+   ```bash
+   painel --projeto "S:\DEV\seu-projeto" --sem-portal --navegador
+   ```
+
+2. **Abrir como WebApp nativo (sem barras de navegação ou abas):**
+   - No **Edge**: `msedge --app=http://localhost:3333`
+   - No **Chrome**: `chrome --app=http://localhost:3333`
+   - Arraste para o monitor secundário e aperte `F11` para tela cheia contínua.
+
+3. **Se o painel já estiver ativo no Maestri:**
+   - O servidor local já está servindo em `http://localhost:3333`.
+   - Basta abrir essa URL no navegador no monitor secundário (ou via `msedge --app=http://localhost:3333`).
+   - Você pode fechar o card do portal dentro do canvas do Maestri para liberar espaço: o servidor continua ativo em segundo plano atualizando o monitor secundário.
 
 ---
 
