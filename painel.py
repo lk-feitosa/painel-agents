@@ -499,7 +499,7 @@ def descobrir_contas_local(leituras, agora_epoch):
             "ferramenta": "agy",
             "ferramenta_nome": "Antigravity",
             "titulo": "Google AI Pro",
-            "email": agy_email or "lukynnhas.feitosa@gmail.com",
+            "email": agy_email or "conta@local",
             "plano": "Google AI Pro",
             "agentes": agentes_agy or ["Minerva"],
             "terminais": agentes_agy or ["Minerva"],
@@ -605,7 +605,7 @@ def descobrir_contas_local(leituras, agora_epoch):
             "ferramenta": "codex",
             "ferramenta_nome": "Codex",
             "titulo": f"Codex ({codex_plano})",
-            "email": codex_email or agy_email or "lukynnhas.feitosa@gmail.com",
+            "email": codex_email or agy_email or "conta@local",
             "plano": codex_plano,
             "agentes": agentes_codex or ["Disponível p/ Back-End & QA"],
             "terminais": agentes_codex or ["Pronto no Workspace"],
@@ -644,7 +644,7 @@ def descobrir_contas_local(leituras, agora_epoch):
     # 3. Claude Code CLI
     claude_cfg = home / ".claude.json"
     agentes_claude = [a["nome"] for a in leituras if a.get("ferramenta") == "claude"]
-    claude_email = agy_email or "lukynnhas.feitosa@gmail.com"
+    claude_email = agy_email or "conta@local"
     claude_modelo = "claude-sonnet-4-6"
     claude_esforco = "high"
     claude_5h_pct = 0.0
@@ -1732,7 +1732,7 @@ def ciclo_coleta(terminais, pasta_saida):
         if not reg.get("ferramenta_nome"):
             reg["ferramenta_nome"] = NOME_FERRAMENTA.get(ferr_real, "Agente IA")
 
-        reg["conta"] = "lukynnhas.feitosa@gmail.com"
+        reg["conta"] = reg.get("conta") or "conta@local"
         reg.setdefault("prs", [])
         reg.setdefault("missao", None)
 
