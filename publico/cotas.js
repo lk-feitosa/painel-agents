@@ -40,7 +40,7 @@ html[data-tema="escuro"] #contas { --c-alerta: #f59e0b; }
 .legenda-cor { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 .legenda-cor.faixa-tempo { background: var(--c-decorrido); border: 1px solid var(--c-borda); }
 .legenda-cor.faixa-consumo { background: var(--c-cheio); }
-.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; margin: 0; padding: 0 2px; }
+.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; margin: 0; padding: 0 2px; }
 #contas.cartao { background: none; border-radius: 0; }
 #contas .aviso-contas { padding-left: 4px; padding-right: 4px; }
 .contas-grade[hidden] { display: none; }
@@ -57,13 +57,14 @@ html[data-layout="minimo"] #contas { display: none; }
 .card-cena.pop { animation: none !important; }
 
 .card { --radius: 10px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 260px; color: var(--c-tinta);
+  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 215px; color: var(--c-tinta);
   background: var(--c-sup, #161619);
   transform: none !important; transition: none !important;
   box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0; border-radius: var(--radius);
   padding: 12px 14px; box-sizing: border-box; overflow: hidden !important; scrollbar-width: none !important; -ms-overflow-style: none;
   background: var(--c-sup, #161619);
+  box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio);
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
 .card-slot, .card-cena, .card-pilha, .card, .card *, .card-verso, .card-verso *, .verso-corpo, .verso-corpo * {
   scrollbar-width: none !important; -ms-overflow-style: none !important;
@@ -73,9 +74,10 @@ html[data-layout="minimo"] #contas { display: none; }
 }
 .verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; justify-content: space-between; overflow: hidden !important; scrollbar-width: none !important; }
 .verso-corpo::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-.card-cena.virado .card { pointer-events: none; }
+.card-cena.virado .card { pointer-events: none; position: absolute; inset: 0; min-height: 0; overflow: hidden; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
+.card-cena.virado .card-verso { position: relative; inset: auto; min-height: 215px; height: auto; visibility: visible; }
 .card .bloco, .card-verso .bloco { transition: opacity 120ms ease-out; }
 .card-cena.virado .card .bloco { opacity: 0; }
 .card-cena:not(.virado) .card-verso .bloco { opacity: 0; }
