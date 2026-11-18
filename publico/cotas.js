@@ -40,7 +40,7 @@ html[data-tema="escuro"] #contas { --c-alerta: #f59e0b; }
 .legenda-cor { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 .legenda-cor.faixa-tempo { background: var(--c-decorrido); border: 1px solid var(--c-borda); }
 .legenda-cor.faixa-consumo { background: var(--c-cheio); }
-.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; margin: 0; padding: 0 2px; }
+.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; margin: 0; padding: 0 2px; }
 #contas.cartao { background: none; border-radius: 0; }
 #contas .aviso-contas { padding-left: 4px; padding-right: 4px; }
 .contas-grade[hidden] { display: none; }
@@ -57,13 +57,14 @@ html[data-layout="minimo"] #contas { display: none; }
 .card-cena.pop { animation: none !important; }
 
 .card { --radius: 10px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 220px; color: var(--c-tinta);
+  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 215px; color: var(--c-tinta);
   background: var(--c-sup, #161619);
   transform: none !important; transition: none !important;
   box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0;
+.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0; border-radius: var(--radius);
   padding: 12px 14px; box-sizing: border-box; overflow: hidden !important; scrollbar-width: none !important; -ms-overflow-style: none;
   background: var(--c-sup, #161619);
+  box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio);
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
 .card-slot, .card-cena, .card-pilha, .card, .card *, .card-verso, .card-verso *, .verso-corpo, .verso-corpo * {
   scrollbar-width: none !important; -ms-overflow-style: none !important;
@@ -73,9 +74,11 @@ html[data-layout="minimo"] #contas { display: none; }
 }
 .verso-corpo { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 4px; justify-content: space-between; overflow: hidden !important; scrollbar-width: none !important; }
 .verso-corpo::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
-.card-cena.virado .card { pointer-events: none; }
+.card-cena.virado .card { pointer-events: none; position: absolute; inset: 0; min-height: 0; overflow: hidden; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
+.card-cena.virado .card-verso { position: relative; inset: auto; min-height: 215px; height: auto; visibility: visible; overflow: visible !important; padding-bottom: 14px; }
+.card-cena.virado .verso-corpo { overflow: visible !important; flex: none; gap: 6px; }
 .card .bloco, .card-verso .bloco { transition: opacity 120ms ease-out; }
 .card-cena.virado .card .bloco { opacity: 0; }
 .card-cena:not(.virado) .card-verso .bloco { opacity: 0; }
@@ -344,6 +347,15 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .tip-compact-usage .tip-meter { flex: 1; min-width: 40px; margin: 0; }
 .tip-summary { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--apagado); font-size: 10px; }
 .tip-pace { font-size: 10px; padding-top: 2px; }
+.tip-models { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--c-fio); }
+.tip-models[hidden] { display: none; }
+.tip-models-title { font-size: 9px; font-weight: 650; color: var(--apagado); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; }
+.tip-models-list { display: flex; flex-direction: column; gap: 3px; }
+.tip-model-row { display: grid; grid-template-columns: minmax(96px, 1.35fr) 1fr auto; align-items: center; gap: 8px; font-size: 10px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.tip-model-name { color: var(--tinta2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-model-bar { height: 3px; border-radius: 999px; background: var(--sup2); overflow: hidden; }
+.tip-model-fill { display: block; height: 100%; border-radius: inherit; background: var(--accent, var(--barra)); }
+.tip-model-pct { color: var(--tinta); font-weight: 600; min-width: 30px; text-align: right; white-space: nowrap; }
 .card-verso footer { color: var(--apagado); font-size: 10px; margin-top: 3px; padding-top: 3px; border-top: 1px solid var(--c-fio); }
 .card-verso footer p { margin: 0 0 2px; line-height: 1.25; }
 .card-verso footer p[hidden] { display: none; }
@@ -704,6 +716,35 @@ function encherVerso(card, agoraS) {
   var erro = conta.erro ? mascarar(conta.erro_detalhe || "falhou") : "";
   texto(v.erro, erro); oculto(v.erroLinha, !erro);
   texto(v.observacao, numero(b.lido_em_epoch) ? idade(agoraS - b.lido_em_epoch) + (b.origem ? " · " + origemDaBarra(b) : "") : "sem observação");
+  var modelos = Array.isArray(conta.modelos_cota) ? conta.modelos_cota : [];
+  oculto(v.modelos, modelos.length === 0);
+  if (modelos.length > 0 && v.modelosLista) {
+    var chaveMod = modelos.map(function (m) { return (m.nome || "") + ":" + (m.usado_pct != null ? m.usado_pct : ""); }).join("|");
+    if (v.modelosLista.getAttribute("data-chave") !== chaveMod) {
+      v.modelosLista.setAttribute("data-chave", chaveMod);
+      v.modelosLista.textContent = "";
+      modelos.slice(0, 4).forEach(function (m) {
+        var row = document.createElement("div");
+        row.className = "tip-model-row";
+        var nm = document.createElement("span");
+        nm.className = "tip-model-name";
+        nm.textContent = m.nome || "Modelo";
+        nm.title = m.pool ? (m.nome + " (" + m.pool + ")") : (m.nome || "");
+        var bar = document.createElement("div");
+        bar.className = "tip-model-bar";
+        var fill = document.createElement("span");
+        fill.className = "tip-model-fill";
+        var pVal = numero(m.usado_pct) ? Math.min(100, Math.max(0, m.usado_pct)) : 0;
+        fill.style.width = pVal + "%";
+        bar.appendChild(fill);
+        var pctEl = document.createElement("span");
+        pctEl.className = "tip-model-pct";
+        pctEl.textContent = numero(m.usado_pct) ? pct(m.usado_pct) : "—";
+        row.appendChild(nm); row.appendChild(bar); row.appendChild(pctEl);
+        v.modelosLista.appendChild(row);
+      });
+    }
+  }
 }
 var SAIDA_DO_VERSO = 220;   /* ms: a saída dos blocos do verso ao voltar, com o escalonamento */
 var GIROS = [-0.8, -0.55, -0.35, 0.35, 0.55, 0.8];   /* graus do giro no plano, sorteados; sinal = horário ou anti-horário (08/10: reduzido três vezes) */
@@ -861,16 +902,20 @@ function criarVerso() {
   var principal = janelaDoVerso(true), outra = janelaDoVerso(false);
   principal.no.classList.add("bloco"); principal.no.style.setProperty("--i", "1");
   outra.no.classList.add("bloco"); outra.no.style.setProperty("--i", "2");
+  var modelosSecao = document.createElement("div");
+  modelosSecao.className = "tip-models bloco"; modelosSecao.style.setProperty("--i", "2"); modelosSecao.hidden = true;
+  modelosSecao.innerHTML = '<div class="tip-models-title">Modelos na conta</div><div class="tip-models-list"></div>';
   var rodape = document.createElement("footer");
   rodape.className = "bloco"; rodape.style.setProperty("--i", "3");
   rodape.innerHTML = '<dl class="tip-pace tip-ritmo-outra" hidden><div><dt></dt><dd></dd></div></dl><p class="tip-explanation" hidden></p>' +
     '<dl class="tip-error" hidden><div><dt>Última consulta não concluída</dt><dd></dd></div></dl><div class="tip-observation"><span>Observação</span><span></span></div>';
   var corpo = document.createElement("div");
   corpo.className = "verso-corpo";
-  corpo.appendChild(principal.no); corpo.appendChild(outra.no); corpo.appendChild(rodape);
+  corpo.appendChild(principal.no); corpo.appendChild(outra.no); corpo.appendChild(modelosSecao); corpo.appendChild(rodape);
   no.appendChild(corpo);
   return { no: no, eyebrow: no.querySelector(".card-eyebrow"), titulo: no.querySelector(".verso-titulo"), voltar: no.querySelector(".voltar"),
-           principal: principal, outra: outra, ritmoOutra: rodape.querySelector(".tip-ritmo-outra"), explicacao: rodape.querySelector(".tip-explanation"),
+           principal: principal, outra: outra, modelos: modelosSecao, modelosLista: modelosSecao.querySelector(".tip-models-list"),
+           ritmoOutra: rodape.querySelector(".tip-ritmo-outra"), explicacao: rodape.querySelector(".tip-explanation"),
            erroLinha: rodape.querySelector(".tip-error"), erro: rodape.querySelector(".tip-error dd"), observacao: rodape.querySelector(".tip-observation span:last-child") };
 }
 function criarCard(conta) {

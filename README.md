@@ -16,6 +16,31 @@
 
 ---
 
+## Apresentação Visual
+
+### Visão Geral Completa
+Monitoramento unificado de terminais ativos, consumo de cotas em tempo real, pendências de aprovação, portas locais anti-colisão e mapeamento consultivo de Skills, MCPs e modelos do workspace.
+
+<p align="center">
+  <img src="assets/preview-visao-geral.png" alt="Painel de Agentes - Visão Geral" width="100%" />
+</p>
+
+### Detalhamento de Cotas & Passo a Passo de Aprovações
+Clique em qualquer card de cota para visualizar o tempo exato até a reabertura das janelas (5 horas e semanal) e expanda as pendências de **Precisa de você** para acompanhar comandos e fontes passo a passo.
+
+<p align="center">
+  <img src="assets/preview-detalhes.png" alt="Painel de Agentes - Detalhamento de Cotas e Pendências" width="100%" />
+</p>
+
+### Console de Atividades & Logs
+Timeline minimalista em tempo real com filtros por agente, nível de evento (`OK`, `INFO`, `WARN`, `ERR`) e busca textual instantânea.
+
+<p align="center">
+  <img src="assets/preview-logs.png" alt="Painel de Agentes - Console de Logs" width="100%" />
+</p>
+
+---
+
 ## O que é
 
 `painel-agents` é um painel local, leve e não intrusivo para acompanhar visualmente múltiplos agentes de IA (**Claude Code**, **Codex** e **Antigravity**) e inspecionar a arquitetura viva do seu projeto no **Maestri**.
