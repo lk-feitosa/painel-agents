@@ -77,7 +77,8 @@ html[data-layout="minimo"] #contas { display: none; }
 .card-cena.virado .card { pointer-events: none; position: absolute; inset: 0; min-height: 0; overflow: hidden; }
 .card-cena:not(.virado) .card-verso { pointer-events: none; }
 .card-cena.mostra-verso .card-verso { visibility: visible; }
-.card-cena.virado .card-verso { position: relative; inset: auto; min-height: 215px; height: auto; visibility: visible; }
+.card-cena.virado .card-verso { position: relative; inset: auto; min-height: 215px; height: auto; visibility: visible; overflow: visible !important; padding-bottom: 14px; }
+.card-cena.virado .verso-corpo { overflow: visible !important; flex: none; gap: 6px; }
 .card .bloco, .card-verso .bloco { transition: opacity 120ms ease-out; }
 .card-cena.virado .card .bloco { opacity: 0; }
 .card-cena:not(.virado) .card-verso .bloco { opacity: 0; }
