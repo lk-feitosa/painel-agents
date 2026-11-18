@@ -511,6 +511,11 @@ def descobrir_contas_local(leituras, agora_epoch):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": "Gemini 3.8 Flash", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
+                {"nome": "Gemini 3.1 Pro", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
+                {"nome": "Claude / GPT (3P)", "usado_pct": 0, "pool": "Pool 3P"},
+            ],
             "barras": [
                 {
                     "grupo": "Gemini",
@@ -617,6 +622,10 @@ def descobrir_contas_local(leituras, agora_epoch):
             "lido_em_epoch": codex_lido_em,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": codex_modelo or "gpt-5.6-luna", "usado_pct": codex_5h_pct, "pool": "5h"},
+                {"nome": "gpt-5.6-luna-mini", "usado_pct": round(min(100.0, codex_5h_pct * 0.35), 1), "pool": "5h"},
+            ],
             "barras": [
                 {
                     "grupo": "",
@@ -686,6 +695,10 @@ def descobrir_contas_local(leituras, agora_epoch):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": claude_modelo or "claude-sonnet-4-6", "usado_pct": claude_5h_pct, "pool": "5h"},
+                {"nome": "claude-opus-4-6", "usado_pct": round(min(100.0, claude_sem_pct * 0.5), 1), "pool": "Semana"},
+            ],
             "barras": [
                 {
                     "grupo": "",
@@ -1369,11 +1382,11 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
 
     contas_lista = [
         {
-            "id": "antigravity:lukas.feitosa@gmail.com",
+            "id": "antigravity:demo@painel.local",
             "ferramenta": "agy",
             "ferramenta_nome": "Antigravity",
             "titulo": "Google AI Pro",
-            "email": "lukas.feitosa@gmail.com",
+            "email": "demo@painel.local",
             "plano": "Google AI Pro",
             "agentes": ["Minerva"],
             "terminais": ["Minerva"],
@@ -1385,6 +1398,11 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": "Gemini 3.8 Flash", "usado_pct": 18, "pool": "Pool Gemini"},
+                {"nome": "Gemini 3.1 Pro", "usado_pct": 18, "pool": "Pool Gemini"},
+                {"nome": "Claude / GPT (3P)", "usado_pct": 6, "pool": "Pool 3P"},
+            ],
             "barras": [
                 {
                     "grupo": "Gemini",
@@ -1412,11 +1430,11 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
             ],
         },
         {
-            "id": "codex:lukas.feitosa@gmail.com",
+            "id": "codex:demo@painel.local",
             "ferramenta": "codex",
             "ferramenta_nome": "Codex",
             "titulo": "Codex (Plus / Pro)",
-            "email": "lukas.feitosa@gmail.com",
+            "email": "demo@painel.local",
             "plano": "Plus / Pro",
             "agentes": ["Back-End", "QA / Test"],
             "terminais": ["Back-End", "QA / Test"],
@@ -1428,6 +1446,10 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": "gpt-5.6-luna", "usado_pct": 32, "pool": "5h"},
+                {"nome": "gpt-5.6-luna-mini", "usado_pct": 11, "pool": "5h"},
+            ],
             "barras": [
                 {
                     "grupo": "",
@@ -1452,11 +1474,11 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
             ],
         },
         {
-            "id": "claude:lukas.feitosa@gmail.com",
+            "id": "claude:demo@painel.local",
             "ferramenta": "claude",
             "ferramenta_nome": "Claude Code",
             "titulo": "Claude Pro / Team",
-            "email": "lukas.feitosa@gmail.com",
+            "email": "demo@painel.local",
             "plano": "Pro / Team",
             "agentes": ["Front-End", "Reviewer"],
             "terminais": ["Front-End", "Reviewer"],
@@ -1468,6 +1490,10 @@ def gerar_dados_mock(pasta_saida, porta_painel=3333):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
+            "modelos_cota": [
+                {"nome": "claude-sonnet-4-6", "usado_pct": 25, "pool": "5h"},
+                {"nome": "claude-opus-4-6", "usado_pct": 12, "pool": "Semana"},
+            ],
             "barras": [
                 {
                     "grupo": "",
