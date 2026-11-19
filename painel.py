@@ -444,14 +444,142 @@ def _proximo_reset_semanal(agora_epoch):
     return int(prox.timestamp())
 
 
+_CACHE_MODELOS_CLI = {"ts": 0.0, "agy_familias": [], "codex_modelos": []}
+
+
+def _parse_iso_epoch(val, fallback):
+    if not val:
+        return fallback
+    if isinstance(val, (int, float)):
+        return int(val)
+    try:
+        from datetime import datetime
+        dt = datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+        return int(dt.timestamp())
+    except Exception:
+        return fallback
+
+
+def _provedor_desativado_no_maestri(home: Path, provider_id: str) -> bool:
+    """
+    Retorna True SOMENTE se o Maestri existir neste PC e o usuário tiver desativado
+    explicitamente aquele provedor nas configurações do Maestri.
+    Fora do Maestri (PC sem ~/.maestri), retorna False (painel 100% independente).
+    """
+    maestri_dir = home / ".maestri"
+    if not maestri_dir.exists():
+        return False
+
+    # 1. Verifica ~/.maestri/usage/providers/.status.json (enabled: false)
+    st_file = maestri_dir / "usage" / "providers" / ".status.json"
+    if st_file.exists():
+        try:
+            st = json.loads(st_file.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
+            for prov in st.get("providers", []):
+                if prov.get("id") == provider_id and prov.get("enabled") is False:
+                    return True
+        except Exception:
+            pass
+
+    # 2. Verifica ~/.maestri/preferences.json (agentPresets[].isActive == false)
+    pref_file = maestri_dir / "preferences.json"
+    type_map = {"claude": "claude_code", "codex": "codex", "antigravity": "antigravity_cli"}
+    target_type = type_map.get(provider_id)
+    if target_type and pref_file.exists():
+        try:
+            pref = json.loads(pref_file.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
+            presets = (pref.get("payload") or {}).get("agentPresets") or []
+            matched = [p for p in presets if p.get("agentType") == target_type]
+            if matched and all(p.get("isActive") is False for p in matched):
+                return True
+        except Exception:
+            pass
+
+    return False
+
+
+def _listar_modelos_agy_cache(home: Path) -> list:
+    """Lista dinamicamente todas as famílias de modelos disponíveis na conta Antigravity via `agy models` (cache 5 min)."""
+    agora = time.time()
+    if _CACHE_MODELOS_CLI["agy_familias"] and (agora - _CACHE_MODELOS_CLI["ts"] < 300):
+        return _CACHE_MODELOS_CLI["agy_familias"]
+
+    agy_bin = shutil.which("agy.exe") or shutil.which("agy")
+    local_agy = home / "AppData" / "Local" / "agy" / "bin" / "agy.exe"
+    if not agy_bin and local_agy.exists():
+        agy_bin = str(local_agy)
+    if not agy_bin:
+        return []
+
+    familias = []
+    vistos = set()
+    try:
+        proc = subprocess.run(
+            [agy_bin, "models"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            timeout=6,
+        )
+        for linha in proc.stdout.splitlines():
+            if "\t" not in linha:
+                continue
+            slug, label = linha.split("\t", 1)
+            label_base = re.sub(r"\s*\((Low|Medium|High|XHigh|Max|Argon)\)\s*$", "", label.strip(), flags=re.I).strip()
+            if not label_base or label_base.lower().startswith("orchestrator"):
+                continue
+            chave = label_base.lower()
+            if chave not in vistos:
+                vistos.add(chave)
+                familias.append({"nome": label_base, "slug": slug.strip().lower()})
+    except Exception:
+        pass
+
+    if familias:
+        _CACHE_MODELOS_CLI["agy_familias"] = familias
+        _CACHE_MODELOS_CLI["ts"] = agora
+    return familias
+
+
+def _ler_cotas_reais_agy(home: Path) -> dict:
+    """Lê cotas reais do Antigravity em live_quota.json (CLI direto) ou .maestri/.status.json."""
+    res = {"meters": {}, "origem": "cli", "lido_em": None}
+    live_file = home / ".gemini" / "antigravity-cli" / "live_quota.json"
+    if live_file.exists():
+        try:
+            doc = json.loads(live_file.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
+            agy = doc.get("agy") or {}
+            for m in agy.get("meters", []):
+                m_name = str(m.get("label") or m.get("id") or "")
+                wins = {}
+                for w in m.get("windows", []):
+                    w_key = str(w.get("window") or w.get("id") or "").lower()
+                    used = w.get("usedPercent")
+                    if used is None and w.get("remainingPercent") is not None:
+                        used = round(max(0.0, 100.0 - float(w["remainingPercent"])), 1)
+                    if used is not None:
+                        wins[w_key] = {"usado_pct": round(float(used), 1), "resetsAt": w.get("resetsAt")}
+                if wins:
+                    res["meters"][m_name.lower()] = {"label": m_name, "windows": wins}
+            if res["meters"]:
+                res["origem"] = "cli"
+                res["lido_em"] = int(live_file.stat().st_mtime)
+                return res
+        except Exception:
+            pass
+    return res
+
+
 def descobrir_contas_local(leituras, agora_epoch):
     """Descobre contas conectadas no ambiente (Antigravity, Codex e Claude Code) e monta dados['contas']."""
     home = Path.home()
     lista_contas = []
 
     # 1. Antigravity / Google AI Pro
+    agy_desativado = _provedor_desativado_no_maestri(home, "antigravity")
     agy_email = None
-    agy_modelo = "Gemini 3.8 Flash"
+    agy_modelo = None
     agy_esforco = "medium"
     agy_log_dir = home / ".gemini" / "antigravity-cli" / "log"
     if agy_log_dir.exists():
@@ -478,22 +606,80 @@ def descobrir_contas_local(leituras, agora_epoch):
                 continue
 
     agentes_agy = [a["nome"] for a in leituras if a.get("ferramenta") == "agy"]
-    usado_5h_agy = 13
-    usado_sem_agy = 15
+    agy_reais = _ler_cotas_reais_agy(home)
+    agy_familias = _listar_modelos_agy_cache(home)
+
+    if not agy_modelo:
+        agy_modelo = agy_familias[0]["nome"] if agy_familias else "Gemini 4 Argon"
+
+    # Cotas reais de live_quota.json (sem valores fixos antigos 13%/15%)
+    meters_agy = agy_reais.get("meters") or {}
+    gem_meter = meters_agy.get("gemini models") or {}
+    gem_5h = (gem_meter.get("windows") or {}).get("5h") or {}
+    gem_sem = (gem_meter.get("windows") or {}).get("weekly") or {}
+    argon_meter = meters_agy.get("gemini 4 argon") or {}
+    argon_sem = (argon_meter.get("windows") or {}).get("weekly") or {}
+    claude_3p_meter = meters_agy.get("claude and gpt models") or {}
+    claude_3p_5h = (claude_3p_meter.get("windows") or {}).get("5h") or {}
+    claude_3p_sem = (claude_3p_meter.get("windows") or {}).get("weekly") or {}
+
+    usado_5h_agy = gem_5h.get("usado_pct", 0.0)
+    usado_sem_agy = gem_sem.get("usado_pct", 0.0)
+    renova_5h = _parse_iso_epoch(gem_5h.get("resetsAt"), _proximo_reset_5h(agora_epoch, 3.5 * 3600))
+    renova_sem = _parse_iso_epoch(gem_sem.get("resetsAt"), _proximo_reset_semanal(agora_epoch))
+    agy_lido_em = agy_reais.get("lido_em") or agora_epoch
+
     for a in leituras:
         if a.get("ferramenta") == "agy":
-            if isinstance(a.get("sessao_5h_pct"), (int, float)):
+            if not gem_5h and isinstance(a.get("sessao_5h_pct"), (int, float)):
                 usado_5h_agy = a["sessao_5h_pct"]
-            if isinstance(a.get("semanal_pct"), (int, float)):
+            if not gem_sem and isinstance(a.get("semanal_pct"), (int, float)):
                 usado_sem_agy = a["semanal_pct"]
             if a.get("modelo"):
-                mod_limpo = re.sub(r"\s*\((Low|Medium|Med|High|Hi|Lo)\)\s*$", "", a["modelo"], flags=re.I).strip()
+                mod_limpo = re.sub(r"\s*\((Low|Medium|Med|High|Hi|Lo|XHigh)\)\s*$", "", a["modelo"], flags=re.I).strip()
                 if mod_limpo:
                     agy_modelo = mod_limpo
 
-    if agy_email or agentes_agy or shutil.which("agy"):
-        renova_5h = _proximo_reset_5h(agora_epoch, 3.5 * 3600)
-        renova_sem = _proximo_reset_semanal(agora_epoch)
+    # Se o modelo atual for Argon e houver medidor específico de Argon, destaca a cota semanal do Argon
+    modelo_atual_lower = agy_modelo.lower()
+    if "argon" in modelo_atual_lower and argon_sem:
+        usado_sem_destaque = argon_sem.get("usado_pct", usado_sem_agy)
+        renova_sem_destaque = _parse_iso_epoch(argon_sem.get("resetsAt"), renova_sem)
+    elif ("claude" in modelo_atual_lower or "gpt" in modelo_atual_lower) and claude_3p_5h:
+        usado_5h_agy = claude_3p_5h.get("usado_pct", usado_5h_agy)
+        usado_sem_destaque = claude_3p_sem.get("usado_pct", usado_sem_agy)
+        renova_sem_destaque = _parse_iso_epoch(claude_3p_sem.get("resetsAt"), renova_sem)
+    else:
+        usado_sem_destaque = usado_sem_agy
+        renova_sem_destaque = renova_sem
+
+    # Monta a seção "Demais Modelos na Conta" dinamicamente com os modelos reais da conta (excluindo o atual já em destaque)
+    outros_modelos_agy = []
+    for fam in agy_familias:
+        nome_f = fam["nome"]
+        fl = nome_f.lower()
+        if fl == modelo_atual_lower:
+            continue
+        if "argon" in fl and argon_sem:
+            pct_f = argon_sem.get("usado_pct", usado_sem_agy)
+            pool_f = "Argon · Semana"
+        elif "claude" in fl or "gpt" in fl:
+            pct_f = claude_3p_5h.get("usado_pct", 0.0)
+            pool_f = "Pool 3P · 5h"
+        else:
+            pct_f = usado_5h_agy
+            pool_f = "Pool Gemini · 5h"
+        outros_modelos_agy.append({"nome": nome_f, "usado_pct": pct_f, "pool": pool_f})
+
+    if not outros_modelos_agy:
+        outros_modelos_agy = [
+            {"nome": "Gemini 4 Argon", "usado_pct": argon_sem.get("usado_pct", usado_sem_agy), "pool": "Semana"},
+            {"nome": "Gemini 4 Hydrogen", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
+            {"nome": "Claude / GPT (3P)", "usado_pct": claude_3p_5h.get("usado_pct", 0.0), "pool": "Pool 3P"},
+        ]
+
+    agy_autenticado = bool(agy_email or meters_agy or agy_familias or agentes_agy)
+    if agy_autenticado and not agy_desativado:
         lista_contas.append({
             "id": f"antigravity:{agy_email or 'local'}",
             "ferramenta": "agy",
@@ -507,54 +693,48 @@ def descobrir_contas_local(leituras, agora_epoch):
             "esforco": agy_esforco,
             "situacao": "ok",
             "consultando": False,
-            "intervalo_s": 1200,
-            "lido_em_epoch": agora_epoch,
+            "intervalo_s": 300,
+            "lido_em_epoch": agy_lido_em,
             "erro": None,
             "erro_detalhe": None,
-            "modelos_cota": [
-                {"nome": "Gemini 3.8 Flash", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
-                {"nome": "Gemini 3.1 Pro", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
-                {"nome": "Claude / GPT (3P)", "usado_pct": 0, "pool": "Pool 3P"},
-            ],
+            "modelos_cota": outros_modelos_agy,
             "barras": [
                 {
-                    "grupo": "Gemini",
+                    "grupo": agy_modelo,
                     "tipo": "5h",
-                    "rotulo": "Gemini · 5 horas",
+                    "rotulo": f"{agy_modelo} · 5 horas",
                     "usado_pct": usado_5h_agy,
                     "renova_epoch": renova_5h,
                     "janela_min": 300,
-                    "origem": "tela",
-                    "lido_em_epoch": agora_epoch,
-                    "como_soube": "status line",
-                    "membros": [
-                        "Gemini 3.8 Flash",
-                        "Gemini 3.1 Pro",
-                    ],
+                    "origem": "cli",
+                    "lido_em_epoch": agy_lido_em,
+                    "como_soube": "cli",
+                    "membros": [agy_modelo],
                 },
                 {
-                    "grupo": "Gemini",
+                    "grupo": agy_modelo,
                     "tipo": "semana",
-                    "rotulo": "Gemini · Semana",
-                    "usado_pct": usado_sem_agy,
-                    "renova_epoch": renova_sem,
+                    "rotulo": f"{agy_modelo} · Semana",
+                    "usado_pct": usado_sem_destaque,
+                    "renova_epoch": renova_sem_destaque,
                     "janela_min": 10080,
-                    "origem": "tela",
-                    "lido_em_epoch": agora_epoch,
-                    "como_soube": "status line",
+                    "origem": "cli",
+                    "lido_em_epoch": agy_lido_em,
+                    "como_soube": "cli",
                 },
             ],
         })
 
     # 2. OpenAI Codex CLI
+    codex_desativado = _provedor_desativado_no_maestri(home, "codex")
     codex_dir = home / ".codex"
     codex_auth = codex_dir / "auth.json"
     codex_email = None
-    codex_modelo = "gpt-5.6-luna"
+    codex_modelo = "gpt-6-luna"
     codex_esforco = "medium"
     codex_plano = "Plus / Pro"
-    codex_5h_pct = 2.0
-    codex_sem_pct = 4.0
+    codex_5h_pct = 0.0
+    codex_sem_pct = 0.0
     codex_renova_5h = _proximo_reset_5h(agora_epoch, 4.2 * 3600)
     codex_renova_sem = _proximo_reset_semanal(agora_epoch)
     codex_lido_em = agora_epoch
@@ -591,7 +771,7 @@ def descobrir_contas_local(leituras, agora_epoch):
                         if isinstance(sec.get("used_percent"), (int, float)):
                             codex_sem_pct = float(sec["used_percent"])
                         else:
-                            codex_sem_pct = round(min(100.0, codex_5h_pct * 1.5), 1)
+                            codex_sem_pct = round(min(100.0, codex_5h_pct), 1)
                 break
             except Exception:
                 continue
@@ -604,7 +784,12 @@ def descobrir_contas_local(leituras, agora_epoch):
             if isinstance(a.get("semanal_pct"), (int, float)):
                 codex_sem_pct = a["semanal_pct"]
 
-    if codex_auth.exists() or agentes_codex or shutil.which("codex"):
+    if (codex_auth.exists() or agentes_codex) and not codex_desativado:
+        outros_codex = [
+            {"nome": m, "usado_pct": codex_5h_pct, "pool": "Pool Codex"}
+            for m in ["gpt-6-luna", "gpt-5.6-terra", "gpt-5.6-luna"]
+            if m.lower() != (codex_modelo or "").lower()
+        ]
         lista_contas.append({
             "id": f"codex:{codex_email or 'local'}",
             "ferramenta": "codex",
@@ -622,25 +807,23 @@ def descobrir_contas_local(leituras, agora_epoch):
             "lido_em_epoch": codex_lido_em,
             "erro": None,
             "erro_detalhe": None,
-            "modelos_cota": [
-                {"nome": codex_modelo or "gpt-5.6-luna", "usado_pct": codex_5h_pct, "pool": "5h"},
-                {"nome": "gpt-5.6-luna-mini", "usado_pct": round(min(100.0, codex_5h_pct * 0.35), 1), "pool": "5h"},
-            ],
+            "modelos_cota": outros_codex,
             "barras": [
                 {
-                    "grupo": "",
+                    "grupo": codex_modelo,
                     "tipo": "5h",
-                    "rotulo": "5 horas",
+                    "rotulo": f"{codex_modelo} · 5 horas",
                     "usado_pct": codex_5h_pct,
                     "renova_epoch": codex_renova_5h,
                     "janela_min": 300,
                     "origem": "cli",
                     "lido_em_epoch": codex_lido_em,
+                    "membros": [codex_modelo],
                 },
                 {
-                    "grupo": "",
+                    "grupo": codex_modelo,
                     "tipo": "semana",
-                    "rotulo": "Semana",
+                    "rotulo": f"{codex_modelo} · Semana",
                     "usado_pct": codex_sem_pct,
                     "renova_epoch": codex_renova_sem,
                     "janela_min": 10080,
@@ -650,18 +833,19 @@ def descobrir_contas_local(leituras, agora_epoch):
             ],
         })
 
-    # 3. Claude Code CLI
+    # 3. Claude Code CLI (só exibe se houver login real oauthAccount E não estiver desativado no Maestri)
+    claude_desativado = _provedor_desativado_no_maestri(home, "claude")
     claude_cfg = home / ".claude.json"
     agentes_claude = [a["nome"] for a in leituras if a.get("ferramenta") == "claude"]
-    claude_email = agy_email or "conta@local"
+    claude_email = None
     claude_modelo = "claude-sonnet-4-6"
-    claude_esforco = "high"
+    claude_esforco = "medium"
     claude_5h_pct = 0.0
-    claude_sem_pct = 8.0
+    claude_sem_pct = 0.0
 
     if claude_cfg.exists():
         try:
-            d_cl = json.loads(claude_cfg.read_text(encoding="utf-8", errors="ignore"))
+            d_cl = json.loads(claude_cfg.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
             oauth = d_cl.get("oauthAccount") or {}
             if oauth.get("emailAddress"):
                 claude_email = oauth["emailAddress"].strip().lower()
@@ -677,13 +861,18 @@ def descobrir_contas_local(leituras, agora_epoch):
             if a.get("modelo"):
                 claude_modelo = a["modelo"]
 
-    if claude_cfg.exists() or agentes_claude or shutil.which("claude"):
+    if (claude_email or agentes_claude) and not claude_desativado:
+        outros_claude = [
+            {"nome": m, "usado_pct": claude_sem_pct, "pool": "Semana"}
+            for m in ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"]
+            if m.lower() != (claude_modelo or "").lower()
+        ]
         lista_contas.append({
-            "id": f"claude:{claude_email}",
+            "id": f"claude:{claude_email or 'local'}",
             "ferramenta": "claude",
             "ferramenta_nome": "Claude Code",
             "titulo": "Claude Code",
-            "email": claude_email,
+            "email": claude_email or "conta@local",
             "plano": "Claude Code",
             "agentes": agentes_claude or ["Disponível p/ Review & UI"],
             "terminais": agentes_claude or ["Pronto no Workspace"],
@@ -695,29 +884,27 @@ def descobrir_contas_local(leituras, agora_epoch):
             "lido_em_epoch": agora_epoch,
             "erro": None,
             "erro_detalhe": None,
-            "modelos_cota": [
-                {"nome": claude_modelo or "claude-sonnet-4-6", "usado_pct": claude_5h_pct, "pool": "5h"},
-                {"nome": "claude-opus-4-6", "usado_pct": round(min(100.0, claude_sem_pct * 0.5), 1), "pool": "Semana"},
-            ],
+            "modelos_cota": outros_claude,
             "barras": [
                 {
-                    "grupo": "",
+                    "grupo": claude_modelo,
                     "tipo": "5h",
-                    "rotulo": "5 horas",
+                    "rotulo": f"{claude_modelo} · 5 horas",
                     "usado_pct": claude_5h_pct,
                     "renova_epoch": _proximo_reset_5h(agora_epoch, 4.8 * 3600),
                     "janela_min": 300,
-                    "origem": "tela",
+                    "origem": "cli",
                     "lido_em_epoch": agora_epoch,
+                    "membros": [claude_modelo],
                 },
                 {
-                    "grupo": "",
+                    "grupo": claude_modelo,
                     "tipo": "semana",
-                    "rotulo": "Semana",
+                    "rotulo": f"{claude_modelo} · Semana",
                     "usado_pct": claude_sem_pct,
                     "renova_epoch": _proximo_reset_semanal(agora_epoch),
                     "janela_min": 10080,
-                    "origem": "tela",
+                    "origem": "cli",
                     "lido_em_epoch": agora_epoch,
                 },
             ],

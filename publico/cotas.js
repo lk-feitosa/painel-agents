@@ -723,7 +723,7 @@ function encherVerso(card, agoraS) {
     if (v.modelosLista.getAttribute("data-chave") !== chaveMod) {
       v.modelosLista.setAttribute("data-chave", chaveMod);
       v.modelosLista.textContent = "";
-      modelos.slice(0, 4).forEach(function (m) {
+      modelos.slice(0, 8).forEach(function (m) {
         var row = document.createElement("div");
         row.className = "tip-model-row";
         var nm = document.createElement("span");
