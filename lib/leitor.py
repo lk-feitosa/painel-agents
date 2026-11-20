@@ -29,10 +29,23 @@ ESFORCOS = {"minimal", "low", "medium", "high", "xhigh"}
 
 RE_CTX = re.compile(r"^\s*(?P<modelo>\S.*?) · ctx \[[^\]]*\] (?P<ctx>\d{1,3}|--)%(?P<resto>.*)$")
 RE_AGY_NATIVA = re.compile(
-    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)\S.*?)\s+[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%\s*\|\s*(?P<tempo>[^|]+?)\s*\|\s*.*?\((?P<estado>ocioso|idle|trabalhando|working|thinking|running)\)",
+    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)\S.*?)\s+(?:5h\s+)?[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%(?:\s*\((?P<tempo>[^)]+)\))?(?P<resto>.*)$",
     re.IGNORECASE,
 )
-RE_CODEX = re.compile(r"Context \d{1,3}% (?:used|left)")
+RE_AGY_SEMANAL = re.compile(r"(?:Sem|Week(?:ly)?)\s+[▬▱━─█░■□]+\s*(\d{1,3})%", re.IGNORECASE)
+RE_AGY_ESTADO_FIM = re.compile(r"\((ocioso|idle|trabalhando|working|thinking|running|tool_use)[^)]*\)?\s*$", re.IGNORECASE)
+RE_AGY_ATIVO_TELA = re.compile(
+    r"(?:^\s*[■●○⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]\s*(?:Running|Thinking|Working|Executing|Searching|Reading|Editing|Writing)\b|esc to (?:interrupt|cancel)|\.\.\.\s*running\s*$|running\s*$)",
+    re.IGNORECASE,
+)
+RE_CODEX = re.compile(
+    r"(?:Context \d{1,3}% (?:used|left)|^\s*(?:gpt-\S+|o[134]-\S+).*?(?:\d{1,3}%\s*(?:left|used)|·\s*(?:Ready|Working|Thinking|Waiting)))",
+    re.IGNORECASE,
+)
+RE_PROMPT_INTERATIVO = re.compile(
+    r"(?:Update available|enter continue\s*·\s*esc skip|Trust this folder|Do you trust the files|Choose text style|Press Enter to continue)",
+    re.IGNORECASE,
+)
 RE_BORDA = re.compile(r"^\s*[─━═]{20,}")
 RE_SEPARADOR = re.compile(r"^\s*[─━═_\-]{3,}\s*$")
 GIRO = "·✢✳✶✻✽*"
@@ -341,19 +354,26 @@ def _ler_linha_codex(linha, r):
     partes = [p.strip() for p in linha.strip().split(" · ")]
     if partes and not partes[0].startswith("Context"):
         palavras = partes[0].split()
-        if len(palavras) > 1 and palavras[-1] in ESFORCOS:
-            r["esforco"] = palavras.pop()
+        if len(palavras) > 1 and palavras[-1].lower() in ESFORCOS:
+            r["esforco"] = palavras.pop().lower()
         r["modelo"] = " ".join(palavras) or None
     for parte in partes:
-        m = re.match(r"^(Context|5h|weekly) (\d{1,3})% (used|left)$", parte)
+        m = re.match(r"^(Context|5h|weekly) (\d{1,3})% (used|left)$", parte, re.IGNORECASE)
         if m:
             valor = _pct(m.group(2))
-            if valor is not None and m.group(3) == "left":
+            if valor is not None and m.group(3).lower() == "left":
                 valor = 100 - valor     # o Codex mostra o que resta; o painel mostra o usado
-            campo = {"Context": "contexto_pct", "5h": "sessao_5h_pct", "weekly": "semanal_pct"}[m.group(1)]
+            chave = m.group(1).lower()
+            campo = {"context": "contexto_pct", "5h": "sessao_5h_pct", "weekly": "semanal_pct"}[chave]
             r[campo] = valor
-        elif parte in ("Ready", "Working", "Thinking", "Waiting"):
-            r["estado_bruto"] = parte
+        else:
+            m_pct = re.match(r"^(\d{1,3})%\s*(left|used)$", parte, re.IGNORECASE)
+            if m_pct and r["contexto_pct"] is None:
+                valor = _pct(m_pct.group(1))
+                if valor is not None:
+                    r["contexto_pct"] = (100 - valor) if m_pct.group(2).lower() == "left" else valor
+            elif parte in ("Ready", "Working", "Thinking", "Waiting"):
+                r["estado_bruto"] = parte
 
 
 def _hora_24(hora, minuto, periodo):
@@ -362,7 +382,7 @@ def _hora_24(hora, minuto, periodo):
 
 
 def _ler_linha_agy_nativa(linha, r):
-    """Status line nativa do Antigravity CLI 1.5+ no Windows/macOS."""
+    """Status line nativa do Antigravity CLI 1.5+ no Windows/macOS (inclui formato 5h + Sem)."""
     m = RE_AGY_NATIVA.search(linha)
     if not m:
         return
@@ -376,8 +396,16 @@ def _ler_linha_agy_nativa(linha, r):
     restante = _pct(m.group("restante"))
     if restante is not None:
         r["sessao_5h_pct"] = max(0, min(100, 100 - restante))
-    est = (m.group("estado") or "").lower()
-    r["estado_bruto"] = "idle" if est in ("ocioso", "idle") else "working"
+    resto = m.group("resto") or ""
+    m_sem = RE_AGY_SEMANAL.search(resto)
+    if m_sem:
+        sem_rest = _pct(m_sem.group(1))
+        if sem_rest is not None:
+            r["semanal_pct"] = max(0, min(100, 100 - sem_rest))
+    m_est = RE_AGY_ESTADO_FIM.search(resto)
+    if m_est:
+        est = m_est.group(1).lower()
+        r["estado_bruto"] = "idle" if est in ("ocioso", "idle") else "working"
 
 
 def ler_tela(texto, ferramenta):
@@ -408,6 +436,28 @@ def ler_tela(texto, ferramenta):
         i_status = _linha_da_status(linhas, RE_AGY_NATIVA)
         usou_agy_nativa = i_status is not None
     if i_status is None:
+        # Fallback inteligente: detecta telas de prompt interativo (Update/Trust) ou execução ativa sem status line
+        ultimas = [l for l in linhas if l.strip()][-LINHAS_FINAIS:]
+        trecho_final = "\n".join(ultimas)
+        if RE_PROMPT_INTERATIVO.search(trecho_final):
+            r = _resultado_base(ferramenta)
+            r["estado"] = "ocioso"
+            r["estado_bruto"] = "confirmacao"
+            r["atividade"] = "Aguardando confirmação no terminal (Update / Trust)"
+            r["aviso"] = "Prompt interativo aberto no terminal (Enter / Esc)"
+            return r
+        if any(
+            RE_CODEX_TRABALHANDO.match(l) or RE_INTERROMPER.search(l) or RE_AGY_ATIVO_TELA.search(l)
+            for l in ultimas
+        ):
+            r = _resultado_base(ferramenta)
+            r["estado"] = "trabalhando"
+            r["estado_bruto"] = "working"
+            bloco_fb = _ultimo_bloco(ultimas, ferramenta)
+            ativ_fb = _texto_do_bloco(bloco_fb, ferramenta, com_itens=False)
+            if ativ_fb:
+                r["atividade"] = _cortar_inicio(mascarar(ativ_fb), MAX_ATIVIDADE)
+            return r
         return sem_leitura(ferramenta, "status line não encontrada no fim da tela")
 
     r = _resultado_base(ferramenta)
@@ -447,6 +497,11 @@ def ler_tela(texto, ferramenta):
             r["estado"] = "trabalhando"
         elif r["estado_bruto"] == "Ready":
             r["estado"] = "ocioso"
+        elif any(RE_CODEX_TRABALHANDO.match(l) or RE_INTERROMPER.search(l) for l in fim):
+            r["estado"] = "trabalhando"
+            r["estado_bruto"] = "Working"
+        else:
+            r["estado"] = "ocioso"
         for linha in fim:
             m = RE_CODEX_TRABALHANDO.match(linha)
             if m and RE_DURACAO.match(m.group("dur").strip()):
@@ -455,6 +510,11 @@ def ler_tela(texto, ferramenta):
         if r["estado_bruto"] in AGY_TRABALHANDO:
             r["estado"] = "trabalhando"
         elif r["estado_bruto"] == "idle":
+            r["estado"] = "ocioso"
+        elif any(RE_AGY_ATIVO_TELA.search(l) for l in fim):
+            r["estado"] = "trabalhando"
+            r["estado_bruto"] = "working"
+        else:
             r["estado"] = "ocioso"
         r["grupo_cota"] = "Gemini" if "gemini" in (r["modelo"] or "").lower() else "Claude/GPT"
 

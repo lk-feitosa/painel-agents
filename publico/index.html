@@ -1185,8 +1185,6 @@ function desenharResumo() {
   var elContaAg = el("agentes-conta");
   if (elContaAg) { elContaAg.textContent = String(dados.agentes.length); elContaAg.classList.toggle("zero", !dados.agentes.length); }
   var p = dados.quadro.pendencias.length;
-  dados.agentes.forEach(function (v) { if (n[v.estado] != null) n[v.estado]++; });
-  var p = dados.quadro.pendencias.length;
   var partes = [plural(n.trabalhando, "trabalhando", "trabalhando"), plural(n.ocioso, "ocioso", "ociosos")];
   if (n.indeterminado) partes.push(plural(n.indeterminado, "indeterminado", "indeterminados"));
   if (n.sem_leitura) partes.push(plural(n.sem_leitura, "sem leitura", "sem leitura"));

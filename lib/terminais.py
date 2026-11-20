@@ -67,15 +67,6 @@ class MaestriTerminais:
     def tela(self, nome):
         """Lê a tela do terminal do agente via `maestri check "<nome>"`."""
         nome_alvo = self.alvo(nome)
-        # Se o daemon estiver rodando desacoplado sem MAESTRI_PIPE, evita spawnar processo filho à toa
-        if not os.environ.get("MAESTRI_PIPE"):
-            if "minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower():
-                texto_sintetico = (
-                    "Antigravity CLI 1.5.3\n"
-                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 13% · sem 15% · (main)\n"
-                    "● Aguardando aprovação da Spec e seleção de modelos para acionar o Team CODES.\n"
-                )
-                return texto_sintetico, None
         try:
             p = subprocess.run(
                 [self.cli, "check", nome_alvo],
@@ -97,13 +88,6 @@ class MaestriTerminais:
 
         if p.returncode != 0:
             err = p.stderr.strip() or f"Código de saída {p.returncode}"
-            if ("no connection to" in err.lower() or "maestri_pipe not set" in err.lower()) and ("minerva" in nome_alvo.lower() or "orquestrador" in nome_alvo.lower()):
-                texto_sintetico = (
-                    "Antigravity CLI 1.5.3\n"
-                    "Gemini 3.8 Flash (Medium) · ctx [██░░░░░░░░] 20% · idle · 5h 13% · sem 15% · (main)\n"
-                    "● Aguardando aprovação da Spec e seleção de modelos para acionar o Team CODES.\n"
-                )
-                return texto_sintetico, None
             return None, f"Terminal não encontrado no Maestri: {nome_alvo} ({err})"
 
         return p.stdout, None
