@@ -29,7 +29,7 @@ ESFORCOS = {"minimal", "low", "medium", "high", "xhigh"}
 
 RE_CTX = re.compile(r"^\s*(?P<modelo>\S.*?) · ctx \[[^\]]*\] (?P<ctx>\d{1,3}|--)%(?P<resto>.*)$")
 RE_AGY_NATIVA = re.compile(
-    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)\S.*?)\s+(?:5h\s+)?[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%(?:\s*\((?P<tempo>[^)]+)\))?(?P<resto>.*)$",
+    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)[^|]*?)\s+(?:5h\s+)?[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%(?:\s*\((?P<tempo>[^)]+)\))?(?P<resto>.*)$",
     re.IGNORECASE,
 )
 RE_AGY_SEMANAL = re.compile(r"(?:Sem|Week(?:ly)?)\s+[▬▱━─█░■□]+\s*(\d{1,3})%", re.IGNORECASE)
