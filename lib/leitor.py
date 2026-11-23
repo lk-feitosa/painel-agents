@@ -29,10 +29,12 @@ ESFORCOS = {"minimal", "low", "medium", "high", "xhigh"}
 
 RE_CTX = re.compile(r"^\s*(?P<modelo>\S.*?) · ctx \[[^\]]*\] (?P<ctx>\d{1,3}|--)%(?P<resto>.*)$")
 RE_AGY_NATIVA = re.compile(
-    r"^\s*(?P<modelo>(?:Gemini|Claude|GPT)[^|]*?)\s+(?:5h\s+)?[▬▱━─█░■□]+\s*(?P<restante>\d{1,3})%(?:\s*\((?P<tempo>[^)]+)\))?(?P<resto>.*)$",
+    r"^\s*(?:⚡\s*)?(?P<modelo>(?:Gemini|Claude|GPT|Sonnet|Opus|Haiku|Hydrogen|Argon|Neon)[^|│]*?)\s*(?:[|│]\s*)?(?:5h:?\s*)?\[?[▬▱━─█░■□]+\]?\s*(?P<restante>\d{1,3}(?:\.\d+)?)%(?:\s*\((?P<tempo>[^)]+)\))?(?P<resto>.*)$",
     re.IGNORECASE,
 )
-RE_AGY_SEMANAL = re.compile(r"(?:Sem|Week(?:ly)?)\s+[▬▱━─█░■□]+\s*(\d{1,3})%", re.IGNORECASE)
+RE_AGY_SEMANAL = re.compile(r"(?:Sem|Week(?:ly)?):?\s*\[?[▬▱━─█░■□]+\]?\s*(\d{1,3}(?:\.\d+)?)%", re.IGNORECASE)
+RE_AGY_CTX_BAR = re.compile(r"Ctx:?\s*\[?[▬▱━─█░■□]+\]?\s*(\d{1,3}(?:\.\d+)?)%", re.IGNORECASE)
+RE_AGY_BRANCH = re.compile(r"⎇\s*([^\s|│]+)")
 RE_AGY_ESTADO_FIM = re.compile(r"\((ocioso|idle|trabalhando|working|thinking|running|tool_use)[^)]*\)?\s*$", re.IGNORECASE)
 RE_AGY_ATIVO_TELA = re.compile(
     r"(?:^\s*[■●○⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]\s*(?:Running|Thinking|Working|Executing|Searching|Reading|Editing|Writing)\b|esc to (?:interrupt|cancel)|\.\.\.\s*running\s*$|running\s*$)",
@@ -381,27 +383,49 @@ def _hora_24(hora, minuto, periodo):
     return "%02dh%s" % (hora, minuto)
 
 
+def _pct_float(texto):
+    """'93.9' -> 94; '31' -> 31; fora de 0 a 100 -> None."""
+    if texto is None:
+        return None
+    try:
+        n = round(float(texto))
+        return n if 0 <= n <= 100 else None
+    except ValueError:
+        return None
+
+
 def _ler_linha_agy_nativa(linha, r):
-    """Status line nativa do Antigravity CLI 1.5+ no Windows/macOS (inclui formato 5h + Sem)."""
+    """Status line nativa do Antigravity CLI 1.5+ e ai-statusline (inclui formato 5h + Sem + Ctx + Branch)."""
     m = RE_AGY_NATIVA.search(linha)
     if not m:
         return
-    r["modelo"] = (
+    mod_bruto = (
         m.group("modelo")
         .strip()
         .replace("(Med)", "(Medium)")
         .replace("(Lo)", "(Low)")
         .replace("(Hi)", "(High)")
     )
-    restante = _pct(m.group("restante"))
+    if mod_bruto.lower().startswith(("sonnet", "opus", "haiku")):
+        mod_bruto = "Claude " + mod_bruto
+    r["modelo"] = mod_bruto
+    restante = _pct_float(m.group("restante"))
     if restante is not None:
         r["sessao_5h_pct"] = max(0, min(100, 100 - restante))
     resto = m.group("resto") or ""
     m_sem = RE_AGY_SEMANAL.search(resto)
     if m_sem:
-        sem_rest = _pct(m_sem.group(1))
+        sem_rest = _pct_float(m_sem.group(1))
         if sem_rest is not None:
             r["semanal_pct"] = max(0, min(100, 100 - sem_rest))
+    m_ctx = RE_AGY_CTX_BAR.search(resto)
+    if m_ctx:
+        ctx_usado = _pct_float(m_ctx.group(1))
+        if ctx_usado is not None:
+            r["contexto_pct"] = ctx_usado
+    m_br = RE_AGY_BRANCH.search(resto)
+    if m_br:
+        r["branch"] = m_br.group(1).strip()
     m_est = RE_AGY_ESTADO_FIM.search(resto)
     if m_est:
         est = m_est.group(1).lower()

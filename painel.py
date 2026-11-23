@@ -46,17 +46,21 @@ NOME_FERRAMENTA = {
 }
 
 MAPA_ROLES_MODELOS = {
-    "minerva": ("Antigravity", "Gemini 3.8 Flash"),
-    "orquestrador": ("Antigravity", "Gemini 3.8 Flash"),
-    "back-end": ("Codex CLI", "GPT-5.6-Luna"),
-    "backend": ("Codex CLI", "GPT-5.6-Luna"),
-    "front-end": ("Claude Code", "Claude Sonnet 4.6"),
-    "frontend": ("Claude Code", "Claude Sonnet 4.6"),
-    "test": ("Codex CLI", "GPT-5.6-Luna"),
-    "qa": ("Codex CLI", "GPT-5.6-Luna"),
-    "review": ("Claude Code", "Claude Sonnet 4.6"),
-    "gatekeeper": ("Claude Code", "Claude Sonnet 4.6"),
-    "bakeneko": ("Antigravity", "Gemini 3.8 Flash"),
+    "minerva": ("Antigravity", "Gemini 4 Hydrogen (Medium)"),
+    "orquestrador": ("Antigravity", "Gemini 4 Hydrogen (Medium)"),
+    "forja": ("Antigravity", "Gemini 4 Hydrogen (Medium)"),
+    "back-end": ("Codex", "gpt-6-luna"),
+    "backend": ("Codex", "gpt-6-luna"),
+    "prisma": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "front-end": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "frontend": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "sonda": ("Codex", "gpt-6-luna"),
+    "test": ("Codex", "gpt-6-luna"),
+    "qa": ("Codex", "gpt-6-luna"),
+    "argos": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "review": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "gatekeeper": ("Antigravity", "Claude Sonnet 5.5 (Medium)"),
+    "bakeneko": ("Antigravity", "Gemini 4 Hydrogen (Medium)"),
 }
 
 HISTORICO_LOGS = []
@@ -623,60 +627,153 @@ def descobrir_contas_local(leituras, agora_epoch):
     claude_3p_5h = (claude_3p_meter.get("windows") or {}).get("5h") or {}
     claude_3p_sem = (claude_3p_meter.get("windows") or {}).get("weekly") or {}
 
-    usado_5h_agy = gem_5h.get("usado_pct", 0.0)
-    usado_sem_agy = gem_sem.get("usado_pct", 0.0)
+    gem_5h_pct = gem_5h.get("usado_pct", 0.0)
+    gem_sem_pct = gem_sem.get("usado_pct", 0.0)
     renova_5h = _parse_iso_epoch(gem_5h.get("resetsAt"), _proximo_reset_5h(agora_epoch, 3.5 * 3600))
     renova_sem = _parse_iso_epoch(gem_sem.get("resetsAt"), _proximo_reset_semanal(agora_epoch))
     agy_lido_em = agy_reais.get("lido_em") or agora_epoch
 
+    c3p_5h_pct = claude_3p_5h.get("usado_pct", 0.0)
+    c3p_sem_pct = claude_3p_sem.get("usado_pct", 0.0)
+    renova_3p_5h = _parse_iso_epoch(claude_3p_5h.get("resetsAt"), renova_5h)
+    renova_3p_sem = _parse_iso_epoch(claude_3p_sem.get("resetsAt"), renova_sem)
+
+    argon_sem_pct = argon_sem.get("usado_pct", gem_sem_pct)
+    renova_argon_sem = _parse_iso_epoch(argon_sem.get("resetsAt"), renova_sem)
+
     for a in leituras:
         if a.get("ferramenta") == "agy":
-            if not gem_5h and isinstance(a.get("sessao_5h_pct"), (int, float)):
-                usado_5h_agy = a["sessao_5h_pct"]
-            if not gem_sem and isinstance(a.get("semanal_pct"), (int, float)):
-                usado_sem_agy = a["semanal_pct"]
-            if a.get("modelo"):
-                mod_limpo = re.sub(r"\s*\((Low|Medium|Med|High|Hi|Lo|XHigh)\)\s*$", "", a["modelo"], flags=re.I).strip()
-                if mod_limpo:
-                    agy_modelo = mod_limpo
+            mod_a = (a.get("modelo") or "").lower()
+            eh_3p = "claude" in mod_a or "sonnet" in mod_a or "opus" in mod_a or "gpt" in mod_a
+            if not eh_3p:
+                if not gem_5h and isinstance(a.get("sessao_5h_pct"), (int, float)):
+                    gem_5h_pct = a["sessao_5h_pct"]
+                if not gem_sem and isinstance(a.get("semanal_pct"), (int, float)):
+                    gem_sem_pct = a["semanal_pct"]
+            else:
+                if not claude_3p_5h and isinstance(a.get("sessao_5h_pct"), (int, float)):
+                    c3p_5h_pct = a["sessao_5h_pct"]
+                if not claude_3p_sem and isinstance(a.get("semanal_pct"), (int, float)):
+                    c3p_sem_pct = a["semanal_pct"]
 
-    # Se o modelo atual for Argon e houver medidor específico de Argon, destaca a cota semanal do Argon
-    modelo_atual_lower = agy_modelo.lower()
-    if "argon" in modelo_atual_lower and argon_sem:
-        usado_sem_destaque = argon_sem.get("usado_pct", usado_sem_agy)
-        renova_sem_destaque = _parse_iso_epoch(argon_sem.get("resetsAt"), renova_sem)
-    elif ("claude" in modelo_atual_lower or "gpt" in modelo_atual_lower) and claude_3p_5h:
-        usado_5h_agy = claude_3p_5h.get("usado_pct", usado_5h_agy)
-        usado_sem_destaque = claude_3p_sem.get("usado_pct", usado_sem_agy)
-        renova_sem_destaque = _parse_iso_epoch(claude_3p_sem.get("resetsAt"), renova_sem)
-    else:
-        usado_sem_destaque = usado_sem_agy
-        renova_sem_destaque = renova_sem
-
-    # Monta a seção "Demais Modelos na Conta" dinamicamente com os modelos reais da conta (excluindo o atual já em destaque)
+    # Monta a seção "Modelos na Conta" com as cotas reais de cada pool (sem contaminar um pool com outro)
     outros_modelos_agy = []
     for fam in agy_familias:
         nome_f = fam["nome"]
         fl = nome_f.lower()
-        if fl == modelo_atual_lower:
-            continue
         if "argon" in fl and argon_sem:
-            pct_f = argon_sem.get("usado_pct", usado_sem_agy)
+            pct_f = argon_sem_pct
             pool_f = "Argon · Semana"
         elif "claude" in fl or "gpt" in fl:
-            pct_f = claude_3p_5h.get("usado_pct", 0.0)
-            pool_f = "Pool 3P · 5h"
+            pct_f = c3p_5h_pct
+            pool_f = f"Pool 3P · 5h ({c3p_sem_pct}% sem)"
         else:
-            pct_f = usado_5h_agy
-            pool_f = "Pool Gemini · 5h"
+            pct_f = gem_5h_pct
+            pool_f = f"Pool Gemini · 5h ({gem_sem_pct}% sem)"
         outros_modelos_agy.append({"nome": nome_f, "usado_pct": pct_f, "pool": pool_f})
 
     if not outros_modelos_agy:
         outros_modelos_agy = [
-            {"nome": "Gemini 4 Argon", "usado_pct": argon_sem.get("usado_pct", usado_sem_agy), "pool": "Semana"},
-            {"nome": "Gemini 4 Hydrogen", "usado_pct": usado_5h_agy, "pool": "Pool Gemini"},
-            {"nome": "Claude / GPT (3P)", "usado_pct": claude_3p_5h.get("usado_pct", 0.0), "pool": "Pool 3P"},
+            {"nome": "Pool Gemini (Hydrogen/Neon/Flash)", "usado_pct": gem_5h_pct, "pool": f"5h ({gem_sem_pct}% sem)"},
+            {"nome": "Pool Claude / GPT (3P)", "usado_pct": c3p_5h_pct, "pool": f"5h ({c3p_sem_pct}% sem)"},
+            {"nome": "Gemini 4 Argon", "usado_pct": argon_sem_pct, "pool": "Semana"},
         ]
+
+    barras_geral_agy = [
+        {
+            "grupo": "Pool Gemini",
+            "tipo": "5h",
+            "rotulo": "Pool Gemini · 5 horas",
+            "usado_pct": gem_5h_pct,
+            "renova_epoch": renova_5h,
+            "janela_min": 300,
+            "origem": "cli",
+            "lido_em_epoch": agy_lido_em,
+            "como_soube": "cli",
+            "membros": ["Pool Gemini", "Pool 3P"],
+        },
+        {
+            "grupo": "Pool Gemini",
+            "tipo": "semana",
+            "rotulo": "Pool Gemini · Semana",
+            "usado_pct": gem_sem_pct,
+            "renova_epoch": renova_sem,
+            "janela_min": 10080,
+            "origem": "cli",
+            "lido_em_epoch": agy_lido_em,
+            "como_soube": "cli",
+        },
+    ]
+
+    resumo_geral_agy = f"Gemini: {gem_5h_pct}% (5h) · {gem_sem_pct}% (sem)  │  Claude/GPT 3P: {c3p_5h_pct}% (5h) · {c3p_sem_pct}% (sem)"
+    visoes_agy = [
+        {
+            "id": "geral",
+            "rotulo": "Geral",
+            "modelo": "Visão Geral · Pools",
+            "esforco": "",
+            "resumo": resumo_geral_agy,
+            "barras": barras_geral_agy,
+        }
+    ]
+
+    for a in leituras:
+        if a.get("ferramenta") != "agy":
+            continue
+        nome_t = a["nome"]
+        mod_bruto = a.get("modelo") or agy_modelo or "Gemini 4 Hydrogen"
+        m_ef = re.search(r"\((Low|Medium|Med|High|Hi|Lo|XHigh|Max)\)\s*$", mod_bruto, re.I)
+        esf_t = m_ef.group(1).lower() if m_ef else "medium"
+        mod_limpo = re.sub(r"\s*\((Low|Medium|Med|High|Hi|Lo|XHigh|Max)\)\s*$", "", mod_bruto, flags=re.I).strip() or mod_bruto
+        ml = mod_limpo.lower()
+        eh_3p = "claude" in ml or "sonnet" in ml or "opus" in ml or "gpt" in ml
+        eh_argon = "argon" in ml
+
+        u_5h = a.get("sessao_5h_pct") if isinstance(a.get("sessao_5h_pct"), (int, float)) else (c3p_5h_pct if eh_3p else gem_5h_pct)
+        u_sem = a.get("semanal_pct") if isinstance(a.get("semanal_pct"), (int, float)) else (
+            c3p_sem_pct if eh_3p else (argon_sem_pct if eh_argon else gem_sem_pct)
+        )
+        r_5h = renova_3p_5h if eh_3p else renova_5h
+        r_sem = renova_3p_sem if eh_3p else (renova_argon_sem if eh_argon else renova_sem)
+
+        partes_resumo = [f"Modelo: {mod_bruto}"]
+        if isinstance(a.get("contexto_pct"), (int, float)):
+            partes_resumo.append(f"Ctx: {a['contexto_pct']}%")
+        if a.get("branch"):
+            partes_resumo.append(f"⎇ {a['branch']}")
+
+        visoes_agy.append({
+            "id": f"term:{nome_t}",
+            "rotulo": nome_t,
+            "modelo": mod_limpo,
+            "esforco": esf_t,
+            "resumo": "  │  ".join(partes_resumo),
+            "barras": [
+                {
+                    "grupo": f"{nome_t}:{mod_limpo}",
+                    "tipo": "5h",
+                    "rotulo": f"{mod_limpo} ({nome_t}) · 5 horas",
+                    "usado_pct": u_5h,
+                    "renova_epoch": r_5h,
+                    "janela_min": 300,
+                    "origem": "cli",
+                    "lido_em_epoch": agy_lido_em,
+                    "como_soube": "cli",
+                    "membros": [nome_t, mod_limpo],
+                },
+                {
+                    "grupo": f"{nome_t}:{mod_limpo}",
+                    "tipo": "semana",
+                    "rotulo": f"{mod_limpo} ({nome_t}) · Semana",
+                    "usado_pct": u_sem,
+                    "renova_epoch": r_sem,
+                    "janela_min": 10080,
+                    "origem": "cli",
+                    "lido_em_epoch": agy_lido_em,
+                    "como_soube": "cli",
+                },
+            ],
+        })
 
     agy_autenticado = bool(agy_email or meters_agy or agy_familias or agentes_agy)
     if agy_autenticado and not agy_desativado:
@@ -689,8 +786,10 @@ def descobrir_contas_local(leituras, agora_epoch):
             "plano": "Google AI Pro",
             "agentes": agentes_agy or ["Minerva"],
             "terminais": agentes_agy or ["Minerva"],
-            "modelo": agy_modelo,
-            "esforco": agy_esforco,
+            "modelo": "Visão Geral · Pools",
+            "esforco": "",
+            "resumo_geral": resumo_geral_agy,
+            "visoes": visoes_agy,
             "situacao": "ok",
             "consultando": False,
             "intervalo_s": 300,
@@ -698,31 +797,7 @@ def descobrir_contas_local(leituras, agora_epoch):
             "erro": None,
             "erro_detalhe": None,
             "modelos_cota": outros_modelos_agy,
-            "barras": [
-                {
-                    "grupo": agy_modelo,
-                    "tipo": "5h",
-                    "rotulo": f"{agy_modelo} · 5 horas",
-                    "usado_pct": usado_5h_agy,
-                    "renova_epoch": renova_5h,
-                    "janela_min": 300,
-                    "origem": "cli",
-                    "lido_em_epoch": agy_lido_em,
-                    "como_soube": "cli",
-                    "membros": [agy_modelo],
-                },
-                {
-                    "grupo": agy_modelo,
-                    "tipo": "semana",
-                    "rotulo": f"{agy_modelo} · Semana",
-                    "usado_pct": usado_sem_destaque,
-                    "renova_epoch": renova_sem_destaque,
-                    "janela_min": 10080,
-                    "origem": "cli",
-                    "lido_em_epoch": agy_lido_em,
-                    "como_soube": "cli",
-                },
-            ],
+            "barras": barras_geral_agy,
         })
 
     # 2. OpenAI Codex CLI
@@ -1898,12 +1973,24 @@ def ciclo_coleta(terminais, pasta_saida):
     mapa = comum.carregar_mapa()
     agentes_cfg = mapa.get("agentes", [])
 
-    if hasattr(terminais, "listar_agentes"):
+    if hasattr(terminais, "listar_agentes_detalhado"):
+        try:
+            descobertos = terminais.listar_agentes_detalhado()
+            if descobertos:
+                nomes_atuais = {a["nome"] for a in agentes_cfg}
+                for d in descobertos:
+                    if d["nome"] not in nomes_atuais:
+                        agentes_cfg.append(d)
+        except Exception:
+            pass
+    elif hasattr(terminais, "listar_agentes"):
         try:
             descobertos = terminais.listar_agentes()
             if descobertos:
                 nomes_atuais = {a["nome"] for a in agentes_cfg}
                 for d in descobertos:
+                    if isinstance(d, str):
+                        d = {"nome": d, "ferramenta": "auto", "terminal": d}
                     if d["nome"] not in nomes_atuais:
                         agentes_cfg.append(d)
         except Exception:

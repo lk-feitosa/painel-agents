@@ -107,6 +107,10 @@ def carregar_mapa(caminho=None):
     try:
         from terminais import obter_terminais
         t = obter_terminais()
+        if hasattr(t, "listar_agentes_detalhado"):
+            agentes = t.listar_agentes_detalhado()
+            if agentes:
+                return {"agentes": agentes}
         nomes = t.listar_agentes()
         if nomes:
             agentes = [{"nome": n, "ferramenta": "auto", "terminal": n} for n in nomes]

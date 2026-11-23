@@ -130,6 +130,16 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
 .card .account-label, .card .quem-usa { margin: 0; color: var(--c-apagado); font-size: 10.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .quem-usa { color: var(--tinta2); }
+.seletor-visao { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 2px; }
+.seletor-visao[hidden] { display: none; }
+.pilula-visao { font: inherit; font-size: 9.5px; font-weight: 550; line-height: 1.2; padding: 2px 7px; border-radius: 999px;
+  border: 1px solid var(--c-fio); background: var(--c-etiqueta); color: var(--c-apagado); cursor: pointer; transition: all 120ms ease-out; }
+.pilula-visao:hover { color: var(--c-tinta); border-color: var(--c-fio-forte); }
+.pilula-visao.ativa { background: color-mix(in srgb, var(--accent) 18%, var(--c-etiqueta)); color: var(--c-tinta); border-color: var(--accent); font-weight: 650; }
+.resumo-visao { margin: 2px 0 4px; font-size: 10px; line-height: 1.3; color: var(--tinta2); font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 6px; border-radius: 5px;
+  background: color-mix(in srgb, var(--c-etiqueta) 65%, transparent); border: 1px solid var(--c-fio); }
+.resumo-visao[hidden] { display: none; }
 .model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 1px 6px; font-size: 9.5px; line-height: 1.25;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; max-width: 50%; }
 .quota { position: relative; }
@@ -924,7 +934,7 @@ function criarCard(conta) {
   no.innerHTML = '<svg class="card-surface" aria-hidden="true" focusable="false"><path></path></svg>' +
     '<span class="query-ring" aria-hidden="true"><span><svg focusable="false"><path></path></svg></span></span><span class="card-spotlight" aria-hidden="true"></span>' +
     '<header class="card-header bloco" style="--i:0"><div class="identity"><p class="card-eyebrow"></p><h3 class="card-title"><span class="title-text"></span></h3>' +
-    '<p class="account-label"></p><p class="quem-usa"></p></div><span class="model-tag" hidden></span></header>' +
+    '<p class="account-label"></p><p class="quem-usa"></p><div class="seletor-visao" hidden></div><p class="resumo-visao" hidden></p></div><span class="model-tag" hidden></span></header>' +
     '<p class="card-status bloco" hidden><span class="orbita" aria-hidden="true" hidden><i></i><i></i><i></i></span><span class="texto"></span></p>';
   formas.set(no, no.querySelector(".card-surface"));
   observadorDeForma.observe(no);
@@ -938,16 +948,20 @@ function criarCard(conta) {
   var slot = document.createElement("div");
   slot.className = "card-slot";
   slot.appendChild(cena);
+  var visaoSalva = "geral";
+  try { visaoSalva = localStorage.getItem("painel-visao:" + (conta.id || conta.titulo)) || "geral"; } catch (e) {}
   var card = { no: no, slot: slot, cena: cena, pilha: pilha, verso: verso, conta: conta, barras: [], barraVirada: null, estado: no.querySelector(".card-status"),
                orbita: no.querySelector(".card-status .orbita"), estadoTexto: no.querySelector(".card-status .texto"),
                desligarTilt: tilt.ligar(slot, pilha, no.querySelector(".card-spotlight")), eyebrow: no.querySelector(".card-eyebrow"), titulo: no.querySelector(".title-text"),
                tituloNo: no.querySelector(".card-title"), rotuloConta: no.querySelector(".account-label"), quemUsa: no.querySelector(".quem-usa"),
+               seletorVisao: no.querySelector(".seletor-visao"), resumoVisao: no.querySelector(".resumo-visao"), visaoAtiva: visaoSalva,
                etiqueta: no.querySelector(".model-tag") };
   cena.addEventListener("animationend", function (ev) { if (ev.target === cena) cena.classList.remove("pop"); });
   /* Clique em qualquer ponto da frente vira o card; numa barra, o verso mostra aquela janela;
-     fora delas, a primeira. Selecionar texto para copiar não vira. */
+     fora delas, a primeira. Selecionar texto para copiar ou clicar nas pílulas de visão não vira. */
   no.addEventListener("click", function (ev) {
     if (card.barraVirada || arrastou(ev)) return;
+    if (ev.target.closest && ev.target.closest(".seletor-visao")) return;
     var alvo = ev.target.closest ? ev.target.closest(".quota") : null, barra = null;
     card.barras.forEach(function (b) { if (b.no === alvo) barra = b; });
     barra = barra || card.barras[0];
@@ -980,6 +994,50 @@ function sincronizarBarras(card, lista) {
   card.estado.style.setProperty("--i", String(card.barras.length + 1));
 }
 
+function aplicarVisaoCard(card, c) {
+  var visoes = Array.isArray(c.visoes) && c.visoes.length > 1 ? c.visoes : null;
+  oculto(card.seletorVisao, !visoes);
+  var visaoEscolhida = null;
+  if (visoes) {
+    visoes.forEach(function (v) { if (v.id === card.visaoAtiva) visaoEscolhida = v; });
+    if (!visaoEscolhida) { visaoEscolhida = visoes[0]; card.visaoAtiva = visaoEscolhida.id; }
+    var chaveBotoes = visoes.map(function (v) { return v.id + ":" + v.rotulo; }).join("|");
+    if (card.seletorVisao.getAttribute("data-chave") !== chaveBotoes) {
+      card.seletorVisao.setAttribute("data-chave", chaveBotoes);
+      card.seletorVisao.textContent = "";
+      visoes.forEach(function (v) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "pilula-visao";
+        btn.setAttribute("data-visao", v.id);
+        btn.textContent = v.rotulo;
+        btn.title = v.id === "geral" ? "Visão Geral da Conta (Todos os Pools)" : ("Acompanhar terminal " + v.rotulo);
+        btn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          card.visaoAtiva = v.id;
+          try { localStorage.setItem("painel-visao:" + (card.conta.id || card.conta.titulo), v.id); } catch (e) {}
+          aplicarVisaoCard(card, card.conta);
+          tique();
+        });
+        card.seletorVisao.appendChild(btn);
+      });
+    }
+    Array.prototype.forEach.call(card.seletorVisao.children, function (btn) {
+      btn.classList.toggle("ativa", btn.getAttribute("data-visao") === card.visaoAtiva);
+    });
+  }
+  var modFonte = visaoEscolhida ? visaoEscolhida.modelo : c.modelo;
+  var esfFonte = visaoEscolhida ? visaoEscolhida.esforco : c.esforco;
+  var resumoTexto = (visaoEscolhida && visaoEscolhida.resumo) || c.resumo_geral || "";
+  oculto(card.resumoVisao, !resumoTexto);
+  if (resumoTexto) { texto(card.resumoVisao, resumoTexto); atributo(card.resumoVisao, "title", resumoTexto); }
+  var modelo = modeloLegivel(c.ferramenta, modFonte), etiqueta = modelo ? [modelo, esfFonte ? capitalizar(esfFonte) : ""].filter(Boolean).join(" · ") : "";
+  oculto(card.etiqueta, !etiqueta); texto(card.etiqueta, etiqueta);
+  atributo(card.etiqueta, "title", etiqueta ? ("Visualizando: " + etiqueta) : "");
+  var barrasAtivas = (visaoEscolhida && Array.isArray(visaoEscolhida.barras)) ? visaoEscolhida.barras : (Array.isArray(c.barras) ? c.barras : []);
+  sincronizarBarras(card, barrasAtivas);
+}
+
 /* ---------- desenho ---------- */
 var grade = null, ultimoJson = null;
 function desenhar(contas, agoraS) {
@@ -1007,10 +1065,10 @@ function desenhar(contas, agoraS) {
       texto(card.eyebrow, c.ferramenta_nome || "");
       identidade(card);
       var quem = (c.agentes && c.agentes.length ? c.agentes : c.terminais || []).join(" · ");
-      texto(card.quemUsa, quem); atributo(card.quemUsa, "title", quem);
-      var modelo = modeloLegivel(c.ferramenta, c.modelo), etiqueta = modelo ? [modelo, c.esforco ? capitalizar(c.esforco) : ""].filter(Boolean).join(" · ") : "";
-      oculto(card.etiqueta, !etiqueta); texto(card.etiqueta, etiqueta); atributo(card.etiqueta, "title", etiqueta ? "Modelo da sessão mais recente desta conta: " + etiqueta : "");
-      sincronizarBarras(card, Array.isArray(c.barras) ? c.barras : []);
+      var visoes = Array.isArray(c.visoes) && c.visoes.length > 1 ? c.visoes : null;
+      oculto(card.quemUsa, !!visoes);
+      if (!visoes) { texto(card.quemUsa, quem); atributo(card.quemUsa, "title", quem); }
+      aplicarVisaoCard(card, c);
     });
     Object.keys(cards).forEach(function (id) { if (!presentes[id]) { removerCard(cards[id]); delete cards[id]; } });
     var mensagem = "";
