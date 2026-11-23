@@ -462,12 +462,12 @@ class TmuxTerminais:
 
 def obter_terminais(mapa=None):
     """Detecta se estamos no Maestri ou Tmux e retorna o adaptador correto."""
-    # 1. Se estivermos rodando com pipe do Maestri, CLI disponível ou pasta .maestri presente
-    if os.environ.get("MAESTRI_PIPE") or os.environ.get("MAESTRI_CLI"):
+    # 1. Se estivermos rodando com pipe/socket do Maestri, CLI disponível ou pasta ~/.maestri presente
+    if os.environ.get("MAESTRI_PIPE") or os.environ.get("MAESTRI_CLI") or resolver_socket_maestri():
         return MaestriTerminais(mapa)
 
-    # 2. No Windows ou quando houver pasta .maestri no workspace
-    if sys.platform == "win32" or (Path.cwd() / ".maestri").is_dir() or (Path("S:/DEV/test-maestri/.maestri")).is_dir():
+    # 2. Quando houver pasta .maestri no projeto ou no home do usuário
+    if sys.platform == "win32" or (Path.cwd() / ".maestri").is_dir() or (Path.home() / ".maestri").is_dir():
         return MaestriTerminais(mapa)
 
     # 3. Testa se a CLI do Maestri responde

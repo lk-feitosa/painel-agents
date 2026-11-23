@@ -332,6 +332,82 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
                         }
         except Exception:
             pass
+    else:
+        # Scanner nativo de portas TCP no Linux / macOS via `ss -tlnp`
+        try:
+            p = subprocess.run(
+                ["ss", "-tlnp"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+            )
+            if p.returncode == 0 and p.stdout:
+                for linha in p.stdout.splitlines()[1:]:
+                    partes = linha.split()
+                    if len(partes) < 4:
+                        continue
+                    local_addr = partes[3]
+                    if ":" not in local_addr:
+                        continue
+                    end_raw, porta_str = local_addr.rsplit(":", 1)
+                    if not porta_str.isdigit():
+                        continue
+                    porta = int(porta_str)
+                    if porta < 3000 or porta > 9999 or porta in portas_detectadas:
+                        continue
+                    end = end_raw.strip("[]") or "127.0.0.1"
+                    if end in ("*", "0.0.0.0", "::"):
+                        end = "127.0.0.1"
+                    m_proc = re.search(r'\("([^"]+)",pid=(\d+)', linha)
+                    nome_pr = m_proc.group(1) if m_proc else "processo"
+                    pid = int(m_proc.group(2)) if m_proc else 0
+                    cmd_pr = ""
+                    if pid:
+                        try:
+                            cmd_pr = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\x00", b" ").decode("utf-8", errors="ignore").strip()
+                        except Exception:
+                            pass
+                    eh_proj = (
+                        "painel-agents" in cmd_pr.lower()
+                        or "kanban-agents" in cmd_pr.lower()
+                        or str(projeto_dir).lower() in cmd_pr.lower()
+                        or projeto_dir.name.lower() in cmd_pr.lower()
+                    )
+                    if "painel.py" in cmd_pr.lower():
+                        servico = "Painel de Agentes"
+                        eh_proj = True
+                    elif "kanban.py" in cmd_pr.lower():
+                        servico = "Kanban Minimalista do Projeto"
+                        eh_proj = True
+                    elif "uvicorn" in cmd_pr.lower() or "fastapi" in cmd_pr.lower():
+                        servico = f"API FastAPI / Uvicorn ({nome_pr})"
+                    elif "vite" in cmd_pr.lower():
+                        servico = f"Vite Dev Server ({nome_pr})"
+                    elif "qdrant" in nome_pr.lower() or "qdrant" in cmd_pr.lower():
+                        servico = "Qdrant Vector DB"
+                    elif "node" in nome_pr.lower() or "bun" in nome_pr.lower():
+                        servico = f"Servidor Node/Bun ({nome_pr})"
+                    elif "python" in nome_pr.lower():
+                        servico = f"Serviço Python ({nome_pr})"
+                    else:
+                        servico = nome_pr
+
+                    portas_detectadas[porta] = {
+                        "porta": porta,
+                        "endereco": end,
+                        "pid": pid,
+                        "processo": nome_pr,
+                        "servico": servico,
+                        "escopo": "projeto" if eh_proj else "externo",
+                        "url": f"http://localhost:{porta}" if ("http" in servico.lower() or "vite" in servico.lower() or "api" in servico.lower() or eh_proj) else None,
+                        "status": "Ativo no Projeto" if eh_proj else "Porta Externa Ocupada",
+                    }
+        except Exception:
+            pass
 
     lista_ordenada = sorted(
         portas_detectadas.values(),
@@ -595,9 +671,13 @@ def _listar_modelos_agy_cache(home: Path) -> list:
         return _CACHE_MODELOS_CLI["agy_familias"]
 
     agy_bin = shutil.which("agy.exe") or shutil.which("agy")
-    local_agy = home / "AppData" / "Local" / "agy" / "bin" / "agy.exe"
-    if not agy_bin and local_agy.exists():
-        agy_bin = str(local_agy)
+    for cand in [
+        home / "AppData" / "Local" / "agy" / "bin" / "agy.exe",
+        home / ".local" / "bin" / "agy",
+        Path("/usr/local/bin/agy"),
+    ]:
+        if not agy_bin and cand.exists():
+            agy_bin = str(cand)
     if not agy_bin:
         return []
 
