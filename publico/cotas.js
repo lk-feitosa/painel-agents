@@ -133,8 +133,10 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .seletor-visao { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 2px; }
 .seletor-visao[hidden] { display: none; }
 .pilula-visao { font: inherit; font-size: 9.5px; font-weight: 550; line-height: 1.2; padding: 2px 7px; border-radius: 999px;
-  border: 1px solid var(--c-fio); background: var(--c-etiqueta); color: var(--c-apagado); cursor: pointer; transition: all 120ms ease-out; }
+  border: 1px solid var(--c-fio); background: var(--c-etiqueta); color: var(--c-apagado); cursor: pointer; transition: all 120ms ease-out;
+  display: inline-flex; align-items: center; gap: 4px; }
 .pilula-visao:hover { color: var(--c-tinta); border-color: var(--c-fio-forte); }
+.pilula-visao.em-uso::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex: none; }
 .pilula-visao.ativa { background: color-mix(in srgb, var(--accent) 18%, var(--c-etiqueta)); color: var(--c-tinta); border-color: var(--accent); font-weight: 650; }
 .resumo-visao { margin: 2px 0 4px; font-size: 10px; line-height: 1.3; color: var(--tinta2); font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 6px; border-radius: 5px;
@@ -1001,17 +1003,17 @@ function aplicarVisaoCard(card, c) {
   if (visoes) {
     visoes.forEach(function (v) { if (v.id === card.visaoAtiva) visaoEscolhida = v; });
     if (!visaoEscolhida) { visaoEscolhida = visoes[0]; card.visaoAtiva = visaoEscolhida.id; }
-    var chaveBotoes = visoes.map(function (v) { return v.id + ":" + v.rotulo; }).join("|");
+    var chaveBotoes = visoes.map(function (v) { return v.id + ":" + v.rotulo + ":" + (v.ativo ? "1" : "0"); }).join("|");
     if (card.seletorVisao.getAttribute("data-chave") !== chaveBotoes) {
       card.seletorVisao.setAttribute("data-chave", chaveBotoes);
       card.seletorVisao.textContent = "";
       visoes.forEach(function (v) {
         var btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "pilula-visao";
+        btn.className = "pilula-visao" + (v.ativo && v.id !== "geral" ? " em-uso" : "");
         btn.setAttribute("data-visao", v.id);
         btn.textContent = v.rotulo;
-        btn.title = v.id === "geral" ? "Visão Geral da Conta (Todos os Pools)" : ("Acompanhar terminal " + v.rotulo);
+        btn.title = v.id === "geral" ? "Visão Geral da Conta (Todos os Pools)" : ((v.rotulo_completo || v.rotulo) + (v.resumo ? " — " + v.resumo : ""));
         btn.addEventListener("click", function (ev) {
           ev.stopPropagation();
           card.visaoAtiva = v.id;
@@ -1065,9 +1067,7 @@ function desenhar(contas, agoraS) {
       texto(card.eyebrow, c.ferramenta_nome || "");
       identidade(card);
       var quem = (c.agentes && c.agentes.length ? c.agentes : c.terminais || []).join(" · ");
-      var visoes = Array.isArray(c.visoes) && c.visoes.length > 1 ? c.visoes : null;
-      oculto(card.quemUsa, !!visoes);
-      if (!visoes) { texto(card.quemUsa, quem); atributo(card.quemUsa, "title", quem); }
+      texto(card.quemUsa, quem); atributo(card.quemUsa, "title", quem);
       aplicarVisaoCard(card, c);
     });
     Object.keys(cards).forEach(function (id) { if (!presentes[id]) { removerCard(cards[id]); delete cards[id]; } });

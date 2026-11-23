@@ -161,6 +161,11 @@ def porta_realmente_livre(porta):
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             except OSError:
                 pass
+        elif sys.platform != "win32":
+            try:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            except OSError:
+                pass
         try:
             s.bind(("127.0.0.1", porta))
             return True
@@ -705,66 +710,104 @@ def descobrir_contas_local(leituras, agora_epoch):
         },
     ]
 
-    resumo_geral_agy = f"Gemini: {gem_5h_pct}% (5h) · {gem_sem_pct}% (sem)  │  Claude/GPT 3P: {c3p_5h_pct}% (5h) · {c3p_sem_pct}% (sem)"
+    resumo_geral_agy = f"Pool Gemini: {gem_5h_pct}% (5h) · {gem_sem_pct}% (sem)  │  Pool 3P (Claude/GPT): {c3p_5h_pct}% (5h) · {c3p_sem_pct}% (sem)"
     visoes_agy = [
         {
             "id": "geral",
             "rotulo": "Geral",
             "modelo": "Visão Geral · Pools",
             "esforco": "",
+            "ativo": True,
             "resumo": resumo_geral_agy,
             "barras": barras_geral_agy,
         }
     ]
 
+    # Agrupa quais terminais ativos estão usando cada família de modelo nesta conta
+    terminais_por_familia = {}
     for a in leituras:
         if a.get("ferramenta") != "agy":
             continue
         nome_t = a["nome"]
-        mod_bruto = a.get("modelo") or agy_modelo or "Gemini 4 Hydrogen"
-        m_ef = re.search(r"\((Low|Medium|Med|High|Hi|Lo|XHigh|Max)\)\s*$", mod_bruto, re.I)
-        esf_t = m_ef.group(1).lower() if m_ef else "medium"
-        mod_limpo = re.sub(r"\s*\((Low|Medium|Med|High|Hi|Lo|XHigh|Max)\)\s*$", "", mod_bruto, flags=re.I).strip() or mod_bruto
-        ml = mod_limpo.lower()
+        mod_t = (a.get("modelo") or "").lower()
+        ctx_t = f" (Ctx {a['contexto_pct']}%)" if isinstance(a.get("contexto_pct"), (int, float)) else ""
+        if "hydrogen" in mod_t:
+            chave_fam = "hydrogen"
+        elif "argon" in mod_t:
+            chave_fam = "argon"
+        elif "neon" in mod_t:
+            chave_fam = "neon"
+        elif "flash" in mod_t:
+            chave_fam = "flash"
+        elif "sonnet" in mod_t:
+            chave_fam = "sonnet"
+        elif "opus" in mod_t:
+            chave_fam = "opus"
+        elif "gpt" in mod_t:
+            chave_fam = "gpt"
+        else:
+            chave_fam = mod_t
+        terminais_por_familia.setdefault(chave_fam, []).append(f"{nome_t}{ctx_t}")
+
+    catalogo_modelos_agy = [f["nome"] for f in agy_familias] if agy_familias else [
+        "Gemini 4 Hydrogen",
+        "Gemini 4 Argon",
+        "Gemini 4 Neon",
+        "Gemini 3.8 Flash",
+        "Claude Sonnet 5.5",
+        "Claude Opus 5.5",
+        "GPT-OSS 120B",
+    ]
+
+    for nome_mod in catalogo_modelos_agy:
+        ml = nome_mod.lower()
         eh_3p = "claude" in ml or "sonnet" in ml or "opus" in ml or "gpt" in ml
         eh_argon = "argon" in ml
 
-        u_5h = a.get("sessao_5h_pct") if isinstance(a.get("sessao_5h_pct"), (int, float)) else (c3p_5h_pct if eh_3p else gem_5h_pct)
-        u_sem = a.get("semanal_pct") if isinstance(a.get("semanal_pct"), (int, float)) else (
-            c3p_sem_pct if eh_3p else (argon_sem_pct if eh_argon else gem_sem_pct)
-        )
+        u_5h = c3p_5h_pct if eh_3p else gem_5h_pct
+        u_sem = c3p_sem_pct if eh_3p else (argon_sem_pct if eh_argon else gem_sem_pct)
         r_5h = renova_3p_5h if eh_3p else renova_5h
         r_sem = renova_3p_sem if eh_3p else (renova_argon_sem if eh_argon else renova_sem)
+        nome_pool = "Pool 3P (Claude/GPT)" if eh_3p else ("Pool Argon / Gemini" if eh_argon else "Pool Gemini")
 
-        partes_resumo = [f"Modelo: {mod_bruto}"]
-        if isinstance(a.get("contexto_pct"), (int, float)):
-            partes_resumo.append(f"Ctx: {a['contexto_pct']}%")
-        if a.get("branch"):
-            partes_resumo.append(f"⎇ {a['branch']}")
+        usando = []
+        for k_fam, lista_t in terminais_por_familia.items():
+            if k_fam and k_fam in ml:
+                usando.extend(lista_t)
+
+        rotulo_curto = (
+            nome_mod.replace("Gemini 4 ", "G4 ")
+            .replace("Gemini 3.8 ", "G3.8 ")
+            .replace("Claude ", "")
+            .replace(" 5.5", "")
+        )
+        resumo_mod = f"{nome_pool}  │  " + (f"Em uso: {', '.join(usando)}" if usando else "Livre (nenhum terminal usando)")
 
         visoes_agy.append({
-            "id": f"term:{nome_t}",
-            "rotulo": nome_t,
-            "modelo": mod_limpo,
-            "esforco": esf_t,
-            "resumo": "  │  ".join(partes_resumo),
+            "id": f"mod:{nome_mod}",
+            "rotulo": rotulo_curto,
+            "rotulo_completo": nome_mod,
+            "modelo": nome_mod,
+            "esforco": "",
+            "ativo": bool(usando),
+            "resumo": resumo_mod,
             "barras": [
                 {
-                    "grupo": f"{nome_t}:{mod_limpo}",
+                    "grupo": nome_mod,
                     "tipo": "5h",
-                    "rotulo": f"{mod_limpo} ({nome_t}) · 5 horas",
+                    "rotulo": f"{nome_mod} · 5 horas",
                     "usado_pct": u_5h,
                     "renova_epoch": r_5h,
                     "janela_min": 300,
                     "origem": "cli",
                     "lido_em_epoch": agy_lido_em,
                     "como_soube": "cli",
-                    "membros": [nome_t, mod_limpo],
+                    "membros": [nome_mod],
                 },
                 {
-                    "grupo": f"{nome_t}:{mod_limpo}",
+                    "grupo": nome_mod,
                     "tipo": "semana",
-                    "rotulo": f"{mod_limpo} ({nome_t}) · Semana",
+                    "rotulo": f"{nome_mod} · Semana",
                     "usado_pct": u_sem,
                     "renova_epoch": r_sem,
                     "janela_min": 10080,
