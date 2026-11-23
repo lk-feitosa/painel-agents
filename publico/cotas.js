@@ -20,51 +20,49 @@ var Apoio = window.CartaoApoio;
 
 var ESTILO = `
 #contas { --c-sup: var(--sup); --c-tinta: var(--tinta); --c-apagado: var(--apagado); --c-trilho: var(--sup2);
-          --c-cheio: var(--barra); --c-alerta: #b86a24; --c-critico: var(--critico); --c-fio: var(--fio); --c-fio-forte: var(--fio-forte);
-          --c-etiqueta: var(--sup2); --c-borda: #8c8c86; --c-decorrido: #d0d0c9; --c-agulha: #55554f; --c-marca: rgba(0,0,0,.48);
-          --c-pilula: rgba(255,255,255,.74); --c-pulso: rgba(85,85,79,.6);
-          --sombra-sm: 0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08);
-          --sombra-md: 0px 0px 0px 1px rgba(0,0,0,0.06), 0px 1px 1px -0.5px rgba(0,0,0,0.06), 0px 3px 3px -1.5px rgba(0,0,0,0.06), 0px 6px 6px -3px rgba(0,0,0,0.06), 0px 12px 12px -6px rgba(0,0,0,0.06), 0px 24px 24px -12px rgba(0,0,0,0.06); }
-/* No escuro, a cápsula ganha contorno, decorrido, agulha, marcas e pílula próprios na paleta preto e cinza. */
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-sup: #161619; --c-fio: #27272c; --c-etiqueta: #202025; --c-borda: #34343a; --c-decorrido: #3f3f46; --c-agulha: #f4f4f5; --c-marca: rgba(255,255,255,.5); --c-pilula: rgba(30,30,35,.85); --c-pulso: rgba(161,161,170,.5); } }
-html[data-tema="escuro"] #contas { --c-sup: #161619; --c-fio: #27272c; --c-etiqueta: #202025; --c-borda: #34343a; --c-decorrido: #3f3f46; --c-agulha: #f4f4f5; --c-marca: rgba(255,255,255,.5); --c-pilula: rgba(30,30,35,.85); --c-pulso: rgba(161,161,170,.5); }
+          --c-cheio: var(--tinta); --c-alerta: #d97706; --c-critico: var(--critico); --c-fio: var(--fio); --c-fio-forte: var(--fio-forte);
+          --c-etiqueta: var(--sup2); --c-borda: var(--fio-forte); --c-decorrido: #d4d4d8; --c-agulha: var(--tinta); --c-marca: rgba(0,0,0,.35);
+          --c-pilula: rgba(255,255,255,.92); --c-pulso: rgba(24,24,27,.4);
+          --sombra-sm: none; --sombra-md: none; }
+/* No escuro (Estilo Render.com Monocromático P&B): fundo carbono puro, bordas 1px nítidas, barras em branco/zinco de alto contraste. */
+@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-sup: #0c0c0e; --c-fio: #222226; --c-etiqueta: #131316; --c-borda: #3f3f46; --c-decorrido: #27272a; --c-agulha: #ffffff; --c-marca: rgba(255,255,255,.35); --c-pilula: #131316; --c-pulso: rgba(255,255,255,.4); } }
+html[data-tema="escuro"] #contas { --c-sup: #0c0c0e; --c-fio: #222226; --c-etiqueta: #131316; --c-borda: #3f3f46; --c-decorrido: #27272a; --c-agulha: #ffffff; --c-marca: rgba(255,255,255,.35); --c-pilula: #131316; --c-pulso: rgba(255,255,255,.4); }
 @media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-alerta: #f59e0b; } }
 html[data-tema="escuro"] #contas { --c-alerta: #f59e0b; }
 #contas .aviso-contas { padding: 0 16px 12px; color: var(--apagado); font-size: 11px; }
 #contas .aviso-contas[hidden] { display: none; }
 #contas .aviso-contas .erro { color: var(--critico-tinta); }
-.legenda-faixas { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 10.5px; color: var(--apagado);
-  margin: 0 2px 8px; padding: 5px 10px; background: color-mix(in srgb, var(--c-sup) 80%, transparent);
-  border: 1px solid var(--c-fio); border-radius: 6px; line-height: 1.35; }
+.legenda-faixas { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 10.5px; color: var(--apagado);
+  margin: 10px 14px 10px; padding: 6px 10px; background: var(--c-etiqueta);
+  border: 1px solid var(--c-fio); border-radius: 2px; line-height: 1.35; }
 .legenda-item { display: inline-flex; align-items: center; gap: 5px; }
-.legenda-cor { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+.legenda-cor { width: 9px; height: 9px; border-radius: 1px; display: inline-block; flex-shrink: 0; }
 .legenda-cor.faixa-tempo { background: var(--c-decorrido); border: 1px solid var(--c-borda); }
-.legenda-cor.faixa-consumo { background: var(--c-cheio); }
-.contas-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; margin: 0; padding: 0 2px; }
-#contas.cartao { background: none; border-radius: 0; }
-#contas .aviso-contas { padding-left: 4px; padding-right: 4px; }
+.legenda-cor.faixa-consumo { background: var(--c-tinta); }
+/* Grid 100% responsivo: se houver 2 cards ativos, dividem 50%/50% ocupando toda a largura; se 3, 33%/33%/33%; em telas menores, empilha em 1 coluna */
+.contas-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 12px; align-items: stretch; margin: 0; padding: 0 14px 14px; }
+#contas.cartao { background: var(--sup); border-radius: 4px; }
+#contas .aviso-contas { padding-left: 14px; padding-right: 14px; }
 .contas-grade[hidden] { display: none; }
-@media (max-width: 1100px) { .contas-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .contas-grade { grid-template-columns: 1fr; } }
+@media (max-width: 840px) { .contas-grade { grid-template-columns: 1fr; } }
 html[data-layout="minimo"] #contas { display: none; }
 
 .card-slot { position: relative; display: grid; min-width: 0; }
 .card-slot:hover, .card-slot:focus-within { z-index: 1; }
-/* Frente e verso no mesmo lugar: a frente é o card com as réguas de tempo e consumo; o verso é
-   o detalhe expandido com tempos e cotas detalhadas. Sem efeito de hover, sem tilt e sem scrollbar. */
 .card-cena { position: relative; display: grid; min-width: 0; }
 .card-pilha { position: relative; display: grid; min-width: 0; cursor: pointer; transform: none !important; will-change: auto; }
 .card-cena.pop { animation: none !important; }
 
-.card { --radius: 10px; --accent: #6d7782; position: relative; isolation: isolate; border-radius: var(--radius);
-  padding: 12px 14px; box-sizing: border-box; min-width: 0; min-height: 215px; color: var(--c-tinta);
-  background: var(--c-sup, #161619);
-  transform: none !important; transition: none !important;
-  box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio); }
-.card-verso { --radius: 10px; --accent: #6d7782; position: absolute; inset: 0; z-index: 1; min-width: 0; border-radius: var(--radius);
-  padding: 12px 14px; box-sizing: border-box; overflow: hidden !important; scrollbar-width: none !important; -ms-overflow-style: none;
-  background: var(--c-sup, #161619);
-  box-shadow: 0px 1px 3px rgba(0,0,0,0.2), 0px 0px 0px 1px var(--c-fio);
+.card { --radius: 4px; --accent: var(--c-tinta); position: relative; isolation: isolate; border-radius: var(--radius);
+  padding: 14px 16px; box-sizing: border-box; min-width: 0; min-height: 225px; color: var(--c-tinta);
+  background: var(--c-sup, #0c0c0e);
+  transform: none !important; transition: border-color 120ms ease !important;
+  border: 1px solid var(--c-fio); box-shadow: none; }
+.card:hover { border-color: var(--c-fio-forte) !important; box-shadow: none !important; }
+.card-verso { --radius: 4px; --accent: var(--c-tinta); position: absolute; inset: 0; z-index: 1; min-width: 0; border-radius: var(--radius);
+  padding: 14px 16px; box-sizing: border-box; overflow: hidden !important; scrollbar-width: none !important; -ms-overflow-style: none;
+  background: var(--c-sup, #0c0c0e);
+  border: 1px solid var(--c-fio-forte); box-shadow: none;
   color: var(--c-tinta); cursor: pointer; display: flex; flex-direction: column; visibility: hidden; }
 .card-slot, .card-cena, .card-pilha, .card, .card *, .card-verso, .card-verso *, .verso-corpo, .verso-corpo * {
   scrollbar-width: none !important; -ms-overflow-style: none !important;
@@ -91,25 +89,19 @@ html[data-layout="minimo"] #contas { display: none; }
 html[data-tema="escuro"] .card-spotlight { --brilho: .035; --grao: .16; }
 /* No escuro, trilho e preenchimento das barras ganham contraste próprio, para a luz do hover não
    apagar uma barra vazia ou quase vazia contra o fundo. */
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-trilho: #35352f; --c-cheio: #8f8f86; } }
-html[data-tema="escuro"] #contas { --c-trilho: #35352f; --c-cheio: #8f8f86; }
+@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) #contas { --c-trilho: #18181c; --c-cheio: #ffffff; } }
+html[data-tema="escuro"] #contas { --c-trilho: #18181c; --c-cheio: #ffffff; }
 .card-spotlight::before, .card-spotlight::after { content: ""; position: absolute; left: -380px; top: -380px; width: 760px; height: 760px;
   transform: translate3d(var(--spot-x, 0px), var(--spot-y, 0px), 0); }
 .card-spotlight::before { opacity: var(--brilho); background: radial-gradient(closest-side, rgba(255,255,255,1) 0%, rgba(255,255,255,.5) 28%, rgba(255,255,255,.16) 58%, rgba(255,255,255,0) 100%); }
 .card-spotlight::after { opacity: var(--grao); mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>");
   background-size: 180px 180px; -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.5) 45%, transparent 100%); mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,.5) 45%, transparent 100%); }
-/* A cor de cada ferramenta: o laranja do Claude, o azul do Codex, o verde-água do Antigravity.
-   Vale para o ponto do título e para as barras (a de 5 h cheia; a semanal, mais contida). */
-.card[data-ferramenta="claude"], .card-verso[data-ferramenta="claude"] { --accent: #d4683a; }
-.card[data-ferramenta="codex"], .card-verso[data-ferramenta="codex"] { --accent: #2fa08e; }
-.card[data-ferramenta="agy"], .card-verso[data-ferramenta="agy"] { --accent: #7f6ae0; }
-@media (prefers-color-scheme: dark) { html:not([data-tema="claro"]) .card[data-ferramenta="claude"], html:not([data-tema="claro"]) .card-verso[data-ferramenta="claude"] { --accent: #e07c52; }
-  html:not([data-tema="claro"]) .card[data-ferramenta="codex"], html:not([data-tema="claro"]) .card-verso[data-ferramenta="codex"] { --accent: #47b8a5; }
-  html:not([data-tema="claro"]) .card[data-ferramenta="agy"], html:not([data-tema="claro"]) .card-verso[data-ferramenta="agy"] { --accent: #a08df0; } }
-html[data-tema="escuro"] .card[data-ferramenta="claude"], html[data-tema="escuro"] .card-verso[data-ferramenta="claude"] { --accent: #e07c52; }
-html[data-tema="escuro"] .card[data-ferramenta="codex"], html[data-tema="escuro"] .card-verso[data-ferramenta="codex"] { --accent: #47b8a5; }
-html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] .card-verso[data-ferramenta="agy"] { --accent: #a08df0; }
+/* Estética Monocromática Render.com: todas as barras e indicadores em P&B de alto contraste */
+.card[data-ferramenta="claude"], .card-verso[data-ferramenta="claude"],
+.card[data-ferramenta="codex"], .card-verso[data-ferramenta="codex"],
+.card[data-ferramenta="agy"], .card-verso[data-ferramenta="agy"] { --accent: var(--c-tinta); }
+.card-surface { display: none !important; }
 /* A tarja do e-mail: uma tira de quadros sorteados (--tira, --quadros), um por ângulo de inclinação do card. O quadro do meio é o repouso;
    --angulo (-1 a 1, escrita pela inclinação do card, com transição) mistura dois quadros vizinhos, então os pixels variam aos poucos. */
 @property --angulo { syntax: "<number>"; inherits: true; initial-value: 0; }
@@ -130,19 +122,23 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
 .card .account-label, .card .quem-usa { margin: 0; color: var(--c-apagado); font-size: 10.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .quem-usa { color: var(--tinta2); }
-.seletor-visao { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 2px; }
+/* Barra segmentada em LINHA ÚNICA (Single-Line Segmented Control estilo Render.com) */
+.seletor-visao { display: flex; flex-wrap: nowrap; align-items: center; gap: 2px; margin: 6px 0 4px; padding: 2px;
+  background: var(--plano, #050505); border: 1px solid var(--c-fio); border-radius: 3px;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; width: 100%; }
+.seletor-visao::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .seletor-visao[hidden] { display: none; }
-.pilula-visao { font: inherit; font-size: 9.5px; font-weight: 550; line-height: 1.2; padding: 2px 7px; border-radius: 999px;
-  border: 1px solid var(--c-fio); background: var(--c-etiqueta); color: var(--c-apagado); cursor: pointer; transition: all 120ms ease-out;
-  display: inline-flex; align-items: center; gap: 4px; }
-.pilula-visao:hover { color: var(--c-tinta); border-color: var(--c-fio-forte); }
-.pilula-visao.em-uso::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex: none; }
-.pilula-visao.ativa { background: color-mix(in srgb, var(--accent) 18%, var(--c-etiqueta)); color: var(--c-tinta); border-color: var(--accent); font-weight: 650; }
-.resumo-visao { margin: 2px 0 4px; font-size: 10px; line-height: 1.3; color: var(--tinta2); font-variant-numeric: tabular-nums;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 6px; border-radius: 5px;
-  background: color-mix(in srgb, var(--c-etiqueta) 65%, transparent); border: 1px solid var(--c-fio); }
+.pilula-visao { font: inherit; font-size: 10px; font-weight: 550; line-height: 1.25; padding: 3px 8px; border-radius: 2px;
+  border: 1px solid transparent; background: transparent; color: var(--c-apagado); cursor: pointer; transition: all 100ms ease-out;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; flex: 1 0 auto; }
+.pilula-visao:hover { color: var(--c-tinta); background: var(--c-etiqueta); }
+.pilula-visao.em-uso::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex: none; }
+.pilula-visao.ativa { background: var(--c-tinta); color: var(--c-sup); border-color: var(--c-tinta); font-weight: 700; }
+.resumo-visao { margin: 2px 0 6px; font-size: 10.5px; line-height: 1.35; color: var(--tinta2); font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 3px 8px; border-radius: 2px;
+  background: var(--c-etiqueta); border: 1px solid var(--c-fio); width: 100%; }
 .resumo-visao[hidden] { display: none; }
-.model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 999px; padding: 1px 6px; font-size: 9.5px; line-height: 1.25;
+.model-tag { color: var(--tinta2); background: var(--c-etiqueta); border: 1px solid var(--c-fio); border-radius: 2px; padding: 2px 7px; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.25;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; max-width: 50%; }
 .quota { position: relative; }
 .quota + .quota { margin-top: 4px; }
@@ -175,7 +171,7 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 .visual.sem-regua { height: calc(var(--barra) + 2px + 6px); }
 @property --slot-gap { syntax: "<length>"; inherits: true; initial-value: 1px; }
 .cap { --slot-gap: 1px; position: absolute; left: 48px; right: 0; top: 3px; box-sizing: border-box; overflow: hidden;
-  height: calc(var(--barra) + 1px + var(--faixa) + 2px); border: 1px solid var(--c-borda); border-radius: 8px;
+  height: calc(var(--barra) + 1px + var(--faixa) + 2px); border: 1px solid var(--c-borda); border-radius: 2px;
   transition: --slot-gap 220ms cubic-bezier(.23, 1, .32, 1), height 200ms cubic-bezier(.23, 1, .32, 1), background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 200ms ease-out; }
 .cap-uso { position: absolute; left: 0; right: 0; top: 0; height: var(--barra); background: var(--c-trilho); transition: top 240ms cubic-bezier(.23, 1, .32, 1); }
 .regua { position: absolute; left: 0; right: 0; top: calc(var(--barra) + 1px); height: var(--faixa);
@@ -231,10 +227,10 @@ html[data-tema="escuro"] .card[data-ferramenta="agy"], html[data-tema="escuro"] 
 /* A pílula do tempo decorrido fica abaixo da .cap: translúcida, com sombra suave. O centro acompanha a agulha; nas bordas, a meia
    largura aberta ou compacta preserva a folga interna da barra. */
 .relogio { position: absolute; z-index: 3; left: clamp(calc(48px + var(--meia-pilula) + var(--folga-pilula)), var(--x), calc(100% - var(--meia-pilula) - var(--folga-pilula)));
-  display: inline-flex; align-items: center; height: var(--pilula); padding: 0 8px;
-  top: calc(3px + var(--cap-d) + 3px); border-radius: 999px; box-shadow: var(--sombra-sm);
-  background: var(--c-pilula); -webkit-backdrop-filter: blur(8px) saturate(1.3); backdrop-filter: blur(8px) saturate(1.3); color: var(--c-tinta);
-  font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none;
+  display: inline-flex; align-items: center; height: var(--pilula); padding: 0 7px;
+  top: calc(3px + var(--cap-d) + 3px); border-radius: 2px; border: 1px solid var(--c-fio); box-shadow: none;
+  background: var(--c-pilula); color: var(--c-tinta);
+  font-size: 11px; line-height: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none;
   opacity: 0; visibility: hidden; transform: translate(-50%, -4px); transition: opacity 140ms ease-out, transform 200ms cubic-bezier(.23, 1, .32, 1), visibility 0s 140ms; }
 /* "Decorrido" nasce inteiro. Depois de 1.300 ms, sua própria caixa encolhe pela esquerda; o fim da palavra permanece junto ao timer
    e o recorte impede que o texto passe por trás do número. */

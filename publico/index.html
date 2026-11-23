@@ -10,62 +10,62 @@
      verde = trabalhando (bolinha cheia), âmbar ◆ e vermelho ▲ = alerta, azul = depende do dono do painel. */
   :root {
     color-scheme: light;
-    --plano: #f2f2ef; --sup: #ffffff; --sup2: #f4f4f1;
-    --tinta: #1b1b1a; --tinta2: #55554f; --apagado: #6d6d68;
-    --fio: #e8e8e4; --fio-forte: #d2d2cd; --barra: #a9a9a2;
-    --bom: #1d9a3f; --bom-tinta: #19722f;
-    --aviso: #b87d00; --aviso-tinta: #8a5f00;
-    --critico: #d93a3a; --critico-tinta: #b02a2a;
-    --voce: #2b5fae; --voce-tinta: #2b5fae; --voce-fundo: #e9f0fb;
-    --foco: #2b5fae;
+    --plano: #fafafa; --sup: #ffffff; --sup2: #f4f4f5; --sup3: #e4e4e7;
+    --tinta: #09090b; --tinta2: #52525b; --apagado: #71717a;
+    --fio: #e4e4e7; --fio-forte: #a1a1aa; --barra: #18181b;
+    --bom: #16a34a; --bom-tinta: #15803d;
+    --aviso: #d97706; --aviso-tinta: #b45309;
+    --critico: #dc2626; --critico-tinta: #b91c1c;
+    --voce: #09090b; --voce-tinta: #09090b; --voce-fundo: #f4f4f5;
+    --foco: #09090b;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) {
       color-scheme: dark;
-      --plano: #0e0e11;
-      --sup: #161619;
-      --sup2: #1f1f24;
-      --sup3: #28282f;
-      --tinta: #f4f4f5;
+      --plano: #050505;
+      --sup: #0c0c0e;
+      --sup2: #131316;
+      --sup3: #1c1c21;
+      --tinta: #ffffff;
       --tinta2: #a1a1aa;
       --apagado: #71717a;
-      --fio: #27272c;
-      --fio-forte: #383842;
-      --barra: #52525b;
+      --fio: #222226;
+      --fio-forte: #3f3f46;
+      --barra: #ffffff;
       --bom: #22c55e;
       --bom-tinta: #4ade80;
       --aviso: #f59e0b;
       --aviso-tinta: #fbbf24;
       --critico: #ef4444;
       --critico-tinta: #f87171;
-      --voce: #d4d4d8;
-      --voce-tinta: #f4f4f5;
-      --voce-fundo: #25252b;
-      --foco: #71717a;
+      --voce: #ffffff;
+      --voce-tinta: #ffffff;
+      --voce-fundo: #18181b;
+      --foco: #ffffff;
     }
   }
   :root[data-tema="escuro"] {
     color-scheme: dark;
-    --plano: #0e0e11;
-    --sup: #161619;
-    --sup2: #1f1f24;
-    --sup3: #28282f;
-    --tinta: #f4f4f5;
+    --plano: #050505;
+    --sup: #0c0c0e;
+    --sup2: #131316;
+    --sup3: #1c1c21;
+    --tinta: #ffffff;
     --tinta2: #a1a1aa;
     --apagado: #71717a;
-    --fio: #27272c;
-    --fio-forte: #383842;
-    --barra: #52525b;
+    --fio: #222226;
+    --fio-forte: #3f3f46;
+    --barra: #ffffff;
     --bom: #22c55e;
     --bom-tinta: #4ade80;
     --aviso: #f59e0b;
     --aviso-tinta: #fbbf24;
     --critico: #ef4444;
     --critico-tinta: #f87171;
-    --voce: #d4d4d8;
-    --voce-tinta: #f4f4f5;
-    --voce-fundo: #25252b;
-    --foco: #71717a;
+    --voce: #ffffff;
+    --voce-tinta: #ffffff;
+    --voce-fundo: #18181b;
+    --foco: #ffffff;
   }
 
   /* Uma escala só: tamanhos 11 / 12.5 / 14 / 20, espaços múltiplos de 4. */
@@ -143,44 +143,59 @@
   .alerta strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; color: var(--critico-tinta); }
   .alerta span { color: var(--tinta2); }
 
-  /* ---------- superfícies ---------- */
-  .cartao { background: var(--sup); border: 1px solid var(--fio); border-radius: 12px; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45); }
-  .rolagem { overflow-x: auto; border-radius: 12px 12px 0 0; }
-  h2 { margin: 0; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  /* ---------- superfícies (Estilo Render.com: Neo-Brutalist Swiss Grid / Monocromático) ---------- */
+  .cartao { background: var(--sup); border: 1px solid var(--fio); border-radius: 4px; box-shadow: none; }
+  .rolagem { overflow-x: auto; border-radius: 4px 4px 0 0; }
+  h2 { margin: 0; font-size: 13.5px; font-weight: 650; letter-spacing: -0.2px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
   h2 .conta {
-    color: var(--voce-tinta); background: var(--voce-fundo);
-    border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 999px;
-    padding: 1px 8px; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--sup); background: var(--tinta);
+    border: 1px solid var(--tinta); border-radius: 2px;
+    padding: 0px 6px; font-size: 10.5px; font-weight: 700; font-variant-numeric: tabular-nums;
   }
-  h2 .conta.zero { color: var(--apagado); background: var(--sup2); border-color: var(--fio); font-weight: 400; }
-  .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px 8px; }
+  h2 .conta.zero { color: var(--apagado); background: transparent; border-color: var(--fio); font-weight: 500; }
+  .cabeca { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px 10px; border-bottom: 1px solid var(--fio); }
   .cabeca .nota { color: var(--apagado); font-size: 11px; }
 
   /* Botão de recolher/expandir seções */
   .btn-recolher {
-    font: inherit; font-size: 11px; color: var(--apagado); background: var(--sup2);
-    border: 1px solid var(--fio); border-radius: 6px; padding: 3px 9px; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 5px; transition: color 140ms ease, border-color 140ms ease;
+    font: inherit; font-size: 11px; color: var(--tinta2); background: transparent;
+    border: 1px solid var(--fio); border-radius: 2px; padding: 3px 9px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px; transition: all 120ms ease;
   }
-  .btn-recolher:hover { color: var(--tinta); border-color: var(--fio-forte); background: var(--sup3); }
+  .btn-recolher:hover { color: var(--tinta); border-color: var(--tinta); background: var(--sup2); }
   .btn-recolher svg { width: 10px; height: 10px; transition: transform 200ms ease; }
   .secao-recolhida .btn-recolher svg { transform: rotate(-90deg); }
   .secao-recolhida .corpo-recolhivel { display: none !important; }
 
-  /* ---------- quadro dos Agentes: linha unificada e rica ----------
-     Missão, Atividade Atual (Agora/Última fala), PR & CI, Contexto e Previsão unificados
-     em uma única visão completa, sem necessidade de clicar ou alternar modos. */
+  /* ---------- quadro dos Agentes: linha unificada e responsiva ---------- */
   .cabecalho, .face { display: grid; align-items: center; column-gap: 16px; padding: 0 16px 0 12px; }
   .cabecalho {
-    grid-template-columns: 20px minmax(220px, 250px) 125px minmax(280px, 1fr) 90px 135px minmax(195px, 225px);
+    grid-template-columns: 20px minmax(180px, 230px) 115px minmax(240px, 1fr) 85px 125px minmax(160px, 210px);
     padding-top: 8px; padding-bottom: 6px;
     border-bottom: 1px solid var(--fio);
     background: var(--sup2);
-    border-radius: 10px 10px 0 0;
+    border-radius: 0;
   }
-  .cabecalho span { font-size: 11px; font-weight: 500; color: var(--apagado); white-space: nowrap; }
+  .cabecalho span { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--apagado); white-space: nowrap; }
   .face.frente {
-    grid-template-columns: 20px minmax(220px, 250px) 125px minmax(280px, 1fr) 90px 135px minmax(195px, 225px);
+    grid-template-columns: 20px minmax(180px, 230px) 115px minmax(240px, 1fr) 85px 125px minmax(160px, 210px);
+  }
+  @media (max-width: 1100px) {
+    .cabecalho, .face.frente {
+      grid-template-columns: 18px minmax(150px, 190px) 100px minmax(180px, 1fr) 110px;
+    }
+    .cabecalho span:nth-child(5), .cabecalho span:nth-child(7),
+    .face.frente > :nth-child(5), .face.frente > :nth-child(7) { display: none; }
+  }
+  @media (max-width: 720px) {
+    .cabecalho { display: none; }
+    .face.frente {
+      grid-template-columns: 1fr auto;
+      row-gap: 6px;
+      padding: 10px 14px;
+    }
+    .face.frente > .cel-alca { display: none; }
+    .face.frente > .cel-missao-atividade { grid-column: 1 / -1; }
   }
   .face.verso { display: none; }
   .cel-alca { display: flex; align-items: center; justify-content: center; }
@@ -350,12 +365,13 @@
   .rodape { margin: 12px 0 0; color: var(--apagado); font-size: 11px; }
   .rodape .erro { color: var(--critico-tinta); font-weight: 600; }
 
-  /* ---------- Abas Superiores ---------- */
-  .barra-abas { display: flex; align-items: center; gap: 8px; padding: 10px 24px; background: #121215; border-bottom: 1px solid var(--fio); }
-  .aba-btn { background: transparent; border: 1px solid transparent; color: var(--tinta2); font-size: 12.5px; font-weight: 550; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 140ms ease; font-family: inherit; }
-  .aba-btn:hover { color: var(--tinta); background: #1a1a1f; }
-  .aba-btn.ativa { background: #232328; color: #ffffff; border-color: #383842; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-  .badge-log { font-size: 10px; background: #18181b; border: 1px solid #2d2d34; color: var(--tinta2); padding: 1px 6px; border-radius: 999px; }
+  /* ---------- Abas Superiores (Estilo Render.com P&B) ---------- */
+  .barra-abas { display: flex; align-items: center; gap: 6px; padding: 8px 0 12px; background: transparent; border-bottom: 1px solid var(--fio); margin-bottom: 14px; }
+  .aba-btn { background: transparent; border: 1px solid var(--fio); color: var(--tinta2); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 12px; border-radius: 2px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 120ms ease; font-family: inherit; }
+  .aba-btn:hover { color: var(--tinta); border-color: var(--fio-forte); background: var(--sup2); }
+  .aba-btn.ativa { background: var(--tinta); color: var(--plano); border-color: var(--tinta); box-shadow: none; }
+  .aba-btn.ativa .badge-log { background: var(--plano); color: var(--tinta); border-color: var(--plano); }
+  .badge-log { font-size: 10px; background: var(--sup2); border: 1px solid var(--fio); color: var(--tinta2); padding: 0px 5px; border-radius: 2px; font-variant-numeric: tabular-nums; }
 
   /* ---------- Console de Logs (Terminal Minimalista) ---------- */
   .timeline-logs {
