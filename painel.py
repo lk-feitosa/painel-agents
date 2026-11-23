@@ -453,7 +453,88 @@ def _proximo_reset_semanal(agora_epoch):
     return int(prox.timestamp())
 
 
-_CACHE_MODELOS_CLI = {"ts": 0.0, "agy_familias": [], "codex_modelos": []}
+_CACHE_MODELOS_CLI = {"ts": 0.0, "ts_codex": 0.0, "agy_familias": [], "codex_modelos": []}
+
+
+def _listar_modelos_codex_cache(home: Path) -> list:
+    """Lista dinamicamente os modelos disponíveis na conta Codex via `codex app-server --stdio` (cache 5 min)."""
+    agora = time.time()
+    if _CACHE_MODELOS_CLI["codex_modelos"] and (agora - _CACHE_MODELOS_CLI.get("ts_codex", 0.0) < 300):
+        return _CACHE_MODELOS_CLI["codex_modelos"]
+
+    codex_bin = shutil.which("codex.exe") or shutil.which("codex")
+    if not codex_bin or not (home / ".codex" / "auth.json").exists():
+        return ["gpt-6-luna", "gpt-5.6-terra", "gpt-5.6-luna"]
+
+    cache_dir = home / ".minerva" / ".cache" / "codex-usage"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["CODEX_SQLITE_HOME"] = str(cache_dir)
+    modelos = []
+    p = None
+    try:
+        p = subprocess.Popen(
+            [codex_bin, "app-server", "--stdio"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            env=env,
+        )
+        p.stdin.write(json.dumps({"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "painel", "title": "Painel", "version": "1"}}}) + "\n")
+        p.stdin.flush()
+        deadline = time.time() + 4.0
+        while time.time() < deadline:
+            line = p.stdout.readline()
+            if not line or (line.strip().startswith("{") and json.loads(line).get("id") == 1):
+                break
+        p.stdin.write(json.dumps({"method": "initialized"}) + "\n")
+        p.stdin.write(json.dumps({"id": 3, "method": "model/list", "params": {}}) + "\n")
+        p.stdin.flush()
+        while time.time() < deadline:
+            line = p.stdout.readline()
+            if not line:
+                break
+            if line.strip().startswith("{"):
+                msg = json.loads(line)
+                if msg.get("id") == 3 and "result" in msg:
+                    for m in (msg["result"].get("data") or []):
+                        if not m.get("hidden") and m.get("id"):
+                            modelos.append(str(m["id"]))
+                    break
+    except Exception:
+        pass
+    finally:
+        if p is not None:
+            try:
+                if p.stdin:
+                    p.stdin.close()
+                p.terminate()
+                p.wait(timeout=1)
+            except Exception:
+                pass
+
+    if not modelos:
+        modelos = ["gpt-6-luna", "gpt-5.6-terra", "gpt-5.6-luna"]
+    _CACHE_MODELOS_CLI["codex_modelos"] = modelos
+    _CACHE_MODELOS_CLI["ts_codex"] = agora
+    return modelos
+
+
+def _status_provedor_maestri(home: Path, provider_id: str) -> dict:
+    """Retorna o bloco do provedor em ~/.maestri/usage/providers/.status.json se existir."""
+    st_file = home / ".maestri" / "usage" / "providers" / ".status.json"
+    if st_file.exists():
+        try:
+            st = json.loads(st_file.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
+            for prov in st.get("providers", []):
+                if prov.get("id") == provider_id:
+                    return prov
+        except Exception:
+            pass
+    return {}
 
 
 def _parse_iso_epoch(val, fallback):
@@ -901,13 +982,104 @@ def descobrir_contas_local(leituras, agora_epoch):
                 codex_5h_pct = a["sessao_5h_pct"]
             if isinstance(a.get("semanal_pct"), (int, float)):
                 codex_sem_pct = a["semanal_pct"]
+            if a.get("modelo"):
+                codex_modelo = a["modelo"]
+
+    # Complementa com dados ao vivo do Maestri (.status.json) caso os logs de sessão estejam vazios
+    st_codex = _status_provedor_maestri(home, "codex")
+    if st_codex.get("plan"):
+        codex_plano = str(st_codex["plan"]).capitalize()
+    for meter in (st_codex.get("meters") or []):
+        for w in (meter.get("windows") or []):
+            u_val = w.get("usedPercent")
+            if isinstance(u_val, (int, float)):
+                if codex_5h_pct == 0.0:
+                    codex_5h_pct = round(float(u_val), 1)
+                if codex_sem_pct == 0.0:
+                    codex_sem_pct = round(float(u_val), 1)
+            if w.get("resetsAt"):
+                codex_renova_sem = _parse_iso_epoch(w.get("resetsAt"), codex_renova_sem)
 
     if (codex_auth.exists() or agentes_codex) and not codex_desativado:
+        catalogo_codex = _listar_modelos_codex_cache(home)
         outros_codex = [
             {"nome": m, "usado_pct": codex_5h_pct, "pool": "Pool Codex"}
-            for m in ["gpt-6-luna", "gpt-5.6-terra", "gpt-5.6-luna"]
-            if m.lower() != (codex_modelo or "").lower()
+            for m in catalogo_codex
         ]
+        barras_geral_codex = [
+            {
+                "grupo": "Pool Codex",
+                "tipo": "5h",
+                "rotulo": "Pool Codex · 5 horas",
+                "usado_pct": codex_5h_pct,
+                "renova_epoch": codex_renova_5h,
+                "janela_min": 300,
+                "origem": "cli",
+                "lido_em_epoch": codex_lido_em,
+                "membros": catalogo_codex,
+            },
+            {
+                "grupo": "Pool Codex",
+                "tipo": "semana",
+                "rotulo": "Pool Codex · Semana / Mensal",
+                "usado_pct": codex_sem_pct,
+                "renova_epoch": codex_renova_sem,
+                "janela_min": 10080,
+                "origem": "cli",
+                "lido_em_epoch": codex_lido_em,
+            },
+        ]
+        resumo_geral_codex = f"Pool Codex: {codex_5h_pct}% (5h) · {codex_sem_pct}% (sem)  │  Modelo padrão: {codex_modelo}"
+        visoes_codex = [
+            {
+                "id": "geral",
+                "rotulo": "Geral",
+                "modelo": "Visão Geral · Codex",
+                "esforco": "",
+                "ativo": True,
+                "resumo": resumo_geral_codex,
+                "barras": barras_geral_codex,
+            }
+        ]
+        for m_codex in catalogo_codex:
+            usando_c = []
+            for a in leituras:
+                if a.get("ferramenta") == "codex" and (a.get("modelo") or codex_modelo).lower() == m_codex.lower():
+                    ctx_c = f" (Ctx {a['contexto_pct']}%)" if isinstance(a.get("contexto_pct"), (int, float)) else ""
+                    usando_c.append(f"{a['nome']}{ctx_c}")
+            visoes_codex.append({
+                "id": f"mod:{m_codex}",
+                "rotulo": m_codex,
+                "rotulo_completo": m_codex,
+                "modelo": m_codex,
+                "esforco": codex_esforco,
+                "ativo": bool(usando_c),
+                "resumo": f"Pool Codex  │  " + (f"Em uso: {', '.join(usando_c)}" if usando_c else "Livre (nenhum terminal usando)"),
+                "barras": [
+                    {
+                        "grupo": m_codex,
+                        "tipo": "5h",
+                        "rotulo": f"{m_codex} · 5 horas",
+                        "usado_pct": codex_5h_pct,
+                        "renova_epoch": codex_renova_5h,
+                        "janela_min": 300,
+                        "origem": "cli",
+                        "lido_em_epoch": codex_lido_em,
+                        "membros": [m_codex],
+                    },
+                    {
+                        "grupo": m_codex,
+                        "tipo": "semana",
+                        "rotulo": f"{m_codex} · Semana / Mensal",
+                        "usado_pct": codex_sem_pct,
+                        "renova_epoch": codex_renova_sem,
+                        "janela_min": 10080,
+                        "origem": "cli",
+                        "lido_em_epoch": codex_lido_em,
+                    },
+                ],
+            })
+
         lista_contas.append({
             "id": f"codex:{codex_email or 'local'}",
             "ferramenta": "codex",
@@ -917,8 +1089,10 @@ def descobrir_contas_local(leituras, agora_epoch):
             "plano": codex_plano,
             "agentes": agentes_codex or ["Disponível p/ Back-End & QA"],
             "terminais": agentes_codex or ["Pronto no Workspace"],
-            "modelo": codex_modelo,
-            "esforco": codex_esforco,
+            "modelo": "Visão Geral · Codex",
+            "esforco": "",
+            "resumo_geral": resumo_geral_codex,
+            "visoes": visoes_codex,
             "situacao": "ok",
             "consultando": False,
             "intervalo_s": 300,
@@ -926,36 +1100,16 @@ def descobrir_contas_local(leituras, agora_epoch):
             "erro": None,
             "erro_detalhe": None,
             "modelos_cota": outros_codex,
-            "barras": [
-                {
-                    "grupo": codex_modelo,
-                    "tipo": "5h",
-                    "rotulo": f"{codex_modelo} · 5 horas",
-                    "usado_pct": codex_5h_pct,
-                    "renova_epoch": codex_renova_5h,
-                    "janela_min": 300,
-                    "origem": "cli",
-                    "lido_em_epoch": codex_lido_em,
-                    "membros": [codex_modelo],
-                },
-                {
-                    "grupo": codex_modelo,
-                    "tipo": "semana",
-                    "rotulo": f"{codex_modelo} · Semana",
-                    "usado_pct": codex_sem_pct,
-                    "renova_epoch": codex_renova_sem,
-                    "janela_min": 10080,
-                    "origem": "cli",
-                    "lido_em_epoch": codex_lido_em,
-                },
-            ],
+            "barras": barras_geral_codex,
         })
 
-    # 3. Claude Code CLI (só exibe se houver login real oauthAccount E não estiver desativado no Maestri)
+    # 3. Claude Code CLI (só exibe se a conta estiver realmente autenticada COM plano/cota ativa ou terminal ativo)
     claude_desativado = _provedor_desativado_no_maestri(home, "claude")
     claude_cfg = home / ".claude.json"
+    claude_cred = home / ".claude" / ".credentials.json"
     agentes_claude = [a["nome"] for a in leituras if a.get("ferramenta") == "claude"]
     claude_email = None
+    claude_seat_tier = None
     claude_modelo = "claude-sonnet-4-6"
     claude_esforco = "medium"
     claude_5h_pct = 0.0
@@ -965,10 +1119,19 @@ def descobrir_contas_local(leituras, agora_epoch):
         try:
             d_cl = json.loads(claude_cfg.read_text(encoding="utf-8", errors="ignore").lstrip("\ufeff"))
             oauth = d_cl.get("oauthAccount") or {}
+            claude_seat_tier = oauth.get("seatTier")
             if oauth.get("emailAddress"):
                 claude_email = oauth["emailAddress"].strip().lower()
         except Exception:
             pass
+
+    st_claude = _status_provedor_maestri(home, "claude")
+    claude_tem_medidor_maestri = bool(st_claude.get("limitsApply") or st_claude.get("meters"))
+    claude_autenticado_real = bool(
+        agentes_claude
+        or claude_tem_medidor_maestri
+        or (claude_email and claude_seat_tier and claude_cred.exists())
+    )
 
     for a in leituras:
         if a.get("ferramenta") == "claude":
@@ -979,7 +1142,7 @@ def descobrir_contas_local(leituras, agora_epoch):
             if a.get("modelo"):
                 claude_modelo = a["modelo"]
 
-    if (claude_email or agentes_claude) and not claude_desativado:
+    if claude_autenticado_real and not claude_desativado:
         outros_claude = [
             {"nome": m, "usado_pct": claude_sem_pct, "pool": "Semana"}
             for m in ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"]
