@@ -409,6 +409,70 @@ def escanear_portas_ativas(porta_painel, projeto_dir):
         except Exception:
             pass
 
+        # Fallback macOS (darwin) via `lsof -iTCP -sTCP:LISTEN -P -n` (já que macOS não possui `ss` nem `/proc`)
+        if sys.platform == "darwin" and len(portas_detectadas) <= 2:
+            try:
+                p_lsof = subprocess.run(
+                    ["lsof", "-iTCP", "-sTCP:LISTEN", "-P", "-n"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    timeout=3,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                )
+                if p_lsof.returncode == 0 and p_lsof.stdout:
+                    for linha in p_lsof.stdout.splitlines()[1:]:
+                        partes = linha.split()
+                        if len(partes) < 9:
+                            continue
+                        nome_pr = partes[0]
+                        pid = int(partes[1]) if partes[1].isdigit() else 0
+                        addr_col = partes[8]
+                        if ":" not in addr_col:
+                            continue
+                        end_raw, porta_str = addr_col.rsplit(":", 1)
+                        if not porta_str.isdigit():
+                            continue
+                        porta = int(porta_str)
+                        if porta < 3000 or porta > 9999 or porta in portas_detectadas:
+                            continue
+                        end = end_raw.strip("[]") or "127.0.0.1"
+                        if end in ("*", "0.0.0.0", "::"):
+                            end = "127.0.0.1"
+                        cmd_pr = ""
+                        if pid:
+                            try:
+                                p_ps = subprocess.run(
+                                    ["ps", "-p", str(pid), "-o", "args="],
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=1,
+                                )
+                                cmd_pr = (p_ps.stdout or "").strip()
+                            except Exception:
+                                pass
+                        eh_proj = (
+                            "painel-agents" in cmd_pr.lower()
+                            or "kanban-agents" in cmd_pr.lower()
+                            or str(projeto_dir).lower() in cmd_pr.lower()
+                            or projeto_dir.name.lower() in cmd_pr.lower()
+                        )
+                        servico = f"Servidor ({nome_pr})" if eh_proj else nome_pr
+                        portas_detectadas[porta] = {
+                            "porta": porta,
+                            "endereco": end,
+                            "pid": pid,
+                            "processo": nome_pr,
+                            "servico": servico,
+                            "escopo": "projeto" if eh_proj else "externo",
+                            "url": f"http://localhost:{porta}" if eh_proj else None,
+                            "status": "Ativo no Projeto" if eh_proj else "Porta Externa Ocupada",
+                        }
+            except Exception:
+                pass
+
     lista_ordenada = sorted(
         portas_detectadas.values(),
         key=lambda x: (0 if x["escopo"] == "projeto" else 1, x["porta"]),
@@ -674,6 +738,7 @@ def _listar_modelos_agy_cache(home: Path) -> list:
     for cand in [
         home / "AppData" / "Local" / "agy" / "bin" / "agy.exe",
         home / ".local" / "bin" / "agy",
+        Path("/opt/homebrew/bin/agy"),
         Path("/usr/local/bin/agy"),
     ]:
         if not agy_bin and cand.exists():
